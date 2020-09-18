@@ -1,72 +1,43 @@
 r"""
 Some (ocaml) pseudo-code here to show the intended type structure::
-
-    type args = item list
-    and  item = 
-           | Field of {key: str; value: data; optional: bool; doc: str}
-           | Variant of {flag: str; choices: (str * args * str) list; 
-                         optional: bool; default: str; doc: str}
+           
+    type args = {key: str; value: data; optional: bool; doc: str} list
     and  data = 
            | Arg of dtype
            | Node of args
            | Repeat of args
+           | Variant of (str * args) list
 
-In actual implementation, *args* is a class that has two attributes, 
-``fields: Dict[str, AbstractData]`` and ``variants: Dict[str, TaggedUnion]``
-that correspond to the *item* type. So this layer is flattened.
+In actual implementation, We flatten this structure into on tree-like class
+`Argument` with (optional) attribute `dtype`, `sub_fields`, `repeat` and 
+`sub_variants` to mimic the union behavior in the type structure.
 
-``AbstractData`` class is a combine of *value*, *optional* and *doc*
-of *Field* record and is inheritanced by three variants of the *data* type.
-This gives possibility to add more data format.
-
-``TaggedUnion`` class is a combine of *choices*, "optional*, *default*
-and *doc* of *Variant* record. It is used to handle the multiple choices 
-condition in the argument dict.
+Due to the complexity of *Variant* structure, it is implemented into a 
+separate class `Variant` so that multiple choices can be handled correctly.
+We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Any
+from typing import List, Union, Dict, Any, Union
 from dataclasses import dataclass, field
 
 
 @dataclass
-class Arguments:
-    fields: Dict[str, "AbstractData"] = field(default_factory=dict)
-    variants: Dict[str, "TaggedUnion"] = field(default_factory=dict)
-
-
-@dataclass
-class TaggedUnion:
-    choices: Dict[str, "Arguments"] = field(default_factory=dict)
-    optional: bool = False
-    default: str = ""
-    doc: str = ""
-
-
-class AbstructData(ABC):
-    @abstractmethod
-    def check_value(value: Any):
-        pass
-
-
-@dataclass
-class ArgData(AbstructData):
-    dtype: List[type]
+class Argument:
+    name: str
+    dtype: Union(type, List[type])
+    sub_fields: List["Argument"] = field(default_factory=list)
+    sub_variants: List["Variant"] = field(default_factory=list)
+    repeat: bool = False
     optional: bool = False
     default: Any = None
     doc: str = ""
 
 
 @dataclass
-class NodeData(AbstructData):
-    args: Arguments
+class Variant:
+    flag_name: str
+    choices: Dict[str, "Arguments"] = field(default_factory=dict)
     optional: bool = False
-    doc: str = ""
-
-
-@dataclass
-class RepeatData(AbstructData):
-    unitargs: Arguments
-    optional: bool = False
+    default: str = ""
     doc: str = ""
