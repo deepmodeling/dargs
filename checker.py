@@ -93,6 +93,7 @@ class Argument:
         assert isinstance(value, list) and self.repeat
         for item in value:
             self._check_subfield(item)
+            self._check_subvariant(item)
 
 
 @dataclass
