@@ -5,6 +5,7 @@ model.ckpt.*
 .vscode
 .ipynb_*
 *.swp
+.coverage
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
