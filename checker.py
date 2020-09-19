@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Argument:
     name: str
-    dtype: Union(type, Iterable[type])
+    dtype: Union[type, Iterable[type]]
     sub_fields: List["Argument"] = field(default_factory=list)
     sub_variants: List["Variant"] = field(default_factory=list)
     repeat: bool = False
@@ -34,14 +34,20 @@ class Argument:
     doc: str = ""
 
     def __post_init__(self):
-        if isinstance(self.dtype, type):
+        if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
+        # remove duplicate
+        self.dtype = set(self.dtype)
+        # check conner cases
         if self.sub_fields and self.repeat:
-            self.dtype = [*self.dtype, list]
+            self.dtype.add(list)
         if self.sub_fields and not self.repeat or self.sub_variants:
-            self.dtype = [*self.dtype, dict]
-        # remove duplicate and make it compatible with `isinstance`
-        self.dtype = tuple(set(self.dtype))
+            self.dtype.add(dict)
+        if None in self.dtype:
+            self.dtype.remove(None)
+            self.dtype.add(type(None))
+        # and make it compatible with `isinstance`
+        self.dtype = tuple(self.dtype)
 
     def check(self, argdict: dict):
         # first, check existence of a key
