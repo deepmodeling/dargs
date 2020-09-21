@@ -18,22 +18,32 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import List, Union, Dict, Any, Iterable
-from dataclasses import dataclass, field
+from typing import List, Union, Dict, Any, Iterable, Optional
 
 
-@dataclass
 class Argument:
-    name: str
-    dtype: Union[type, Iterable[type]]
-    sub_fields: List["Argument"] = field(default_factory=list)
-    sub_variants: List["Variant"] = field(default_factory=list)
-    repeat: bool = False
-    optional: bool = False
-    default: Any = None # for now it is just a tag, no real use
-    doc: str = ""
 
-    def __post_init__(self):
+    def __init__(self, 
+            name: str,
+            dtype: Union[None, type, Iterable[type]],
+            sub_fields: Optional[List["Argument"]] = None,
+            sub_variants: Optional[List["Variant"]] = None,
+            repeat: bool = False,
+            optional: bool = False,
+            default: Any = None, # for now it is just a tag, no real use
+            doc: str = ""):
+        self.name = name
+        self.dtype = dtype
+        self.sub_fields = sub_fields if sub_fields is not None else []
+        self.sub_variants = sub_variants if sub_variants is not None else []
+        self.repeat = repeat
+        self.optional = optional
+        self.default = default
+        self.doc = doc
+        # handle the format of dtype, makeit a tuple
+        self.reorg_dtype()
+
+    def reorg_dtype(self):
         if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
         # remove duplicate
@@ -96,21 +106,27 @@ class Argument:
             self._check_subvariant(item)
 
 
-@dataclass
 class Variant:
-    flag_name: str
-    choices: List["Arguments"] = field(default_factory=list)
-    optional: bool = False
-    default_tag: str = "" # this is indeed necessary in case of optional
-    doc: str = ""
 
-    def __post_init__(self):
+    def __init__(self, 
+            flag_name: str,
+            choices: List["Argument"],
+            optional: bool = False,
+            default_tag: str = "", # this is indeed necessary in case of optional
+            doc: str = ""):
+        self.flag_name = flag_name
+        self.choice_dict = {}
+        self.add_choice(*choices)
+        self.optional = optional
+        self.default_tag = default_tag
+        self.doc = doc
+
+    def add_choice(self, *choices: Argument):
         # choices is a list of arguments 
         # whose name is treated as the switch tag
         # we convert it into a dict for better reference
         # and avoid duplicate tags
-        self.choice_dict = {}
-        for arg in self.choices:
+        for arg in choices:
             tag = arg.name
             if tag in self.choice_dict:
                 raise ValueError(f"duplicate tag `{tag}` appears in "
