@@ -18,16 +18,19 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import List, Union, Dict, Any, Iterable, Optional
+from typing import Union, Any, Iterable, Optional
+from textwrap import wrap, indent
 
+
+INDENT = "    " # doc is indented by four spaces
 
 class Argument:
 
     def __init__(self, 
             name: str,
             dtype: Union[None, type, Iterable[type]],
-            sub_fields: Optional[List["Argument"]] = None,
-            sub_variants: Optional[List["Variant"]] = None,
+            sub_fields: Optional[Iterable["Argument"]] = None,
+            sub_variants: Optional[Iterable["Variant"]] = None,
             repeat: bool = False,
             optional: bool = False,
             default: Any = None, # for now it is just a tag, no real use
@@ -58,6 +61,9 @@ class Argument:
             self.dtype.add(type(None))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
+
+    # above are creation part
+    # below are type checking part
 
     def check(self, argdict: dict):
         # first, check existence of a key
@@ -105,23 +111,68 @@ class Argument:
             self._check_subfield(item)
             self._check_subvariant(item)
 
+    # above are type checking part
+    # below are doc generation part
+
+    def gen_doc(self, parents=None, **kwargs):
+        # the actual indentation is done here, and ONLY here
+        doc_list = [
+            self.gen_doc_head(parents, **kwargs),
+            indent(self.gen_doc_path(parents, **kwargs), INDENT),
+            indent(self.gen_doc_body(parents, **kwargs), INDENT)
+        ]
+        return "\n".join(doc_list)
+
+    def gen_doc_head(self, parents=None, **kwargs):
+        typesig = "|".join([f"``{dt.__name__}``" for dt in self.dtype])
+        if self.optional:
+            typesig += ", optional"
+        head = f"{self.name}: {typesig}"
+        return head
+
+    def gen_doc_path(self, parents=None, **kwargs):
+        if parents is None:
+            parents = []
+        arg_path = [*parents, self.name]
+        pathdoc = f"Argument path: {'/'.join(arg_path)}"
+        return pathdoc
+
+    def gen_doc_body(self, parents=None, **kwargs):
+        if parents is None:
+            parents = []
+        arg_path = [*parents, self.name]
+        body_list = []
+        body_list.extend(wrap(self.doc))
+        if self.sub_fields:
+            body_list.append("") # genetate a blank line
+            body_list.append("This argument accept the following sub arguments:")
+            for subarg in self.sub_fields:
+                body_list.extend(["", subarg.gen_doc(arg_path, **kwargs)])
+        if self.sub_variants:
+            for subvrnt in self.sub_variants:
+                # use same level of indent for variants
+                body_list.extend(["", subvrnt.gen_doc(arg_path, **kwargs)])
+        body = "\n".join(body_list)
+        return body
+        
 
 class Variant:
 
     def __init__(self, 
             flag_name: str,
-            choices: List["Argument"],
+            choices: Optional[Iterable["Argument"]] = None,
             optional: bool = False,
             default_tag: str = "", # this is indeed necessary in case of optional
             doc: str = ""):
         self.flag_name = flag_name
         self.choice_dict = {}
-        self.add_choice(*choices)
+        if choices is not None:
+            self.extend_choices(choices)
         self.optional = optional
         self.default_tag = default_tag
         self.doc = doc
 
-    def add_choice(self, *choices: Argument):
+    def extend_choices(self, choices: Iterable["Argument"]):
         # choices is a list of arguments 
         # whose name is treated as the switch tag
         # we convert it into a dict for better reference
@@ -132,6 +183,9 @@ class Variant:
                 raise ValueError(f"duplicate tag `{tag}` appears in "
                                  f"variant with flag `{self.flag_name}`")
             self.choice_dict[tag] = arg
+
+    # above are creation part
+    # below are type checking part
 
     def check(self, argdict: dict):
         choice = self._load_choice(argdict)
@@ -148,4 +202,19 @@ class Variant:
             raise KeyError(f"Key `{self.flag_name}` is required "
                             "to choose variant but not found.")
 
+    # above are type checking part
+    # below are doc generation part
         
+    def gen_doc(self, parents=None, **kwargs):
+        body_list = []
+        body_list.extend(wrap(self.doc))
+        body_list.append(f"Depend on the value of *{self.flag_name}*, "
+                          "following sub arguments are accepted: ") 
+        for choice in self.choice_dict.values():
+            body_list.extend([
+                "", 
+                f"When *{self.flag_name}* is set to ``{choice.name}``: ",
+                choice.gen_doc_body(parents, **kwargs), 
+            ])
+        body = "\n".join(body_list)
+        return body
