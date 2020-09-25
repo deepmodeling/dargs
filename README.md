@@ -8,7 +8,5 @@ where you can determine the items of a dict based the value of on one of its "fl
 
 ## TODO
 
-- [ ] recursive generation of docs
-- [ ] interface for adding sub arguments and variants (maybe follow `argparse`)
 - [ ] possibly support of indexing by keys
 - [ ] possibly support of generate default dicts (may not be a good idea)
