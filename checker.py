@@ -121,7 +121,7 @@ class Argument:
             indent(self.gen_doc_path(parents, **kwargs), INDENT),
             indent(self.gen_doc_body(parents, **kwargs), INDENT)
         ]
-        return "\n".join(doc_list)
+        return "\n".join(filter(None, doc_list))
 
     def gen_doc_head(self, parents=None, **kwargs):
         typesig = "|".join([f"``{dt.__name__}``" for dt in self.dtype])
@@ -143,14 +143,16 @@ class Argument:
         arg_path = [*parents, self.name]
         body_list = []
         body_list.extend(wrap(self.doc))
+        if self.repeat:
+            body_list.append("This argument takes a list with "
+                             "each element containing the following:")
         if self.sub_fields:
-            body_list.append("") # genetate a blank line
-            body_list.append("This argument accept the following sub arguments:")
+            # body_list.append("") # genetate a blank line
+            # body_list.append("This argument accept the following sub arguments:")                
             for subarg in self.sub_fields:
                 body_list.extend(["", subarg.gen_doc(arg_path, **kwargs)])
         if self.sub_variants:
             for subvrnt in self.sub_variants:
-                # use same level of indent for variants
                 body_list.extend(["", subvrnt.gen_doc(arg_path, **kwargs)])
         body = "\n".join(body_list)
         return body
@@ -208,8 +210,8 @@ class Variant:
     def gen_doc(self, parents=None, **kwargs):
         body_list = []
         body_list.extend(wrap(self.doc))
-        body_list.append(f"Depend on the value of *{self.flag_name}*, "
-                          "following sub arguments are accepted: ") 
+        body_list.append(f"Depending on the value of *{self.flag_name}*, "
+                          "different sub args are accepted: ") 
         for choice in self.choice_dict.values():
             body_list.extend([
                 "", 
