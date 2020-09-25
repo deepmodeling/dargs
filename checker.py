@@ -46,6 +46,18 @@ class Argument:
         # handle the format of dtype, makeit a tuple
         self.reorg_dtype()
 
+    def __eq__(self, other: "Argument") -> bool:
+        # do not compare doc and default
+        # since they do not enter to the type checking
+        fkey = lambda f: f.name
+        vkey = lambda v: v.flag_name
+        return (self.name == other.name 
+            and set(self.dtype) == set(other.dtype)
+            and sorted(self.sub_fields, key=fkey) == sorted(other.sub_fields, key=fkey)
+            and sorted(self.sub_variants, key=fkey) == sorted(other.sub_variants, key=fkey)
+            and self.repeat == other.repeat
+            and self.optional == other.optional)
+
     def reorg_dtype(self):
         if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
@@ -69,7 +81,7 @@ class Argument:
         self.reorg_dtype
 
     def add_subfield(self, name: Union[str, "Argument"], 
-                     *args, **kwargs) -> Argument:
+                     *args, **kwargs) -> "Argument":
         if isinstance(name, Argument):
             newarg = name
         else:
@@ -79,7 +91,7 @@ class Argument:
         return newarg
 
     def add_subvariant(self, flag_name: Union[str, "Variant"], 
-                       *args, **kwargs) -> Variant:
+                       *args, **kwargs) -> "Variant":
         if isinstance(flag_name, Variant):
             newvrnt = flag_name
         else:
@@ -202,6 +214,13 @@ class Variant:
         self.default_tag = default_tag
         self.doc = doc
 
+    def __eq__(self, other: "Variant") -> bool:
+        # do not compare doc 
+        return (self.flag_name == other.flag_name 
+            and self.choice_dict == other.choice_dict
+            and self.optional == other.optional
+            and self.default_tag == other.default_tag)
+
     def extend_choices(self, choices: Iterable["Argument"]):
         # choices is a list of arguments 
         # whose name is treated as the switch tag
@@ -221,7 +240,7 @@ class Variant:
         self.default_tag = default_tag
 
     def add_choice(self, tag: Union[str, "Argument"], 
-                   *args, **kwargs) -> Argument:
+                   *args, **kwargs) -> "Argument":
         if isinstance(tag, Argument):
             newarg = tag
         else:
@@ -237,7 +256,7 @@ class Variant:
         # here we use check_value to flatten the tag
         choice.check_value(argdict)
 
-    def _load_choice(self, argdict: dict) -> Argument:
+    def _load_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             return self.choice_dict[tag]
