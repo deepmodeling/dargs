@@ -52,10 +52,8 @@ class Argument:
         # remove duplicate
         self.dtype = set(self.dtype)
         # check conner cases
-        if self.sub_fields and self.repeat:
-            self.dtype.add(list)
-        if self.sub_fields and not self.repeat or self.sub_variants:
-            self.dtype.add(dict)
+        if self.sub_fields or self.sub_variants: 
+            self.dtype.add(list if self.repeat else dict)
         if None in self.dtype:
             self.dtype.remove(None)
             self.dtype.add(type(None))
