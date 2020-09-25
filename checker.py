@@ -18,8 +18,8 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import Union, Any, Iterable, Optional
-from textwrap import wrap, indent
+from typing import Union, Any, List, Iterable, Optional
+from textwrap import wrap, fill, indent
 
 
 INDENT = "    " # doc is indented by four spaces
@@ -112,7 +112,7 @@ class Argument:
     # above are type checking part
     # below are doc generation part
 
-    def gen_doc(self, parents=None, **kwargs):
+    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs):
         # the actual indentation is done here, and ONLY here
         doc_list = [
             self.gen_doc_head(parents, **kwargs),
@@ -121,21 +121,21 @@ class Argument:
         ]
         return "\n".join(filter(None, doc_list))
 
-    def gen_doc_head(self, parents=None, **kwargs):
+    def gen_doc_head(self, parents: Optional[List[str]] = None, **kwargs):
         typesig = "|".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
         head = f"{self.name}: {typesig}"
         return head
 
-    def gen_doc_path(self, parents=None, **kwargs):
+    def gen_doc_path(self, parents: Optional[List[str]] = None, **kwargs):
         if parents is None:
             parents = []
         arg_path = [*parents, self.name]
         pathdoc = f"Argument path: {'/'.join(arg_path)}"
         return pathdoc
 
-    def gen_doc_body(self, parents=None, **kwargs):
+    def gen_doc_body(self, parents: Optional[List[str]] = None, **kwargs):
         if parents is None:
             parents = []
         arg_path = [*parents, self.name]
@@ -169,6 +169,8 @@ class Variant:
         if choices is not None:
             self.extend_choices(choices)
         self.optional = optional
+        if optional:
+            assert default_tag
         self.default_tag = default_tag
         self.doc = doc
 
@@ -205,11 +207,11 @@ class Variant:
     # above are type checking part
     # below are doc generation part
         
-    def gen_doc(self, parents=None, **kwargs):
+    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs):
         body_list = []
-        body_list.extend(wrap(self.doc))
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
-                          "different sub args are accepted: ") 
+                          "different sub args are accepted. ") 
+        body_list.extend(["", self.gen_doc_flag(parents, **kwargs)])
         for choice in self.choice_dict.values():
             body_list.extend([
                 "", 
@@ -218,3 +220,14 @@ class Variant:
             ])
         body = "\n".join(body_list)
         return body
+
+    def gen_doc_flag(self, parents: Optional[List[str]] = None, **kwargs):
+        headdoc = f"{self.flag_name}: ``str``"
+        if self.optional:
+            headdoc += f", default: {self.default_tag}"
+        if parents is None:
+            parents = []
+        arg_path = [*parents, self.flag_name]
+        pathdoc = indent(f"Argument path: {'/'.join(arg_path)}", INDENT)
+        realdoc = indent(fill(self.doc), INDENT)
+        return "\n".join(filter(None, [headdoc, pathdoc, realdoc]))
