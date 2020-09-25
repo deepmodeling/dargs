@@ -60,6 +60,34 @@ class Argument:
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
 
+    def set_dtype(self, dtype: Union[None, type, Iterable[type]]):
+        self.dtype = dtype
+        self.reorg_dtype()
+
+    def set_repeat(self, repeat: bool = True):
+        self.repeat = repeat
+        self.reorg_dtype
+
+    def add_subfield(self, name: Union[str, "Argument"], 
+                     *args, **kwargs) -> Argument:
+        if isinstance(name, Argument):
+            newarg = name
+        else:
+            newarg = Argument(name, *args, **kwargs)
+        self.sub_fields.append(newarg)
+        self.reorg_dtype
+        return newarg
+
+    def add_subvariant(self, flag_name: Union[str, "Variant"], 
+                       *args, **kwargs) -> Variant:
+        if isinstance(flag_name, Variant):
+            newvrnt = flag_name
+        else:
+            newvrnt = Variant(flag_name, *args, **kwargs)
+        self.sub_variants.append(newvrnt)
+        self.reorg_dtype
+        return newvrnt
+
     # above are creation part
     # below are type checking part
 
@@ -112,7 +140,7 @@ class Argument:
     # above are type checking part
     # below are doc generation part
 
-    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         # the actual indentation is done here, and ONLY here
         doc_list = [
             self.gen_doc_head(parents, **kwargs),
@@ -121,21 +149,21 @@ class Argument:
         ]
         return "\n".join(filter(None, doc_list))
 
-    def gen_doc_head(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc_head(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         typesig = "|".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
         head = f"{self.name}: {typesig}"
         return head
 
-    def gen_doc_path(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc_path(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         if parents is None:
             parents = []
         arg_path = [*parents, self.name]
         pathdoc = f"Argument path: {'/'.join(arg_path)}"
         return pathdoc
 
-    def gen_doc_body(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc_body(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         if parents is None:
             parents = []
         arg_path = [*parents, self.name]
@@ -169,8 +197,8 @@ class Variant:
         if choices is not None:
             self.extend_choices(choices)
         self.optional = optional
-        if optional:
-            assert default_tag
+        if optional and not default_tag:
+            raise ValueError("default_tag is needed if optional is set to be True")
         self.default_tag = default_tag
         self.doc = doc
 
@@ -185,6 +213,21 @@ class Variant:
                 raise ValueError(f"duplicate tag `{tag}` appears in "
                                  f"variant with flag `{self.flag_name}`")
             self.choice_dict[tag] = arg
+
+    def set_optional(self, optional: bool = True, default_tag : str = ""):
+        if optional and not default_tag:
+            raise ValueError("default_tag is needed if optional is set to be True")
+        self.optional = optional
+        self.default_tag = default_tag
+
+    def add_choice(self, tag: Union[str, "Argument"], 
+                   *args, **kwargs) -> Argument:
+        if isinstance(tag, Argument):
+            newarg = tag
+        else:
+            newarg = Argument(tag, *args, **kwargs)
+        self.extend_choices([newarg])
+        return newarg
 
     # above are creation part
     # below are type checking part
@@ -207,7 +250,7 @@ class Variant:
     # above are type checking part
     # below are doc generation part
         
-    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         body_list = []
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
                           "different sub args are accepted. ") 
@@ -221,7 +264,7 @@ class Variant:
         body = "\n".join(body_list)
         return body
 
-    def gen_doc_flag(self, parents: Optional[List[str]] = None, **kwargs):
+    def gen_doc_flag(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         headdoc = f"{self.flag_name}: ``str``"
         if self.optional:
             headdoc += f", default: {self.default_tag}"
