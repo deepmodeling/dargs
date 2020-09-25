@@ -54,7 +54,7 @@ class Argument:
         return (self.name == other.name 
             and set(self.dtype) == set(other.dtype)
             and sorted(self.sub_fields, key=fkey) == sorted(other.sub_fields, key=fkey)
-            and sorted(self.sub_variants, key=fkey) == sorted(other.sub_variants, key=fkey)
+            and sorted(self.sub_variants, key=vkey) == sorted(other.sub_variants, key=vkey)
             and self.repeat == other.repeat
             and self.optional == other.optional)
 
@@ -78,7 +78,7 @@ class Argument:
 
     def set_repeat(self, repeat: bool = True):
         self.repeat = repeat
-        self.reorg_dtype
+        self.reorg_dtype()
 
     def add_subfield(self, name: Union[str, "Argument"], 
                      *args, **kwargs) -> "Argument":
@@ -87,7 +87,7 @@ class Argument:
         else:
             newarg = Argument(name, *args, **kwargs)
         self.sub_fields.append(newarg)
-        self.reorg_dtype
+        self.reorg_dtype()
         return newarg
 
     def add_subvariant(self, flag_name: Union[str, "Variant"], 
@@ -97,7 +97,7 @@ class Argument:
         else:
             newvrnt = Variant(flag_name, *args, **kwargs)
         self.sub_variants.append(newvrnt)
-        self.reorg_dtype
+        self.reorg_dtype()
         return newvrnt
 
     # above are creation part
@@ -233,18 +233,22 @@ class Variant:
                                  f"variant with flag `{self.flag_name}`")
             self.choice_dict[tag] = arg
 
-    def set_optional(self, optional: bool = True, default_tag : str = ""):
-        if optional and not default_tag:
-            raise ValueError("default_tag is needed if optional is set to be True")
-        self.optional = optional
-        self.default_tag = default_tag
+    def set_default(self, default_tag : Union[bool, str]):
+        if not default_tag:
+            self.optional = False
+            self.default_tag = ""
+        else:
+            assert default_tag in self.choice_dict
+            self.optional = True
+            self.default_tag = default_tag
 
     def add_choice(self, tag: Union[str, "Argument"], 
+                   dtype: Union[None, type, Iterable[type]] = dict,
                    *args, **kwargs) -> "Argument":
         if isinstance(tag, Argument):
             newarg = tag
         else:
-            newarg = Argument(tag, *args, **kwargs)
+            newarg = Argument(tag, dtype, *args, **kwargs)
         self.extend_choices([newarg])
         return newarg
 
