@@ -199,7 +199,7 @@ class Argument:
             parents = []
         arg_path = [*parents, self.name]
         body_list = []
-        body_list.extend(wrap(self.doc))
+        body_list.extend(wrap(self.doc, replace_whitespace=False))
         if self.repeat:
             body_list.append("This argument takes a list with "
                              "each element containing the following:")
@@ -320,5 +320,5 @@ class Variant:
             parents = []
         arg_path = [*parents, self.flag_name]
         pathdoc = indent(f"Argument path: {'/'.join(arg_path)}", INDENT)
-        realdoc = indent(fill(self.doc), INDENT)
+        realdoc = indent(fill(self.doc, replace_whitespace=False), INDENT)
         return "\n".join(filter(None, [headdoc, pathdoc, realdoc]))
