@@ -1,5 +1,5 @@
 import unittest
-from checker import Argument, Variant
+from dargs import Argument, Variant
 
 
 class TestCreation(unittest.TestCase):
@@ -86,3 +86,7 @@ class TestCreation(unittest.TestCase):
         self.assertTrue(ca == ref1)
         v1.set_default(False)
         self.assertTrue(ca == ref)
+
+
+if __name__ == "__main__":
+    unittest.main()

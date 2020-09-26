@@ -1,5 +1,5 @@
 import unittest
-from checker import Argument, Variant
+from dargs import Argument, Variant
 
 
 class TestDocgen(unittest.TestCase):
@@ -48,3 +48,7 @@ class TestDocgen(unittest.TestCase):
             ])
         ], doc="very long doc. " * 20)
         print(ca.gen_doc())
+
+
+if __name__ == "__main__":
+    unittest.main()

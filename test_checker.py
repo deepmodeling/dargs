@@ -1,5 +1,5 @@
 import unittest
-from checker import Argument, Variant
+from dargs import Argument, Variant
 
 
 class TestChecker(unittest.TestCase):
