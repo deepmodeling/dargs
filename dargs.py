@@ -103,51 +103,70 @@ class Argument:
     # above are creation part
     # below are type checking part
 
-    def check(self, argdict: dict):
+    def check(self, argdict: dict, strict: bool = False):
         # first, check existence of a key
         # then, take out the vaule and check its type
         self._check_exist(argdict)
         if self.name in argdict:
             # this is the key step that we traverse into the tree
-            self.check_value(argdict[self.name])
+            self.check_value(argdict[self.name], strict)
 
-    def check_value(self, value: Any):
+    def check_value(self, value: Any, strict: bool = False):
         # this is not private, and can be called directly
         # in the condition where there is no leading key
         self._check_dtype(value)
         if isinstance(value, dict):
-            self._check_subfield(value)
-            self._check_subvariant(value)
+            if strict:
+                self._check_strict(value)
+            self._check_subfield(value, strict)
+            self._check_subvariant(value, strict)
         if isinstance(value, list) and self.repeat:
-            self._check_repeat(value)
+            self._check_repeat(value, strict)
             
     def _check_exist(self, argdict: dict):
         if self.optional is True:
             return
         if self.name not in argdict:
-            raise KeyError(f"Key `{self.name}` is required "
+            raise KeyError(f"key `{self.name}` is required "
                             "in arguments but not found")
 
     def _check_dtype(self, value: Any):
         if not isinstance(value, self.dtype):
-            raise TypeError(f"Key `{self.name}` gets wrong value type: "
+            raise TypeError(f"key `{self.name}` gets wrong value type: "
                             f"requires: {self.dtype} but gets {type(value)}")
 
-    def _check_subfield(self, value: dict):
+    def _check_subfield(self, value: dict, strict: bool = False):
         assert isinstance(value, dict)
         for subarg in self.sub_fields:
-            subarg.check(value)
+            subarg.check(value, strict)
 
-    def _check_subvariant(self, value: dict):
+    def _check_subvariant(self, value: dict, strict: bool = False):
         assert isinstance(value, dict)
         for subvrnt in self.sub_variants:
-            subvrnt.check(value)
+            subvrnt.check(value, strict)
 
-    def _check_repeat(self, value: list):
+    def _check_repeat(self, value: list, strict: bool = False):
         assert isinstance(value, list) and self.repeat
         for item in value:
-            self._check_subfield(item)
-            self._check_subvariant(item)
+            if strict:
+                self._check_strict(item)
+            self._check_subfield(item, strict)
+            self._check_subvariant(item, strict)
+
+    def _check_strict(self, value: dict):
+        allowed = self._get_allowed_sub(value)
+        allowed_set = set(allowed)
+        assert len(allowed) == len(allowed_set), "duplicated keys!"
+        for name in value.keys():
+            if name not in allowed_set:
+                raise KeyError(f"undefined key `{name}` is "
+                                "not allowed in strict mode")
+        
+    def _get_allowed_sub(self, value: dict):
+        allowed = [subarg.name for subarg in self.sub_fields]
+        for subvrnt in self.sub_variants:
+            allowed.extend(subvrnt._get_allowed_sub(value))
+        return allowed
 
     # above are type checking part
     # below are doc generation part
@@ -255,10 +274,10 @@ class Variant:
     # above are creation part
     # below are type checking part
 
-    def check(self, argdict: dict):
+    def check(self, argdict: dict, strict: bool = False):
         choice = self._load_choice(argdict)
         # here we use check_value to flatten the tag
-        choice.check_value(argdict)
+        choice.check_value(argdict, strict)
 
     def _load_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
@@ -267,8 +286,14 @@ class Variant:
         elif self.optional:
             return self.choice_dict[self.default_tag]
         else:
-            raise KeyError(f"Key `{self.flag_name}` is required "
+            raise KeyError(f"key `{self.flag_name}` is required "
                             "to choose variant but not found.")
+
+    def _get_allowed_sub(self, argdict: dict) -> List[str]:
+        allowed = [self.flag_name]
+        choice = self._load_choice(argdict)
+        allowed.extend(choice._get_allowed_sub(argdict))
+        return allowed
 
     # above are type checking part
     # below are doc generation part

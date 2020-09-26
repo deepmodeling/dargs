@@ -40,6 +40,8 @@ class TestChecker(unittest.TestCase):
             "base": {
                 "sub1": 1,
                 "sub2": "hello"}}
+        self.assertSetEqual(set(ca._get_allowed_sub(test_dict1["base"])),
+                            set(test_dict1["base"].keys()))
         ca.check(test_dict1)
         ca.check_value(test_dict1["base"])
         # long one
@@ -59,9 +61,13 @@ class TestChecker(unittest.TestCase):
                 "sub2": {
                     "subsub1": 11,
                     "subsub2": {
-                        "subsubsub2": 111}}}}
+                        "subsubsub2": 111}}}} # different name here
         with self.assertRaises(KeyError):
             ca.check(err_dict1)
+        err_dict1["base"]["sub2"]["subsub2"]["subsubsub1"] = 111
+        ca.check(err_dict1) # now should pass
+        with self.assertRaises(KeyError):
+            ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict1["base"]["sub2"] = None
         with self.assertRaises(TypeError):
             ca.check(err_dict1)
@@ -89,6 +95,10 @@ class TestChecker(unittest.TestCase):
             ]}
         with self.assertRaises(KeyError):
             ca.check(err_dict1)
+        err_dict1["base"][1]["sub2"] = "world too"
+        ca.check(err_dict1) # now should pass
+        with self.assertRaises(KeyError):
+            ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict2 = {
             "base": [
                 {"sub1": 10,
@@ -127,6 +137,8 @@ class TestChecker(unittest.TestCase):
                 "vnt1_1": 11,
                 "vnt1_2": {
                     "vnt1_1_1": 111}}}
+        self.assertSetEqual(set(ca._get_allowed_sub(test_dict1["base"])),
+                            set(test_dict1["base"].keys()))
         ca.check(test_dict1)
         test_dict2 = {
             "base": {
@@ -135,23 +147,30 @@ class TestChecker(unittest.TestCase):
                 "vnt_flag" : "type2",
                 "shared": 20,
                 "vnt2_1": 21}}
+        self.assertSetEqual(set(ca._get_allowed_sub(test_dict2["base"])),
+                            set(test_dict2["base"].keys()))
         ca.check(test_dict2)
         err_dict1 = {
             "base": {
                 "sub1": 1,
                 "sub2": "a",
-                "vnt_flag" : "type2",
+                "vnt_flag" : "type2", # here is wrong
                 "shared": 10,
                 "vnt1_1": 11,
                 "vnt1_2": {
                     "vnt1_1_1": 111}}}
         with self.assertRaises(KeyError):
             ca.check(err_dict1)
+        err_dict1["base"]["vnt_flag"] = "type1"
+        err_dict1["base"]["additional"] = "hahaha"
+        ca.check(err_dict1) # now should pass
+        with self.assertRaises(KeyError):
+            ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict2 = {
             "base": {
                 "sub1": 1,
                 "sub2": "a",
-                "vnt_flag" : "type3",
+                "vnt_flag" : "type3", # here is wrong
                 "shared": 20,
                 "vnt2_1": 21}}
         with self.assertRaises(KeyError):
