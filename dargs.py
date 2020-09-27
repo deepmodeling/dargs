@@ -18,11 +18,12 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import Union, Any, List, Iterable, Optional
+from typing import Union, Any, List, Iterable, Optional, Callable
 from textwrap import wrap, fill, indent
 
 
 INDENT = "    " # doc is indented by four spaces
+DUMMYHOOK = lambda a,x: None
 
 class Argument:
 
@@ -101,27 +102,60 @@ class Argument:
         return newvrnt
 
     # above are creation part
+    # below are general traverse part
+
+    def traverse(self, argdict: dict, 
+                 key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                 value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
+                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK):
+        # first, do something with the key
+        # then, take out the vaule and do something with it
+        key_hook(self, argdict)
+        if self.name in argdict:
+            # this is the key step that we traverse into the tree
+            self.traverse_value(argdict[self.name], key_hook, value_hook, sub_hook)
+
+    def traverse_value(self, value: Any, 
+                       key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                       value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
+                       sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK):
+        # this is not private, and can be called directly
+        # in the condition where there is no leading key
+        value_hook(self, value)
+        if isinstance(value, dict):
+            sub_hook(self, value)
+            self._traverse_subfield(value, key_hook, value_hook, sub_hook)
+            self._traverse_subvariant(value, key_hook, value_hook, sub_hook)
+        if isinstance(value, list) and self.repeat:
+            for item in value:
+                sub_hook(self, item)
+                self._traverse_subfield(item, key_hook, value_hook, sub_hook)
+                self._traverse_subvariant(item, key_hook, value_hook, sub_hook)
+    
+    def _traverse_subfield(self, value: dict, *args, **kwargs):
+        assert isinstance(value, dict)
+        for subarg in self.sub_fields:
+            subarg.traverse(value, *args, **kwargs)
+
+    def _traverse_subvariant(self, value: dict, *args, **kwargs):
+        assert isinstance(value, dict)
+        for subvrnt in self.sub_variants:
+            subvrnt.traverse(value, *args, **kwargs)
+
+    # above are general traverse part
     # below are type checking part
 
     def check(self, argdict: dict, strict: bool = False):
-        # first, check existence of a key
-        # then, take out the vaule and check its type
-        self._check_exist(argdict)
-        if self.name in argdict:
-            # this is the key step that we traverse into the tree
-            self.check_value(argdict[self.name], strict)
+        self.traverse(argdict, 
+            key_hook=Argument._check_exist,
+            value_hook=Argument._check_dtype,
+            sub_hook=Argument._check_strict if strict else DUMMYHOOK)
 
-    def check_value(self, value: Any, strict: bool = False):
-        # this is not private, and can be called directly
-        # in the condition where there is no leading key
-        self._check_dtype(value)
-        if isinstance(value, dict):
-            if strict:
-                self._check_strict(value)
-            self._check_subfield(value, strict)
-            self._check_subvariant(value, strict)
-        if isinstance(value, list) and self.repeat:
-            self._check_repeat(value, strict)
+    def check_value(self, argdict: dict, strict: bool = False):
+        self.traverse_value(argdict, 
+            key_hook=Argument._check_exist,
+            value_hook=Argument._check_dtype,
+            sub_hook=Argument._check_strict if strict else DUMMYHOOK)
             
     def _check_exist(self, argdict: dict):
         if self.optional is True:
@@ -134,24 +168,6 @@ class Argument:
         if not isinstance(value, self.dtype):
             raise TypeError(f"key `{self.name}` gets wrong value type: "
                             f"requires: {self.dtype} but gets {type(value)}")
-
-    def _check_subfield(self, value: dict, strict: bool = False):
-        assert isinstance(value, dict)
-        for subarg in self.sub_fields:
-            subarg.check(value, strict)
-
-    def _check_subvariant(self, value: dict, strict: bool = False):
-        assert isinstance(value, dict)
-        for subvrnt in self.sub_variants:
-            subvrnt.check(value, strict)
-
-    def _check_repeat(self, value: list, strict: bool = False):
-        assert isinstance(value, list) and self.repeat
-        for item in value:
-            if strict:
-                self._check_strict(item)
-            self._check_subfield(item, strict)
-            self._check_subvariant(item, strict)
 
     def _check_strict(self, value: dict):
         allowed = self._get_allowed_sub(value)
@@ -272,12 +288,12 @@ class Variant:
         return newarg
 
     # above are creation part
-    # below are type checking part
+    # below are general traverse part
 
-    def check(self, argdict: dict, strict: bool = False):
+    def traverse(self, argdict: dict, *args, **kwargs):
         choice = self._load_choice(argdict)
         # here we use check_value to flatten the tag
-        choice.check_value(argdict, strict)
+        choice.traverse_value(argdict, *args, **kwargs)
 
     def _load_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
