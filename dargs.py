@@ -20,6 +20,7 @@ We also need to pay special attention to flat the keys of its choices.
 
 from typing import Union, Any, List, Iterable, Optional, Callable
 from textwrap import wrap, fill, indent
+from copy import deepcopy
 
 
 INDENT = "    " # doc is indented by four spaces
@@ -34,7 +35,8 @@ class Argument:
             sub_variants: Optional[Iterable["Variant"]] = None,
             repeat: bool = False,
             optional: bool = False,
-            default: Any = None, # for now it is just a tag, no real use
+            default: Any = None,
+            alias: Optional[Iterable[str]] = None,
             doc: str = ""):
         self.name = name
         self.dtype = dtype
@@ -43,6 +45,7 @@ class Argument:
         self.repeat = repeat
         self.optional = optional
         self.default = default
+        self.alias = alias if alias is not None else []
         self.doc = doc
         # handle the format of dtype, makeit a tuple
         self.reorg_dtype()
@@ -185,6 +188,40 @@ class Argument:
         return allowed
 
     # above are type checking part
+    # below are normalizing part
+
+    def normalize(self, argdict: dict, inplace: bool = False, 
+                  do_default: bool = True, do_alias: bool = True):
+        if not inplace:
+            argdict = deepcopy(argdict)
+        if do_alias:
+            self.traverse(argdict, key_hook=Argument._convert_alias)
+        if do_default:
+            self.traverse(argdict, key_hook=Argument._assign_default)
+        return argdict
+
+    def normalize_value(self, value: Any, inplace: bool = False, 
+                        do_default: bool = True, do_alias: bool = True):
+        if not inplace:
+            value = deepcopy(value)
+        if do_alias:
+            self.traverse_value(value, key_hook=Argument._convert_alias)
+        if do_default:
+            self.traverse_value(value, key_hook=Argument._assign_default)
+        return value
+
+    def _assign_default(self, argdict: dict):
+        if self.name not in argdict and self.optional:
+            argdict[self.name] = self.default
+
+    def _convert_alias(self, argdict: dict):
+        if self.name not in argdict:
+            for alias in self.alias:
+                if alias in argdict:
+                    argdict[self.name] = argdict.pop(alias)
+                    return
+
+    # above are normalizing part
     # below are doc generation part
 
     def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
