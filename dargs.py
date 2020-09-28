@@ -368,7 +368,7 @@ class Variant:
     def gen_doc_flag(self, parents: Optional[List[str]] = None, **kwargs) -> str:
         headdoc = f"{self.flag_name}: ``str``"
         if self.optional:
-            headdoc += f", default: {self.default_tag}"
+            headdoc += f", default: ``{self.default_tag}``"
         if parents is None:
             parents = []
         arg_path = [*parents, self.flag_name]

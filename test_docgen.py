@@ -20,7 +20,7 @@ class TestDocgen(unittest.TestCase):
         ca = Argument("base", dict, [
             Argument("sub1", int, doc="sub doc." * 5),
             Argument("sub2", [str, dict], [
-                Argument("subsub1", int, doc="subsub doc." * 5),
+                Argument("subsub1", int, doc="subsub doc." * 5, optional=True),
                 Argument("subsub2", dict, [
                     Argument("subsubsub1", int, doc="subsubsub doc." * 5)
                 ], doc="subsub doc." * 5, repeat=True)
@@ -45,7 +45,7 @@ class TestDocgen(unittest.TestCase):
                     Argument("shared", int),
                     Argument("vnt2_1", int),
                 ])
-            ])
+            ], optional=True, default_tag="type1")
         ], doc="very long doc. " * 20)
         print(ca.gen_doc())
 
