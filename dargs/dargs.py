@@ -21,6 +21,7 @@ We also need to pay special attention to flat the keys of its choices.
 from typing import Union, Any, List, Iterable, Optional, Callable
 from textwrap import wrap, fill, indent
 from copy import deepcopy
+import fnmatch, re
 
 
 INDENT = "    " # doc is indented by four spaces
@@ -149,6 +150,10 @@ class Argument:
     # below are type checking part
 
     def check(self, argdict: dict, strict: bool = False):
+        if strict and len(argdict) != 1:
+            raise KeyError("only one single key of arg name is allowed "
+                           "for check in strict mode at top level, "
+                           "use check_value if you are checking subfields")
         self.traverse(argdict, 
             key_hook=Argument._check_exist,
             value_hook=Argument._check_dtype,
@@ -170,7 +175,7 @@ class Argument:
     def _check_dtype(self, value: Any):
         if not isinstance(value, self.dtype):
             raise TypeError(f"key `{self.name}` gets wrong value type: "
-                            f"requires: {self.dtype} but gets {type(value)}")
+                            f"requires {self.dtype} but gets {type(value)}")
 
     def _check_strict(self, value: dict):
         allowed = self._get_allowed_sub(value)
@@ -181,7 +186,7 @@ class Argument:
                 raise KeyError(f"undefined key `{name}` is "
                                 "not allowed in strict mode")
         
-    def _get_allowed_sub(self, value: dict):
+    def _get_allowed_sub(self, value: dict) -> List[str]:
         allowed = [subarg.name for subarg in self.sub_fields]
         for subvrnt in self.sub_variants:
             allowed.extend(subvrnt._get_allowed_sub(value))
@@ -191,23 +196,32 @@ class Argument:
     # below are normalizing part
 
     def normalize(self, argdict: dict, inplace: bool = False, 
-                  do_default: bool = True, do_alias: bool = True):
+                  do_default: bool = True, do_alias: bool = True, 
+                  trim_pattern: Optional[str] = None):
         if not inplace:
             argdict = deepcopy(argdict)
         if do_alias:
             self.traverse(argdict, key_hook=Argument._convert_alias)
         if do_default:
             self.traverse(argdict, key_hook=Argument._assign_default)
+        if trim_pattern is not None:
+            self._trim_unrequired(argdict, trim_pattern, reserved=[self.name])
+            self.traverse(argdict, sub_hook=lambda a, d: 
+                Argument._trim_unrequired(d, trim_pattern, a._get_allowed_sub(d)))
         return argdict
 
     def normalize_value(self, value: Any, inplace: bool = False, 
-                        do_default: bool = True, do_alias: bool = True):
+                        do_default: bool = True, do_alias: bool = True, 
+                        trim_pattern: Optional[str] = None):
         if not inplace:
             value = deepcopy(value)
         if do_alias:
             self.traverse_value(value, key_hook=Argument._convert_alias)
         if do_default:
             self.traverse_value(value, key_hook=Argument._assign_default)
+        if trim_pattern is not None:
+            self.traverse_value(value, sub_hook=lambda a, d: 
+                Argument._trim_unrequired(d, trim_pattern, a._get_allowed_sub(d)))
         return value
 
     def _assign_default(self, argdict: dict):
@@ -220,6 +234,21 @@ class Argument:
                 if alias in argdict:
                     argdict[self.name] = argdict.pop(alias)
                     return
+
+    @staticmethod
+    def _trim_unrequired(argdict: dict, pattern: str, 
+                         reserved: Optional[List[str]] = None,
+                         use_regex: bool = False):
+        rep = fnmatch.translate(pattern) if not use_regex else pattern
+        rem = re.compile(rep)
+        if reserved:
+            conflict = list(filter(rem.match, reserved))
+            if conflict:
+                raise ValueError(f"pattern `{pattern}` conflicts with the "
+                                 f"following reserved names: {', '.join(conflict)}")
+        unrequired = list(filter(rem.match, argdict.keys()))
+        for key in unrequired:
+            argdict.pop(key)
 
     # above are normalizing part
     # below are doc generation part

@@ -34,6 +34,22 @@ class TestNormalization(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg1)
 
+    def test_trim(self):
+        ca = Argument("Key1", int)
+        beg = {"Key1": 1, "_comment": 123}
+        end = ca.normalize(beg, trim_pattern="_*")
+        ref = {"Key1": 1}
+        self.assertTrue(end == ref)
+        self.assertTrue(beg == {"Key1": 1, "_comment": 123})
+        self.assertTrue(end is not beg)
+        # conflict pattern
+        with self.assertRaises(ValueError):
+            ca.normalize(beg, trim_pattern="Key1")
+        # inplace
+        end1 = ca.normalize(beg, inplace=True, trim_pattern="_*")
+        self.assertTrue(end1 == ref)
+        self.assertTrue(end1 is beg)
+
     def test_combined(self):
         ca = Argument("base", dict, [
             Argument("sub1", int, optional=True, default=1, alias=["sub1a"]),
@@ -43,10 +59,10 @@ class TestNormalization(unittest.TestCase):
         ref1 = {"base":{"sub1":1, "sub2": "haha"}}
         self.assertDictEqual(ca.normalize(beg1), ref1)
         self.assertDictEqual(ca.normalize_value(beg1["base"]), ref1["base"])
-        beg2 = {"base":{"sub1a": 2, "sub2a": "hoho"}}
+        beg2 = {"base":{"sub1a": 2, "sub2a": "hoho", "_comment": None}}
         ref2 = {"base":{"sub1": 2, "sub2": "hoho"}}
-        self.assertDictEqual(ca.normalize(beg2), ref2)
-        self.assertDictEqual(ca.normalize_value(beg2["base"]), ref2["base"])
+        self.assertDictEqual(ca.normalize(beg2, trim_pattern="_*"), ref2)
+        self.assertDictEqual(ca.normalize_value(beg2["base"], trim_pattern="_*"), ref2["base"])
 
     def test_complicated(self):
         ca = Argument("base", dict, [
@@ -79,10 +95,11 @@ class TestNormalization(unittest.TestCase):
         beg2 = {
             "base": {
                 "sub1a": 2,
-                "sub2a": [{"ss1a":22}, {}],
+                "sub2a": [{"ss1a":22}, {"_comment1": None}],
                 "vnt_flag": "type2",
                 "sharedb": -3,
-                "vnt2a": 223}
+                "vnt2a": 223,
+                "_comment2": None}
         }
         ref2 = {
             'base': {
@@ -92,8 +109,10 @@ class TestNormalization(unittest.TestCase):
                 'shared': -3, 
                 'vnt2': 223}
         }
-        self.assertDictEqual(ca.normalize(beg2), ref2)
-        self.assertDictEqual(ca.normalize_value(beg2["base"]), ref2["base"])
+        self.assertDictEqual(ca.normalize(beg2, trim_pattern="_*"), ref2)
+        self.assertDictEqual(ca.normalize_value(beg2["base"], trim_pattern="_*"), ref2["base"])
+        with self.assertRaises(ValueError):
+            ca.normalize(beg2, trim_pattern="sub*")
 
 
 if __name__ == "__main__":
