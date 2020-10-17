@@ -113,6 +113,8 @@ class TestNormalization(unittest.TestCase):
         self.assertDictEqual(ca.normalize_value(beg2["base"], trim_pattern="_*"), ref2["base"])
         with self.assertRaises(ValueError):
             ca.normalize(beg2, trim_pattern="sub*")
+        with self.assertRaises(ValueError):
+            ca.normalize(beg2, trim_pattern="vnt*")
 
 
 if __name__ == "__main__":
