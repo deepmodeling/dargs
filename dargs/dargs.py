@@ -67,13 +67,10 @@ class Argument:
         if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
         # remove duplicate
-        self.dtype = set(self.dtype)
+        self.dtype = {dt if type(dt) is type else type(dt) for dt in self.dtype}
         # check conner cases
         if self.sub_fields or self.sub_variants: 
             self.dtype.add(list if self.repeat else dict)
-        if None in self.dtype:
-            self.dtype.remove(None)
-            self.dtype.add(type(None))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
 
