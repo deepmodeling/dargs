@@ -16,6 +16,7 @@ install_requires=[]
 setuptools.setup(
     name="dargs",
     setup_requires=['setuptools_scm'],
+    use_scm_version={'write_to': 'dargs/_version.py'},
     author="Yixiao Chen",
     author_email="yixiaoc@princeton.edu",
     description="Process arguments for the deep modeling project.",
