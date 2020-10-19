@@ -329,16 +329,16 @@ def training_args():
     return Argument("training", dict, args, [], doc = doc_training)
 
 
-def gen_doc():
+def gen_doc(**kwargs):
     ma = model_args()
     lra = learning_rate_args()
     la = loss_args()
     ta = training_args()
     ptr = []
-    ptr.append(ma.gen_doc(make_anchor=True))
-    ptr.append(la.gen_doc(make_anchor=True))
-    ptr.append(lra.gen_doc(make_anchor=True))
-    ptr.append(ta.gen_doc(make_anchor=True))
+    ptr.append(ma.gen_doc(**kwargs))
+    ptr.append(la.gen_doc(**kwargs))
+    ptr.append(lra.gen_doc(**kwargs))
+    ptr.append(ta.gen_doc(**kwargs))
     return "\n\n".join(ptr)
 
 

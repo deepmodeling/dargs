@@ -15,8 +15,8 @@ class TestDocgen(unittest.TestCase):
                 ], doc="subsub doc." * 5)
             ], doc="sub doc." * 5)
         ], doc="Base doc. " * 10)
-        print("\n")
-        print(ca.gen_doc())
+        docstr = ca.gen_doc()
+        # print("\n\n"+docstr)
 
     def test_sub_repeat(self):
         ca = Argument("base", dict, [
@@ -28,8 +28,8 @@ class TestDocgen(unittest.TestCase):
                 ], doc="subsub doc." * 5, repeat=True)
             ], doc="sub doc." * 5)
         ], doc="Base doc. " * 10, repeat=True)
-        print("\n")
-        print(ca.gen_doc())
+        docstr = ca.gen_doc()
+        # print("\n\n"+docstr)
 
     def test_sub_variants(self):
         ca = Argument("base", dict, [
@@ -65,13 +65,13 @@ class TestDocgen(unittest.TestCase):
                 ])
             ], optional=True, default_tag="type1", doc="another vnt")
         ])
-        print("\n")
-        print(ca.gen_doc(make_anchor=True))
+        docstr = ca.gen_doc(make_anchor=True)
+        # print("\n\n"+docstr)
 
     def test_dpmd(self):
         from dpmdargs import gen_doc
-        print(gen_doc())
-
+        docstr = gen_doc(make_anchor=True)
+        # print("\n\n"+docstr)
 
 if __name__ == "__main__":
     unittest.main()

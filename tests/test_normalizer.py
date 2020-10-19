@@ -11,12 +11,12 @@ class TestNormalization(unittest.TestCase):
         beg = {}
         end = ca.normalize(beg)
         ref = {"Key1": 1}
-        self.assertTrue(end == ref)
-        self.assertTrue(beg == {})
+        self.assertDictEqual(end, ref)
+        self.assertDictEqual(beg, {})
         self.assertTrue(end is not beg)
         # inplace
         end1 = ca.normalize(beg, inplace=True)
-        self.assertTrue(end1 == ref)
+        self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
     
     def test_alias(self):
@@ -39,15 +39,15 @@ class TestNormalization(unittest.TestCase):
         beg = {"Key1": 1, "_comment": 123}
         end = ca.normalize(beg, trim_pattern="_*")
         ref = {"Key1": 1}
-        self.assertTrue(end == ref)
-        self.assertTrue(beg == {"Key1": 1, "_comment": 123})
+        self.assertDictEqual(end, ref)
+        self.assertDictEqual(beg, {"Key1": 1, "_comment": 123})
         self.assertTrue(end is not beg)
         # conflict pattern
         with self.assertRaises(ValueError):
             ca.normalize(beg, trim_pattern="Key1")
         # inplace
         end1 = ca.normalize(beg, inplace=True, trim_pattern="_*")
-        self.assertTrue(end1 == ref)
+        self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
 
     def test_combined(self):
