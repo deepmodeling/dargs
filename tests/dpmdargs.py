@@ -340,25 +340,13 @@ def gen_doc():
     ptr.append(ta.gen_doc())
     return "\n\n".join(ptr)
 
+
 def normalize(data):
     ma = model_args()
     lra = learning_rate_args()
     la = loss_args()
     ta = training_args()
-
-    data_m  = ma .normalize({'model': data.get('model', {})}, trim_pattern = "_*")
-    data_lr = lra.normalize({'learning_rate': data.get('learning_rate', {})}, trim_pattern = "_*")
-    data_l  = la .normalize({'loss': data.get('loss', {})}, trim_pattern = "_*")
-    data_t  = ta .normalize({'training': data.get('training', {})}, trim_pattern = "_*")
-
-    ma .check(data_m)
-    lra.check(data_lr)
-    la .check(data_l)
-    ta .check(data_t)
-
-    return {**data_m, **data_lr, **data_l, **data_t}
-
-
-if __name__ == '__main__':
-    gen_doc()
-        
+    base = Argument("base", dict, [ma, lra, la, ta])
+    data = base.normalize_value(data, trim_pattern = "_*")
+    base.check_value(data)
+    return data
