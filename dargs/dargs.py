@@ -250,35 +250,36 @@ class Argument:
     # above are normalizing part
     # below are doc generation part
 
-    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
         # the actual indentation is done here, and ONLY here
+        if paths is None:
+            paths = []
+        sub_paths = [*paths, self.name]
         doc_list = [
-            self.gen_doc_head(parents, **kwargs),
-            indent(self.gen_doc_path(parents, **kwargs), INDENT),
-            indent(self.gen_doc_body(parents, **kwargs), INDENT)
+            self.gen_doc_head(paths, **kwargs),
+            indent(self.gen_doc_path(sub_paths, **kwargs), INDENT),
+            indent(self.gen_doc_body(sub_paths, **kwargs), INDENT)
         ]
         return "\n".join(filter(None, doc_list))
 
-    def gen_doc_head(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        typesig = " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
+    def gen_doc_head(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+        typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
             if self.default is not None:
-                typesig += f", default: {self.default}"
-        head = f"{self.name}: {typesig}"
+                typesig += f", default: ``{self.default}``"
+        head = f"{self.name}: \n{indent(typesig, INDENT)}"
         return head
 
-    def gen_doc_path(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        if parents is None:
-            parents = []
-        arg_path = [*parents, self.name]
-        pathdoc = f"Argument path: ``{'/'.join(arg_path)}``\n"
+    def gen_doc_path(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+        if paths is None:
+            paths = []
+        pathdoc = f"| argument path: ``{'/'.join(paths)}``\n"
         return pathdoc
 
-    def gen_doc_body(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        if parents is None:
-            parents = []
-        arg_path = [*parents, self.name]
+    def gen_doc_body(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+        if paths is None:
+            paths = []
         body_list = []
         if self.doc:
             body_list.append(self.doc + "\n")
@@ -289,10 +290,10 @@ class Argument:
             # body_list.append("") # genetate a blank line
             # body_list.append("This argument accept the following sub arguments:")                
             for subarg in self.sub_fields:
-                body_list.append(subarg.gen_doc(arg_path, **kwargs))
+                body_list.append(subarg.gen_doc(paths, **kwargs))
         if self.sub_variants:
             for subvrnt in self.sub_variants:
-                body_list.append(subvrnt.gen_doc(arg_path, **kwargs))
+                body_list.append(subvrnt.gen_doc(paths, **kwargs))
         body = "\n".join(body_list)
         return body
         
@@ -380,29 +381,32 @@ class Variant:
     # above are type checking part
     # below are doc generation part
         
-    def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
         body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
                           "different sub args are accepted. \n") 
-        body_list.append(self.gen_doc_flag(parents, **kwargs))
+        body_list.append(self.gen_doc_flag(paths, **kwargs))
         for choice in self.choice_dict.values():
+            choice_path = [*paths[:-1], paths[-1]+f"[{choice.name}]"]
             body_list.extend([
                 "", 
                 f"When *{self.flag_name}* is set to ``{choice.name}``: \n",
-                choice.gen_doc_body(parents, **kwargs), 
+                choice.gen_doc_body(choice_path, **kwargs), 
             ])
         body = "\n".join(body_list)
         return body
 
-    def gen_doc_flag(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        headdoc = f"{self.flag_name}: ``str``"
+    def gen_doc_flag(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+        headdoc = f"{self.flag_name}:"
+        typedoc = "| type: ``str`` (flag key)"
         if self.optional:
-            headdoc += f", default: ``{self.default_tag}``"
-        if parents is None:
-            parents = []
-        arg_path = [*parents, self.flag_name]
-        pathdoc = indent(f"Argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
-        allparts = [headdoc, pathdoc]
+            typedoc += f", default: ``{self.default_tag}``"
+        typedoc = indent(typedoc, INDENT)
+        if paths is None:
+            paths = []
+        arg_path = [*paths, self.flag_name]
+        pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
+        allparts = [headdoc, typedoc, pathdoc]
         if self.doc:
             allparts.append(indent(self.doc + "\n", INDENT))
         return "\n".join(filter(None, allparts))
