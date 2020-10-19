@@ -256,7 +256,7 @@ class Argument:
             paths = []
         sub_paths = [*paths, self.name]
         doc_list = [
-            self.gen_doc_head(paths, **kwargs),
+            self.gen_doc_head(sub_paths, **kwargs),
             indent(self.gen_doc_path(sub_paths, **kwargs), INDENT),
             indent(self.gen_doc_body(sub_paths, **kwargs), INDENT)
         ]
@@ -269,17 +269,17 @@ class Argument:
             if self.default is not None:
                 typesig += f", default: ``{self.default}``"
         head = f"{self.name}: \n{indent(typesig, INDENT)}"
+        if kwargs.get("make_anchor"):
+            head = f"{make_rst_refid(paths)}\n" + head
         return head
 
     def gen_doc_path(self, paths: Optional[List[str]] = None, **kwargs) -> str:
         if paths is None:
-            paths = []
+            paths = [self.name]
         pathdoc = f"| argument path: ``{'/'.join(paths)}``\n"
         return pathdoc
 
     def gen_doc_body(self, paths: Optional[List[str]] = None, **kwargs) -> str:
-        if paths is None:
-            paths = []
         body_list = []
         if self.doc:
             body_list.append(self.doc + "\n")
@@ -387,9 +387,12 @@ class Variant:
                           "different sub args are accepted. \n") 
         body_list.append(self.gen_doc_flag(paths, **kwargs))
         for choice in self.choice_dict.values():
-            choice_path = [*paths[:-1], paths[-1]+f"[{choice.name}]"]
+            c_str = f"[{choice.name}]"
+            choice_path = [*paths[:-1], paths[-1]+c_str] if paths else [c_str]
+            body_list.append("")
+            if kwargs.get("make_anchor"):
+                body_list.append(make_rst_refid(choice_path))
             body_list.extend([
-                "", 
                 f"When *{self.flag_name}* is set to ``{choice.name}``: \n",
                 choice.gen_doc_body(choice_path, **kwargs), 
             ])
@@ -406,7 +409,13 @@ class Variant:
             paths = []
         arg_path = [*paths, self.flag_name]
         pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
-        allparts = [headdoc, typedoc, pathdoc]
-        if self.doc:
-            allparts.append(indent(self.doc + "\n", INDENT))
+        realdoc = indent(self.doc + "\n", INDENT) if self.doc else None
+        anchor = make_rst_refid(arg_path) if kwargs.get("make_anchor") else None
+        allparts = [anchor, headdoc, typedoc, pathdoc]
         return "\n".join(filter(None, allparts))
+
+
+def make_rst_refid(name):
+    if not isinstance(name, str):
+        name = '/'.join(name)
+    return f'.. raw:: html\n\n   <a id="{name}"></a>'

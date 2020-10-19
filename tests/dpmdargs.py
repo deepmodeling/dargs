@@ -217,12 +217,13 @@ def model_args ():
     doc_data_stat_nbatch = 'The model determines the normalization from the statistics of the data. This key specifies the number of `frames` in each `system` used for statistics.'
     doc_descrpt = 'The descriptor of atomic environment.'
     doc_fitting = 'The fitting of physical properties.'
+    doc_model = 'Now supports cross reference. Make sure you call gendoc with ``make_anchor=True`` and use standard crossref syntex in restructuredtext. For example, you can refer to `model <#model>`__, `local_frame <#model/descriptor[loc_frame]>`__ and `rcut <#model/descriptor[se_a]/rcut>`__ in different variants.' 
     ca = Argument("model", dict, 
                   [Argument("type_map", list, optional = True, doc = doc_type_map),
                    Argument("data_stat_nbatch", int, optional = True, default = 10, doc = doc_data_stat_nbatch),
                    Argument("descriptor", dict, [], [descrpt_variant_type_args()], doc = doc_descrpt),
                    Argument("fitting_net", dict, [], [fitting_variant_type_args()], doc = doc_fitting)
-                  ])
+                  ], doc=doc_model)
     # print(ca.gen_doc())
     return ca
 
@@ -334,10 +335,10 @@ def gen_doc():
     la = loss_args()
     ta = training_args()
     ptr = []
-    ptr.append(ma.gen_doc())
-    ptr.append(la.gen_doc())
-    ptr.append(lra.gen_doc())
-    ptr.append(ta.gen_doc())
+    ptr.append(ma.gen_doc(make_anchor=True))
+    ptr.append(la.gen_doc(make_anchor=True))
+    ptr.append(lra.gen_doc(make_anchor=True))
+    ptr.append(ta.gen_doc(make_anchor=True))
     return "\n\n".join(ptr)
 
 

@@ -1,4 +1,4 @@
-# argcheck for python programs
+# Argument checking for python programs
 
 This is a minimum version for checking the input argument dict. 
 It would examine argument's type,  as well as keys and types of its sub-arguments. 
@@ -14,6 +14,10 @@ There are three main methods of `Argument` class:
 
 There are also `check_value` and `normalize_value` that 
 ignore the leading key comparing to the base version.
+
+When targeting to html rendering, additional anchor can be made for cross reference. 
+Set `make_anchor=True` when calling `gendoc` function and use standard ref syntax in rst.
+The id is the same as the argument path. Variant types would be in square brackets.
 
 Please refer to test files for detailed usage.
 

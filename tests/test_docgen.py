@@ -66,7 +66,7 @@ class TestDocgen(unittest.TestCase):
             ], optional=True, default_tag="type1", doc="another vnt")
         ])
         print("\n")
-        print(ca.gen_doc())
+        print(ca.gen_doc(make_anchor=True))
 
     def test_dpmd(self):
         from dpmdargs import gen_doc
