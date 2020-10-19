@@ -260,9 +260,11 @@ class Argument:
         return "\n".join(filter(None, doc_list))
 
     def gen_doc_head(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        typesig = "|".join([f"``{dt.__name__}``" for dt in self.dtype])
+        typesig = " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
+            if self.default is not None:
+                typesig += f", default: {self.default}"
         head = f"{self.name}: {typesig}"
         return head
 
@@ -270,7 +272,7 @@ class Argument:
         if parents is None:
             parents = []
         arg_path = [*parents, self.name]
-        pathdoc = f"Argument path: {'/'.join(arg_path)}"
+        pathdoc = f"Argument path: ``{'/'.join(arg_path)}``\n"
         return pathdoc
 
     def gen_doc_body(self, parents: Optional[List[str]] = None, **kwargs) -> str:
@@ -278,18 +280,19 @@ class Argument:
             parents = []
         arg_path = [*parents, self.name]
         body_list = []
-        body_list.extend(wrap(self.doc, replace_whitespace=False))
+        if self.doc:
+            body_list.append(self.doc + "\n")
         if self.repeat:
             body_list.append("This argument takes a list with "
-                             "each element containing the following:")
+                             "each element containing the following: \n")
         if self.sub_fields:
             # body_list.append("") # genetate a blank line
             # body_list.append("This argument accept the following sub arguments:")                
             for subarg in self.sub_fields:
-                body_list.extend(["", subarg.gen_doc(arg_path, **kwargs)])
+                body_list.append(subarg.gen_doc(arg_path, **kwargs))
         if self.sub_variants:
             for subvrnt in self.sub_variants:
-                body_list.extend(["", subvrnt.gen_doc(arg_path, **kwargs)])
+                body_list.append(subvrnt.gen_doc(arg_path, **kwargs))
         body = "\n".join(body_list)
         return body
         
@@ -378,14 +381,14 @@ class Variant:
     # below are doc generation part
         
     def gen_doc(self, parents: Optional[List[str]] = None, **kwargs) -> str:
-        body_list = []
+        body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
-                          "different sub args are accepted. ") 
-        body_list.extend(["", self.gen_doc_flag(parents, **kwargs)])
+                          "different sub args are accepted. \n") 
+        body_list.append(self.gen_doc_flag(parents, **kwargs))
         for choice in self.choice_dict.values():
             body_list.extend([
                 "", 
-                f"When *{self.flag_name}* is set to ``{choice.name}``: ",
+                f"When *{self.flag_name}* is set to ``{choice.name}``: \n",
                 choice.gen_doc_body(parents, **kwargs), 
             ])
         body = "\n".join(body_list)
@@ -398,6 +401,8 @@ class Variant:
         if parents is None:
             parents = []
         arg_path = [*parents, self.flag_name]
-        pathdoc = indent(f"Argument path: {'/'.join(arg_path)}", INDENT)
-        realdoc = indent(fill(self.doc, replace_whitespace=False), INDENT)
-        return "\n".join(filter(None, [headdoc, pathdoc, realdoc]))
+        pathdoc = indent(f"Argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
+        allparts = [headdoc, pathdoc]
+        if self.doc:
+            allparts.append(indent(self.doc + "\n", INDENT))
+        return "\n".join(filter(None, allparts))
