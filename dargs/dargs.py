@@ -21,11 +21,13 @@ We also need to pay special attention to flat the keys of its choices.
 from typing import Union, Any, List, Iterable, Optional, Callable
 from textwrap import wrap, fill, indent
 from copy import deepcopy
+from enum import Enum
 import fnmatch, re
 
 
 INDENT = "    " # doc is indented by four spaces
 DUMMYHOOK = lambda a,x: None
+class Default(Enum): NONE = 1
 
 class Argument:
 
@@ -36,7 +38,7 @@ class Argument:
             sub_variants: Optional[Iterable["Variant"]] = None,
             repeat: bool = False,
             optional: bool = False,
-            default: Any = None,
+            default: Any = Default.NONE,
             alias: Optional[Iterable[str]] = None,
             doc: str = ""):
         self.name = name
@@ -222,7 +224,7 @@ class Argument:
         return value
 
     def _assign_default(self, argdict: dict):
-        if self.name not in argdict and self.optional:
+        if self.name not in argdict and self.optional and self.default is not Default.NONE:
             argdict[self.name] = self.default
 
     def _convert_alias(self, argdict: dict):
@@ -266,7 +268,7 @@ class Argument:
         typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
-            if self.default is not None:
+            if self.default is not Default.NONE:
                 typesig += f", default: ``{self.default}``"
         head = f"{self.name}: \n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
