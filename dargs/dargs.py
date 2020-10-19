@@ -73,6 +73,8 @@ class Argument:
         # check conner cases
         if self.sub_fields or self.sub_variants: 
             self.dtype.add(list if self.repeat else dict)
+        if self.default is not Default.NONE:
+            self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
 
