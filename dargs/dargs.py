@@ -73,7 +73,7 @@ class Argument:
         # check conner cases
         if self.sub_fields or self.sub_variants: 
             self.dtype.add(list if self.repeat else dict)
-        if self.default is not Default.NONE:
+        if self.optional and self.default is not Default.NONE:
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
@@ -226,7 +226,9 @@ class Argument:
         return value
 
     def _assign_default(self, argdict: dict):
-        if self.name not in argdict and self.optional and self.default is not Default.NONE:
+        if (self.name not in argdict 
+        and self.optional 
+        and self.default is not Default.NONE):
             argdict[self.name] = self.default
 
     def _convert_alias(self, argdict: dict):
