@@ -3,7 +3,7 @@ import unittest
 from dargs import Argument, Variant
 
 
-class TestNormalization(unittest.TestCase):
+class TestNormalizer(unittest.TestCase):
 
     def test_default(self):
         # naive
