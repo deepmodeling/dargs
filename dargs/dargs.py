@@ -417,7 +417,7 @@ class Variant:
         pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
         realdoc = indent(self.doc + "\n", INDENT) if self.doc else None
         anchor = make_rst_refid(arg_path) if kwargs.get("make_anchor") else None
-        allparts = [anchor, headdoc, typedoc, pathdoc]
+        allparts = [anchor, headdoc, typedoc, pathdoc, realdoc]
         return "\n".join(filter(None, allparts))
 
 
