@@ -27,7 +27,7 @@ import fnmatch, re
 
 INDENT = "    " # doc is indented by four spaces
 DUMMYHOOK = lambda a,x: None
-class _Flag(Enum): NONE = 1
+class _Flags(Enum): NONE = 0
 
 class Argument:
 
@@ -38,7 +38,7 @@ class Argument:
             sub_variants: Optional[Iterable["Variant"]] = None,
             repeat: bool = False,
             optional: bool = False,
-            default: Any = _Flag.NONE,
+            default: Any = _Flags.NONE,
             alias: Optional[Iterable[str]] = None,
             doc: str = ""):
         self.name = name
@@ -73,7 +73,7 @@ class Argument:
         # check conner cases
         if self.sub_fields or self.sub_variants: 
             self.dtype.add(list if self.repeat else dict)
-        if self.optional and self.default is not _Flag.NONE:
+        if self.optional and self.default is not _Flags.NONE:
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
@@ -228,7 +228,7 @@ class Argument:
     def _assign_default(self, argdict: dict):
         if (self.name not in argdict 
         and self.optional 
-        and self.default is not _Flag.NONE):
+        and self.default is not _Flags.NONE):
             argdict[self.name] = self.default
 
     def _convert_alias(self, argdict: dict):
@@ -272,7 +272,7 @@ class Argument:
         typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
-            if self.default is not _Flag.NONE:
+            if self.default is not _Flags.NONE:
                 typesig += f", default: ``{self.default}``"
         head = f"{self.name}: \n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
