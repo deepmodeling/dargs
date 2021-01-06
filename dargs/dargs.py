@@ -27,7 +27,7 @@ import fnmatch, re
 
 INDENT = "    " # doc is indented by four spaces
 DUMMYHOOK = lambda a,x: None
-class _Flags(Enum): NONE = 0
+class _Flags(Enum): NONE = 0 # for no value in dict
 
 class Argument:
 
@@ -112,30 +112,37 @@ class Argument:
     def traverse(self, argdict: dict, 
                  key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
                  value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK):
+                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                 variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
         # first, do something with the key
         # then, take out the vaule and do something with it
         key_hook(self, argdict)
         if self.name in argdict:
             # this is the key step that we traverse into the tree
-            self.traverse_value(argdict[self.name], key_hook, value_hook, sub_hook)
+            self.traverse_value(argdict[self.name], 
+                key_hook, value_hook, sub_hook, variant_hook)
 
     def traverse_value(self, value: Any, 
                        key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
                        value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                       sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK):
+                       sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                       variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
         # this is not private, and can be called directly
         # in the condition where there is no leading key
         value_hook(self, value)
         if isinstance(value, dict):
             sub_hook(self, value)
-            self._traverse_subfield(value, key_hook, value_hook, sub_hook)
-            self._traverse_subvariant(value, key_hook, value_hook, sub_hook)
+            self._traverse_subfield(value, 
+                key_hook, value_hook, sub_hook, variant_hook)
+            self._traverse_subvariant(value, 
+                key_hook, value_hook, sub_hook, variant_hook)
         if isinstance(value, list) and self.repeat:
             for item in value:
                 sub_hook(self, item)
-                self._traverse_subfield(item, key_hook, value_hook, sub_hook)
-                self._traverse_subvariant(item, key_hook, value_hook, sub_hook)
+                self._traverse_subfield(item, 
+                    key_hook, value_hook, sub_hook, variant_hook)
+                self._traverse_subvariant(item, 
+                    key_hook, value_hook, sub_hook, variant_hook)
     
     def _traverse_subfield(self, value: dict, *args, **kwargs):
         assert isinstance(value, dict)
@@ -202,9 +209,13 @@ class Argument:
         if not inplace:
             argdict = deepcopy(argdict)
         if do_alias:
-            self.traverse(argdict, key_hook=Argument._convert_alias)
+            self.traverse(argdict, 
+                key_hook=Argument._convert_alias,
+                variant_hook=Variant._convert_alias)
         if do_default:
-            self.traverse(argdict, key_hook=Argument._assign_default)
+            self.traverse(argdict, 
+                key_hook=Argument._assign_default,
+                variant_hook=Variant._assign_default)
         if trim_pattern is not None:
             self._trim_unrequired(argdict, trim_pattern, reserved=[self.name])
             self.traverse(argdict, sub_hook=lambda a, d: 
@@ -217,9 +228,13 @@ class Argument:
         if not inplace:
             value = deepcopy(value)
         if do_alias:
-            self.traverse_value(value, key_hook=Argument._convert_alias)
+            self.traverse_value(value, 
+                key_hook=Argument._convert_alias,
+                variant_hook=Variant._convert_alias)
         if do_default:
-            self.traverse_value(value, key_hook=Argument._assign_default)
+            self.traverse_value(value, 
+                key_hook=Argument._assign_default,
+                variant_hook=Variant._assign_default)
         if trim_pattern is not None:
             self.traverse_value(value, sub_hook=lambda a, d: 
                 Argument._trim_unrequired(d, trim_pattern, a._get_allowed_sub(d)))
@@ -314,6 +329,7 @@ class Variant:
             doc: str = ""):
         self.flag_name = flag_name
         self.choice_dict = {}
+        self.alias_dict = {}
         if choices is not None:
             self.extend_choices(choices)
         self.optional = optional
@@ -340,6 +356,13 @@ class Variant:
                 raise ValueError(f"duplicate tag `{tag}` appears in "
                                  f"variant with flag `{self.flag_name}`")
             self.choice_dict[tag] = arg
+            # also update alias here
+            for atag in arg.alias:
+                if atag in self.choice_dict or atag in self.alias_dict:
+                    raise ValueError(f"duplicate alias tag `{atag}` appears in "
+                                     f"variant with flag `{self.flag_name}` "
+                                     f"and choice name `{arg.name}`")
+                self.alias_dict[atag] = arg.name
 
     def set_default(self, default_tag : Union[bool, str]):
         if not default_tag:
@@ -363,10 +386,16 @@ class Variant:
     # above are creation part
     # below are general traverse part
 
-    def traverse(self, argdict: dict, *args, **kwargs):
+    def traverse(self, argdict: dict, 
+                 key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                 value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
+                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                 variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
+        variant_hook(self, argdict)
         choice = self._load_choice(argdict)
         # here we use check_value to flatten the tag
-        choice.traverse_value(argdict, *args, **kwargs)
+        choice.traverse_value(argdict,
+            key_hook, value_hook, sub_hook, variant_hook)
 
     def _load_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
@@ -383,6 +412,16 @@ class Variant:
         choice = self._load_choice(argdict)
         allowed.extend(choice._get_allowed_sub(argdict))
         return allowed
+
+    def _assign_default(self, argdict: dict):
+        if self.flag_name not in argdict and self.optional:
+            argdict[self.flag_name] = self.default_tag
+
+    def _convert_alias(self, argdict: dict):
+        if self.flag_name in argdict:
+            tag = argdict[self.flag_name]
+            if tag not in self.choice_dict and tag in self.alias_dict:
+                argdict[self.flag_name] = self.alias_dict[tag]
 
     # above are type checking part
     # below are doc generation part

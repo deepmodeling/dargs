@@ -79,7 +79,7 @@ class TestNormalizer(unittest.TestCase):
                 Argument("type2", dict, [
                     Argument("shared", int, optional=True, default=-2, alias=["sharedb"]),
                     Argument("vnt2", int, optional=True, default=222, alias=["vnt2a"]),
-                ])
+                ], alias = ['type3'])
             ], optional=True, default_tag="type1")
         ])
         beg1 = {"base": {"sub2": [{}, {}]}}
@@ -87,6 +87,7 @@ class TestNormalizer(unittest.TestCase):
             'base': {
                 'sub1': 1,
                 'sub2': [{'ss1': 21}, {'ss1': 21}], 
+                'vnt_flag': "type1",
                 'shared': -1, 
                 'vnt1': 111}
         }
@@ -96,7 +97,7 @@ class TestNormalizer(unittest.TestCase):
             "base": {
                 "sub1a": 2,
                 "sub2a": [{"ss1a":22}, {"_comment1": None}],
-                "vnt_flag": "type2",
+                "vnt_flag": "type3",
                 "sharedb": -3,
                 "vnt2a": 223,
                 "_comment2": None}
