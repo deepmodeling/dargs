@@ -40,6 +40,7 @@ class Argument:
             optional: bool = False,
             default: Any = _Flags.NONE,
             alias: Optional[Iterable[str]] = None,
+            extra_check: Optional[Callable[[Any], bool]] = None,
             doc: str = ""):
         self.name = name
         self.dtype = dtype
@@ -49,6 +50,7 @@ class Argument:
         self.optional = optional
         self.default = default
         self.alias = alias if alias is not None else []
+        self.extra_check = extra_check
         self.doc = doc
         # handle the format of dtype, makeit a tuple
         self.reorg_dtype()
@@ -164,13 +166,13 @@ class Argument:
                            "use check_value if you are checking subfields")
         self.traverse(argdict, 
             key_hook=Argument._check_exist,
-            value_hook=Argument._check_dtype,
+            value_hook=Argument._check_value,
             sub_hook=Argument._check_strict if strict else DUMMYHOOK)
 
     def check_value(self, argdict: dict, strict: bool = False):
         self.traverse_value(argdict, 
             key_hook=Argument._check_exist,
-            value_hook=Argument._check_dtype,
+            value_hook=Argument._check_value,
             sub_hook=Argument._check_strict if strict else DUMMYHOOK)
             
     def _check_exist(self, argdict: dict):
@@ -180,10 +182,13 @@ class Argument:
             raise KeyError(f"key `{self.name}` is required "
                             "in arguments but not found")
 
-    def _check_dtype(self, value: Any):
+    def _check_value(self, value: Any):
         if not isinstance(value, self.dtype):
             raise TypeError(f"key `{self.name}` gets wrong value type: "
                             f"requires {self.dtype} but gets {type(value)}")
+        if self.extra_check is not None and not self.extra_check(value):
+            raise ValueError(f"key `{self.name}` gets bad value "
+                              "that fails to pass its extra checking")
 
     def _check_strict(self, value: dict):
         allowed = self._get_allowed_sub(value)

@@ -25,8 +25,14 @@ class TestChecker(unittest.TestCase):
         ca = Argument("key1", [int, None])
         ca.check({"key1": None})
         # optional case
-        ca = Argument("Key1", int, optional=True)
+        ca = Argument("key1", int, optional=True)
         ca.check({})
+        # extra checker
+        ca = Argument("key1", int, extra_check=lambda v: v > 0)
+        ca.check({"key1": 1})
+        with self.assertRaises(ValueError):
+            ca.check({"key1": 0})
+
 
     def test_sub_fields(self):
         ca = Argument("base", dict, [
