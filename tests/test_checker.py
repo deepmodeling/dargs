@@ -171,6 +171,7 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(KeyError):
             ca.check(err_dict1)
         err_dict1["base"]["vnt_flag"] = "type1"
+        ca.check(err_dict1, strict=True) # this should pass
         err_dict1["base"]["additional"] = "hahaha"
         ca.check(err_dict1) # now should pass
         with self.assertRaises(KeyError):

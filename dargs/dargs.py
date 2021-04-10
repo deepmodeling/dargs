@@ -1,6 +1,6 @@
 r"""
 Some (ocaml) pseudo-code here to show the intended type structure::
-           
+
     type args = {key: str; value: data; optional: bool; doc: str} list
     and  data = 
            | Arg of dtype
@@ -19,7 +19,7 @@ We also need to pay special attention to flat the keys of its choices.
 
 
 from typing import Union, Any, List, Iterable, Optional, Callable
-from textwrap import wrap, fill, indent
+from textwrap import indent
 from copy import deepcopy
 from enum import Enum
 import fnmatch, re
@@ -30,6 +30,7 @@ DUMMYHOOK = lambda a,x: None
 class _Flags(Enum): NONE = 0 # for no value in dict
 
 class Argument:
+    """Define possible arguments and their types and properties."""
 
     def __init__(self, 
             name: str,
@@ -44,7 +45,9 @@ class Argument:
             doc: str = ""):
         self.name = name
         self.dtype = dtype
+        assert sub_fields is None or all(isinstance(s, Argument) for s in sub_fields)
         self.sub_fields = sub_fields if sub_fields is not None else []
+        assert sub_variants is None or all(isinstance(s, Variant) for s in sub_variants)
         self.sub_variants = sub_variants if sub_variants is not None else []
         self.repeat = repeat
         self.optional = optional
@@ -66,6 +69,9 @@ class Argument:
             and sorted(self.sub_variants, key=vkey) == sorted(other.sub_variants, key=vkey)
             and self.repeat == other.repeat
             and self.optional == other.optional)
+
+    def __repr__(self) -> str:
+        return f"<Argument {self.name}: {' | '.join(dd.__name__ for dd in self.dtype)}>"
 
     def reorg_dtype(self):
         if isinstance(self.dtype, type) or self.dtype is None:
@@ -145,7 +151,7 @@ class Argument:
                     key_hook, value_hook, sub_hook, variant_hook)
                 self._traverse_subvariant(item, 
                     key_hook, value_hook, sub_hook, variant_hook)
-    
+
     def _traverse_subfield(self, value: dict, *args, **kwargs):
         assert isinstance(value, dict)
         for subarg in self.sub_fields:
@@ -174,7 +180,7 @@ class Argument:
             key_hook=Argument._check_exist,
             value_hook=Argument._check_value,
             sub_hook=Argument._check_strict if strict else DUMMYHOOK)
-            
+
     def _check_exist(self, argdict: dict):
         if self.optional is True:
             return
@@ -198,7 +204,7 @@ class Argument:
             if name not in allowed_set:
                 raise KeyError(f"undefined key `{name}` is "
                                 "not allowed in strict mode")
-        
+
     def _get_allowed_sub(self, value: dict) -> List[str]:
         allowed = [subarg.name for subarg in self.sub_fields]
         for subvrnt in self.sub_variants:
@@ -322,9 +328,10 @@ class Argument:
                 body_list.append(subvrnt.gen_doc(paths, **kwargs))
         body = "\n".join(body_list)
         return body
-        
+
 
 class Variant:
+    """Define multiple choices of possible argument sets."""
 
     def __init__(self, 
             flag_name: str,
@@ -349,6 +356,9 @@ class Variant:
             and self.choice_dict == other.choice_dict
             and self.optional == other.optional
             and self.default_tag == other.default_tag)
+    
+    def __repr__(self) -> str:
+        return f"<Variant {self.flag_name} in {{ {', '.join(self.choice_dict.keys())} }}>"
 
     def extend_choices(self, choices: Iterable["Argument"]):
         # choices is a list of arguments 
@@ -398,7 +408,7 @@ class Variant:
                  variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
         variant_hook(self, argdict)
         choice = self._load_choice(argdict)
-        # here we use check_value to flatten the tag
+        # here we use traverse_value to flatten the tag
         choice.traverse_value(argdict,
             key_hook, value_hook, sub_hook, variant_hook)
 
@@ -430,7 +440,7 @@ class Variant:
 
     # above are type checking part
     # below are doc generation part
-        
+
     def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
         body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
