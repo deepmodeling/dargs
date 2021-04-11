@@ -24,7 +24,6 @@ class TestNormalizer(unittest.TestCase):
         beg = {"Old1": 1}
         end = ca.normalize(beg)
         ref = {"Key1": 1}
-        print(end, ref, end==ref)
         self.assertDictEqual(end, ref)
         self.assertDictEqual(beg, {"Old1": 1})
         self.assertTrue(end is not beg)

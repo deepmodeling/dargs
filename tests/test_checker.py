@@ -49,7 +49,7 @@ class TestChecker(unittest.TestCase):
             "base": {
                 "sub1": 1,
                 "sub2": "hello"}}
-        self.assertSetEqual(set(ca._get_allowed_sub(test_dict1["base"])),
+        self.assertSetEqual(set(ca.flatten_sub(test_dict1["base"]).keys()),
                             set(test_dict1["base"].keys()))
         ca.check(test_dict1)
         ca.check_value(test_dict1["base"])
@@ -134,6 +134,28 @@ class TestChecker(unittest.TestCase):
                 Argument("type2", dict, [
                     Argument("shared", int),
                     Argument("vnt2_1", int),
+                ]),
+                Argument("type3", dict, [
+                    Argument("vnt3_1", int)
+                ], [ # testing cascade variants here
+                    Variant("vnt3_flag1", [
+                        Argument("v3f1t1", dict, [
+                            Argument('v3f1t1_1', int),
+                            Argument('v3f1t1_2', int)
+                        ]),
+                        Argument("v3f1t2", dict, [
+                            Argument('v3f1t2_1', int)
+                        ])
+                    ]),
+                    Variant("vnt3_flag2", [
+                        Argument("v3f2t1", dict, [
+                            Argument('v3f2t1_1', int),
+                            Argument('v3f2t1_2', int)
+                        ]),
+                        Argument("v3f2t2", dict, [
+                            Argument('v3f2t2_1', int)
+                        ])
+                    ])
                 ])
             ])
         ])
@@ -146,7 +168,7 @@ class TestChecker(unittest.TestCase):
                 "vnt1_1": 11,
                 "vnt1_2": {
                     "vnt1_1_1": 111}}}
-        self.assertSetEqual(set(ca._get_allowed_sub(test_dict1["base"])),
+        self.assertSetEqual(set(ca.flatten_sub(test_dict1["base"]).keys()),
                             set(test_dict1["base"].keys()))
         ca.check(test_dict1)
         test_dict2 = {
@@ -156,7 +178,7 @@ class TestChecker(unittest.TestCase):
                 "vnt_flag" : "type2",
                 "shared": 20,
                 "vnt2_1": 21}}
-        self.assertSetEqual(set(ca._get_allowed_sub(test_dict2["base"])),
+        self.assertSetEqual(set(ca.flatten_sub(test_dict2["base"]).keys()),
                             set(test_dict2["base"].keys()))
         ca.check(test_dict2)
         err_dict1 = {
@@ -171,16 +193,16 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(KeyError):
             ca.check(err_dict1)
         err_dict1["base"]["vnt_flag"] = "type1"
-        ca.check(err_dict1, strict=True) # this should pass
+        ca.check(err_dict1, strict=True) # no additional should pass
         err_dict1["base"]["additional"] = "hahaha"
-        ca.check(err_dict1) # now should pass
+        ca.check(err_dict1) # without strict should pass
         with self.assertRaises(KeyError):
             ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict2 = {
             "base": {
                 "sub1": 1,
                 "sub2": "a",
-                "vnt_flag" : "type3", # here is wrong
+                "vnt_flag" : "badtype", # here is wrong
                 "shared": 20,
                 "vnt2_1": 21}}
         with self.assertRaises(KeyError):
@@ -189,9 +211,30 @@ class TestChecker(unittest.TestCase):
         test_dict1["base"].pop("vnt_flag")
         with self.assertRaises(KeyError):
             ca.check(test_dict1)
-        ca.sub_variants[0].optional = True
-        ca.sub_variants[0].default_tag = "type1"
+        ca.sub_variants["vnt_flag"].optional = True
+        ca.sub_variants["vnt_flag"].default_tag = "type1"
         ca.check(test_dict1)
+        # test cascade variants
+        test_dict3 = {
+            "base": {
+                "sub1": 1,
+                "sub2": "a",
+                "vnt_flag" : "type3",
+                "vnt3_1": 31,
+                "vnt3_flag1": "v3f1t1",
+                "vnt3_flag2": "v3f2t2",
+                "v3f1t1_1": 3111,
+                "v3f1t1_2": 3112,
+                "v3f2t2_1": 3221}}
+        self.assertSetEqual(set(ca.flatten_sub(test_dict3["base"]).keys()),
+                            set(test_dict3["base"].keys()))
+        ca.check(test_dict3, strict=True)
+        test_dict3["base"].pop("vnt3_flag2")
+        with self.assertRaises(KeyError):
+            ca.check(test_dict3)
+        ca.sub_variants['vnt_flag'].choice_dict["type3"].sub_variants["vnt3_flag2"].optional = True
+        ca.sub_variants['vnt_flag'].choice_dict["type3"].sub_variants["vnt3_flag2"].default_tag = 'v3f2t2'
+        ca.check(test_dict3, strict=True)
         # make sure duplicate tag is not allowed
         with self.assertRaises(ValueError):
             Argument("base", dict, [], [

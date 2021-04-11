@@ -18,7 +18,7 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import Union, Any, List, Iterable, Optional, Callable
+from typing import Union, Any, List, Dict, Iterable, Optional, Callable
 from textwrap import indent
 from copy import deepcopy
 from enum import Enum
@@ -45,35 +45,36 @@ class Argument:
             doc: str = ""):
         self.name = name
         self.dtype = dtype
-        assert sub_fields is None or all(isinstance(s, Argument) for s in sub_fields)
-        self.sub_fields = sub_fields if sub_fields is not None else []
-        assert sub_variants is None or all(isinstance(s, Variant) for s in sub_variants)
-        self.sub_variants = sub_variants if sub_variants is not None else []
+        self.sub_fields : Dict[str, "Argument"] = {}
+        self.sub_variants : Dict[str, "Variant"] = {}
         self.repeat = repeat
         self.optional = optional
         self.default = default
         self.alias = alias if alias is not None else []
         self.extra_check = extra_check
         self.doc = doc
+        # adding subfields and subvariants
+        self.extend_subfields(sub_fields)
+        self.extend_subvariants(sub_variants)
         # handle the format of dtype, makeit a tuple
-        self.reorg_dtype()
+        self._reorg_dtype()
 
     def __eq__(self, other: "Argument") -> bool:
         # do not compare doc and default
         # since they do not enter to the type checking
         fkey = lambda f: f.name
         vkey = lambda v: v.flag_name
-        return (self.name == other.name 
-            and set(self.dtype) == set(other.dtype)
-            and sorted(self.sub_fields, key=fkey) == sorted(other.sub_fields, key=fkey)
-            and sorted(self.sub_variants, key=vkey) == sorted(other.sub_variants, key=vkey)
-            and self.repeat == other.repeat
-            and self.optional == other.optional)
+        return (self.name         == other.name 
+            and set(self.dtype)   == set(other.dtype)
+            and self.sub_fields   == other.sub_fields
+            and self.sub_variants == other.sub_variants
+            and self.repeat       == other.repeat
+            and self.optional     == other.optional)
 
     def __repr__(self) -> str:
         return f"<Argument {self.name}: {' | '.join(dd.__name__ for dd in self.dtype)}>"
 
-    def reorg_dtype(self):
+    def _reorg_dtype(self):
         if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
         # remove duplicate
@@ -88,11 +89,19 @@ class Argument:
 
     def set_dtype(self, dtype: Union[None, type, Iterable[type]]):
         self.dtype = dtype
-        self.reorg_dtype()
+        self._reorg_dtype()
 
     def set_repeat(self, repeat: bool = True):
         self.repeat = repeat
-        self.reorg_dtype()
+        self._reorg_dtype()
+    
+    def extend_subfields(self, sub_fields: Optional[Iterable["Argument"]]):
+        if sub_fields is None:
+            return
+        assert all(isinstance(s, Argument) for s in sub_fields)
+        update_nodup(self.sub_fields, ((s.name, s) for s in sub_fields),
+            err_msg=f"building Argument `{self.name}`")
+        self._reorg_dtype()
 
     def add_subfield(self, name: Union[str, "Argument"], 
                      *args, **kwargs) -> "Argument":
@@ -100,9 +109,17 @@ class Argument:
             newarg = name
         else:
             newarg = Argument(name, *args, **kwargs)
-        self.sub_fields.append(newarg)
-        self.reorg_dtype()
+        self.extend_subfields([newarg])
         return newarg
+    
+    def extend_subvariants(self, sub_variants: Optional[Iterable["Variant"]]):
+        if sub_variants is None:
+            return
+        assert all(isinstance(s, Variant) for s in sub_variants)
+        update_nodup(self.sub_variants, ((s.flag_name, s) for s in sub_variants),
+            exclude=self.sub_fields.keys(),
+            err_msg=f"building Argument `{self.name}`")
+        self._reorg_dtype()
 
     def add_subvariant(self, flag_name: Union[str, "Variant"], 
                        *args, **kwargs) -> "Variant":
@@ -110,12 +127,19 @@ class Argument:
             newvrnt = flag_name
         else:
             newvrnt = Variant(flag_name, *args, **kwargs)
-        self.sub_variants.append(newvrnt)
-        self.reorg_dtype()
+        self.extend_subvariants([newvrnt])
         return newvrnt
 
     # above are creation part
     # below are general traverse part
+
+    def flatten_sub(self, value: dict) -> Dict[str, "Argument"]:
+        sub_dicts = [self.sub_fields]
+        sub_dicts.extend(vrnt.flatten_sub(value) for vrnt in self.sub_variants.values())
+        flat_subs = {}
+        update_nodup(flat_subs, *sub_dicts, 
+            err_msg=f"flattening variants of {self.name}")
+        return flat_subs
 
     def traverse(self, argdict: dict, 
                  key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
@@ -139,28 +163,25 @@ class Argument:
         # in the condition where there is no leading key
         value_hook(self, value)
         if isinstance(value, dict):
-            sub_hook(self, value)
-            self._traverse_subfield(value, 
-                key_hook, value_hook, sub_hook, variant_hook)
-            self._traverse_subvariant(value, 
+            self._traverse_sub(value,
                 key_hook, value_hook, sub_hook, variant_hook)
         if isinstance(value, list) and self.repeat:
             for item in value:
-                sub_hook(self, item)
-                self._traverse_subfield(item, 
-                    key_hook, value_hook, sub_hook, variant_hook)
-                self._traverse_subvariant(item, 
+                self._traverse_sub(item,
                     key_hook, value_hook, sub_hook, variant_hook)
 
-    def _traverse_subfield(self, value: dict, *args, **kwargs):
+    def _traverse_sub(self, value: dict, 
+                      key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                      value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
+                      sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
+                      variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
         assert isinstance(value, dict)
-        for subarg in self.sub_fields:
-            subarg.traverse(value, *args, **kwargs)
-
-    def _traverse_subvariant(self, value: dict, *args, **kwargs):
-        assert isinstance(value, dict)
-        for subvrnt in self.sub_variants:
-            subvrnt.traverse(value, *args, **kwargs)
+        sub_hook(self, value)
+        for subvrnt in self.sub_variants.values():
+            variant_hook(subvrnt, value)
+        for subarg in self.flatten_sub(value).values():
+            subarg.traverse(value, 
+                key_hook, value_hook, sub_hook, variant_hook)
 
     # above are general traverse part
     # below are type checking part
@@ -197,20 +218,12 @@ class Argument:
                               "that fails to pass its extra checking")
 
     def _check_strict(self, value: dict):
-        allowed = self._get_allowed_sub(value)
-        allowed_set = set(allowed)
-        assert len(allowed) == len(allowed_set), "duplicated keys!"
+        allowed_keys = self.flatten_sub(value).keys()
         for name in value.keys():
-            if name not in allowed_set:
+            if name not in allowed_keys:
                 raise KeyError(f"undefined key `{name}` is "
                                 "not allowed in strict mode")
-
-    def _get_allowed_sub(self, value: dict) -> List[str]:
-        allowed = [subarg.name for subarg in self.sub_fields]
-        for subvrnt in self.sub_variants:
-            allowed.extend(subvrnt._get_allowed_sub(value))
-        return allowed
-
+    
     # above are type checking part
     # below are normalizing part
 
@@ -222,15 +235,14 @@ class Argument:
         if do_alias:
             self.traverse(argdict, 
                 key_hook=Argument._convert_alias,
-                variant_hook=Variant._convert_alias)
+                variant_hook=Variant._convert_choice_alias)
         if do_default:
             self.traverse(argdict, 
-                key_hook=Argument._assign_default,
-                variant_hook=Variant._assign_default)
+                key_hook=Argument._assign_default)
         if trim_pattern is not None:
             self._trim_unrequired(argdict, trim_pattern, reserved=[self.name])
             self.traverse(argdict, sub_hook=lambda a, d: 
-                Argument._trim_unrequired(d, trim_pattern, a._get_allowed_sub(d)))
+                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d).keys()))
         return argdict
 
     def normalize_value(self, value: Any, inplace: bool = False, 
@@ -241,14 +253,13 @@ class Argument:
         if do_alias:
             self.traverse_value(value, 
                 key_hook=Argument._convert_alias,
-                variant_hook=Variant._convert_alias)
+                variant_hook=Variant._convert_choice_alias)
         if do_default:
             self.traverse_value(value, 
-                key_hook=Argument._assign_default,
-                variant_hook=Variant._assign_default)
+                key_hook=Argument._assign_default)
         if trim_pattern is not None:
             self.traverse_value(value, sub_hook=lambda a, d: 
-                Argument._trim_unrequired(d, trim_pattern, a._get_allowed_sub(d)))
+                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d).keys()))
         return value
 
     def _assign_default(self, argdict: dict):
@@ -321,10 +332,10 @@ class Argument:
         if self.sub_fields:
             # body_list.append("") # genetate a blank line
             # body_list.append("This argument accept the following sub arguments:")                
-            for subarg in self.sub_fields:
+            for subarg in self.sub_fields.values():
                 body_list.append(subarg.gen_doc(paths, **kwargs))
         if self.sub_variants:
-            for subvrnt in self.sub_variants:
+            for subvrnt in self.sub_variants.values():
                 body_list.append(subvrnt.gen_doc(paths, **kwargs))
         body = "\n".join(body_list)
         return body
@@ -340,10 +351,9 @@ class Variant:
             default_tag: str = "", # this is indeed necessary in case of optional
             doc: str = ""):
         self.flag_name = flag_name
-        self.choice_dict = {}
-        self.alias_dict = {}
-        if choices is not None:
-            self.extend_choices(choices)
+        self.choice_dict : Dict[str, Argument] = {}
+        self.choice_alias : Dict[str, str] = {}
+        self.extend_choices(choices)
         self.optional = optional
         if optional and not default_tag:
             raise ValueError("default_tag is needed if optional is set to be True")
@@ -360,25 +370,6 @@ class Variant:
     def __repr__(self) -> str:
         return f"<Variant {self.flag_name} in {{ {', '.join(self.choice_dict.keys())} }}>"
 
-    def extend_choices(self, choices: Iterable["Argument"]):
-        # choices is a list of arguments 
-        # whose name is treated as the switch tag
-        # we convert it into a dict for better reference
-        # and avoid duplicate tags
-        for arg in choices:
-            tag = arg.name
-            if tag in self.choice_dict:
-                raise ValueError(f"duplicate tag `{tag}` appears in "
-                                 f"variant with flag `{self.flag_name}`")
-            self.choice_dict[tag] = arg
-            # also update alias here
-            for atag in arg.alias:
-                if atag in self.choice_dict or atag in self.alias_dict:
-                    raise ValueError(f"duplicate alias tag `{atag}` appears in "
-                                     f"variant with flag `{self.flag_name}` "
-                                     f"and choice name `{arg.name}`")
-                self.alias_dict[atag] = arg.name
-
     def set_default(self, default_tag : Union[bool, str]):
         if not default_tag:
             self.optional = False
@@ -387,6 +378,21 @@ class Variant:
             assert default_tag in self.choice_dict
             self.optional = True
             self.default_tag = default_tag
+
+    def extend_choices(self, choices: Optional[Iterable["Argument"]]):
+        # choices is a list of arguments 
+        # whose name is treated as the switch tag
+        # we convert it into a dict for better reference
+        # and avoid duplicate tags
+        if choices is None:
+            return
+        update_nodup(self.choice_dict, ((c.name, c) for c in choices),
+            exclude={self.flag_name},
+            err_msg=f"Variant with flag `{self.flag_name}`")
+        update_nodup(self.choice_alias, 
+            *(((a, c.name) for a in c.alias) for c in choices),
+            exclude={self.flag_name, *self.choice_dict.keys()},
+            err_msg=f"building alias dict for Variant with flag `{self.flag_name}`")
 
     def add_choice(self, tag: Union[str, "Argument"], 
                    dtype: Union[None, type, Iterable[type]] = dict,
@@ -397,22 +403,18 @@ class Variant:
             newarg = Argument(tag, dtype, *args, **kwargs)
         self.extend_choices([newarg])
         return newarg
+    
+    def dummy_argument(self):
+        return Argument(name=self.flag_name, dtype=str, 
+                        optional=self.optional, default=self.default_tag,
+                        sub_fields=None, sub_variants=None, repeat=False,
+                        alias=None, extra_check=None, 
+                        doc=f"dummy Argument converted from Variant {self.flag_name}")
 
     # above are creation part
-    # below are general traverse part
+    # below are helpers for traversing
 
-    def traverse(self, argdict: dict, 
-                 key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                 value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                 variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
-        variant_hook(self, argdict)
-        choice = self._load_choice(argdict)
-        # here we use traverse_value to flatten the tag
-        choice.traverse_value(argdict,
-            key_hook, value_hook, sub_hook, variant_hook)
-
-    def _load_choice(self, argdict: dict) -> "Argument":
+    def get_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             return self.choice_dict[tag]
@@ -421,24 +423,20 @@ class Variant:
         else:
             raise KeyError(f"key `{self.flag_name}` is required "
                             "to choose variant but not found.")
+    
+    def flatten_sub(self, argdict: dict) -> Dict[str, "Argument"]:
+        choice = self.get_choice(argdict)
+        fields = {self.flag_name: self.dummy_argument(), # as a placeholder
+                  **choice.flatten_sub(argdict)}
+        return fields
 
-    def _get_allowed_sub(self, argdict: dict) -> List[str]:
-        allowed = [self.flag_name]
-        choice = self._load_choice(argdict)
-        allowed.extend(choice._get_allowed_sub(argdict))
-        return allowed
-
-    def _assign_default(self, argdict: dict):
-        if self.flag_name not in argdict and self.optional:
-            argdict[self.flag_name] = self.default_tag
-
-    def _convert_alias(self, argdict: dict):
+    def _convert_choice_alias(self, argdict: dict):
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
-            if tag not in self.choice_dict and tag in self.alias_dict:
-                argdict[self.flag_name] = self.alias_dict[tag]
+            if tag not in self.choice_dict and tag in self.choice_alias:
+                argdict[self.flag_name] = self.choice_alias[tag]
 
-    # above are type checking part
+    # above are traversing part
     # below are doc generation part
 
     def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
@@ -479,3 +477,18 @@ def make_rst_refid(name):
     if not isinstance(name, str):
         name = '/'.join(name)
     return f'.. raw:: html\n\n   <a id="{name}"></a>'
+
+
+def update_nodup(this : dict, 
+                 *others : Union[dict, Iterable[tuple]], 
+                 exclude : Optional[Iterable] = None,
+                 err_msg : Optional[str] = None):
+    for pair in others:
+        if isinstance(pair, dict):
+            pair = pair.items()
+        for k, v in pair:
+            if k in this or (exclude and k in exclude):
+                raise ValueError(f"duplicate key `{k}` when updating dict"
+                                 + "" if err_msg is None else f"in {err_msg}")
+            this[k] = v
+    return this
