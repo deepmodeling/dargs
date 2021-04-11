@@ -20,8 +20,3 @@ Set `make_anchor=True` when calling `gendoc` function and use standard ref synta
 The id is the same as the argument path. Variant types would be in square brackets.
 
 Please refer to test files for detailed usage.
-
-
-## TODO
-
-- [ ] possibly support of indexing by keys

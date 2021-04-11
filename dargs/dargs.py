@@ -74,6 +74,32 @@ class Argument:
     def __repr__(self) -> str:
         return f"<Argument {self.name}: {' | '.join(dd.__name__ for dd in self.dtype)}>"
 
+    def __getitem__(self, key: str) -> "Argument":
+        key = key.lstrip("/")
+        if key in ("", "."):
+            return self
+        if key.startswith("["):
+            vkey, rkey = key[1:].split("]", 1)
+            if vkey.count("=") == 1:
+                fkey, ckey = vkey.split("=")
+            else:
+                [fkey] = self.sub_variants.keys()
+                ckey = vkey
+            return self.sub_variants[fkey][ckey][rkey]
+        p1, p2 = key.find("/"), key.find("[")
+        if max(p1, p2) < 0: # not found
+            return self.sub_fields[key]
+        else: # at least one found
+            p = p1 if p2 < 0 or  0 < p1 < p2 else p2
+            skey, rkey = key[:p], key[p:]
+            return self[skey][rkey]
+    
+    @property
+    def I(self): 
+        # return a dummy argument that only has self as a sub field
+        # can be used in indexing
+        return Argument("_", dict, [self])
+
     def _reorg_dtype(self):
         if isinstance(self.dtype, type) or self.dtype is None:
             self.dtype = [self.dtype]
@@ -111,7 +137,7 @@ class Argument:
             newarg = Argument(name, *args, **kwargs)
         self.extend_subfields([newarg])
         return newarg
-    
+
     def extend_subvariants(self, sub_variants: Optional[Iterable["Variant"]]):
         if sub_variants is None:
             return
@@ -223,7 +249,7 @@ class Argument:
             if name not in allowed_keys:
                 raise KeyError(f"undefined key `{name}` is "
                                 "not allowed in strict mode")
-    
+
     # above are type checking part
     # below are normalizing part
 
@@ -371,6 +397,9 @@ class Variant:
     def __repr__(self) -> str:
         return f"<Variant {self.flag_name} in {{ {', '.join(self.choice_dict.keys())} }}>"
 
+    def __getitem__(self, key: str) -> "Argument":
+        return self.choice_dict[key]
+
     def set_default(self, default_tag : Union[bool, str]):
         if not default_tag:
             self.optional = False
@@ -424,7 +453,7 @@ class Variant:
         else:
             raise KeyError(f"key `{self.flag_name}` is required "
                             "to choose variant but not found.")
-    
+
     def flatten_sub(self, argdict: dict) -> Dict[str, "Argument"]:
         choice = self.get_choice(argdict)
         fields = {self.flag_name: self.dummy_argument(), # as a placeholder
