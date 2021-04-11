@@ -335,8 +335,9 @@ class Argument:
             for subarg in self.sub_fields.values():
                 body_list.append(subarg.gen_doc(paths, **kwargs))
         if self.sub_variants:
+            showflag = len(self.sub_variants) > 1
             for subvrnt in self.sub_variants.values():
-                body_list.append(subvrnt.gen_doc(paths, **kwargs))
+                body_list.append(subvrnt.gen_doc(paths, showflag, **kwargs))
         body = "\n".join(body_list)
         return body
 
@@ -439,13 +440,15 @@ class Variant:
     # above are traversing part
     # below are doc generation part
 
-    def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc(self, paths: Optional[List[str]] = None, 
+                      showflag : bool = False, **kwargs) -> str:
         body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
                           "different sub args are accepted. \n") 
         body_list.append(self.gen_doc_flag(paths, **kwargs))
         for choice in self.choice_dict.values():
-            c_str = f"[{choice.name}]"
+            f_str = f"{self.flag_name}=" if showflag else ""
+            c_str = f"[{f_str}{choice.name}]"
             choice_path = [*paths[:-1], paths[-1]+c_str] if paths else [c_str]
             body_list.append("")
             if kwargs.get("make_anchor"):
