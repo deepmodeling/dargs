@@ -80,6 +80,12 @@ class TestChecker(unittest.TestCase):
         err_dict1["base"]["sub2"] = None
         with self.assertRaises(TypeError):
             ca.check(err_dict1)
+        # make sure no dup keys is allowed
+        with self.assertRaises(ValueError):
+            Argument("base", dict, [
+                Argument("sub1", int),
+                Argument("sub1", int)
+            ])
         
     def test_sub_repeat(self):
         ca = Argument("base", dict, [
@@ -242,6 +248,20 @@ class TestChecker(unittest.TestCase):
                     Argument("type1", dict),
                     Argument("type1", dict)])
             ])
+        with self.assertRaises(ValueError):
+            Argument("base", dict, [], [
+                Variant("flag", [
+                    Argument("type1", dict)]),
+                Variant("flag", [
+                    Argument("type2", dict)])
+            ])
+
+    def test_dpmd(self):
+        import json
+        from dpmdargs import check, example_json_str
+        data = json.loads(example_json_str)
+        check(data)
+        # print("\n\n"+docstr)
 
 
 if __name__ == "__main__":

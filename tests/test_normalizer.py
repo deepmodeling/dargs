@@ -116,6 +116,11 @@ class TestNormalizer(unittest.TestCase):
         with self.assertRaises(ValueError):
             ca.normalize(beg2, trim_pattern="vnt*")
 
+    def test_dpmd(self):
+        import json
+        from dpmdargs import normalize, example_json_str
+        data = json.loads(example_json_str)
+        normalize(data)
 
 if __name__ == "__main__":
     unittest.main()
