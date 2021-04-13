@@ -26,8 +26,12 @@ import fnmatch, re
 
 
 INDENT = "    " # doc is indented by four spaces
-DUMMYHOOK = lambda a,x: None
-class _Flags(Enum): NONE = 0 # for no value in dict
+RAW_ANCHOR = True # whether to use raw html anchors or RST ones
+
+
+_DUMMYHOOK = lambda a,x: None # for doing nothing in traversing
+class _Flags(Enum): NONE = 0 # for no value in dict (when optional)
+
 
 class Argument:
     """Define possible arguments and their types and properties."""
@@ -168,10 +172,10 @@ class Argument:
         return flat_subs
 
     def traverse(self, argdict: dict, 
-                 key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                 value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                 sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                 variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
+                 key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                 value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
+                 sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                 variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
         # first, do something with the key
         # then, take out the vaule and do something with it
         key_hook(self, argdict)
@@ -181,10 +185,10 @@ class Argument:
                 key_hook, value_hook, sub_hook, variant_hook)
 
     def traverse_value(self, value: Any, 
-                       key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                       value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                       sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                       variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
+                       key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                       value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
+                       sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                       variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
         # this is not private, and can be called directly
         # in the condition where there is no leading key
         value_hook(self, value)
@@ -197,10 +201,10 @@ class Argument:
                     key_hook, value_hook, sub_hook, variant_hook)
 
     def _traverse_sub(self, value: dict, 
-                      key_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                      value_hook: Callable[["Argument", Any], None] = DUMMYHOOK,
-                      sub_hook: Callable[["Argument", dict], None] = DUMMYHOOK,
-                      variant_hook: Callable[["Variant", dict], None] = DUMMYHOOK):
+                      key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                      value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
+                      sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
+                      variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
         assert isinstance(value, dict)
         sub_hook(self, value)
         for subvrnt in self.sub_variants.values():
@@ -220,13 +224,13 @@ class Argument:
         self.traverse(argdict, 
             key_hook=Argument._check_exist,
             value_hook=Argument._check_value,
-            sub_hook=Argument._check_strict if strict else DUMMYHOOK)
+            sub_hook=Argument._check_strict if strict else _DUMMYHOOK)
 
     def check_value(self, argdict: dict, strict: bool = False):
         self.traverse_value(argdict, 
             key_hook=Argument._check_exist,
             value_hook=Argument._check_value,
-            sub_hook=Argument._check_strict if strict else DUMMYHOOK)
+            sub_hook=Argument._check_strict if strict else _DUMMYHOOK)
 
     def _check_exist(self, argdict: dict):
         if self.optional is True:
@@ -544,13 +548,14 @@ class Variant:
 def make_rst_refid(name):
     if not isinstance(name, str):
         name = '/'.join(name)
-    return f'.. raw:: html\n\n   <a id="{name}"></a>'
+    return (f'.. _`{name}`: \n' if not RAW_ANCHOR
+            else f'.. raw:: html\n\n   <a id="{name}"></a>')
 
 
 def make_ref_pair(path, text=None, prefix=None):
     if not isinstance(path, str):
         path = '/'.join(path)
-    url = "#" + path
+    url = f"`{path}`_" if not RAW_ANCHOR else f"#{path}"
     ref = ("" if not prefix else f"{prefix}:") + path
     inline = f'`{ref}`_' if not text else f'|{ref}|_'
     target = f'.. _`{ref}`: {url}'

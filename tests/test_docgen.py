@@ -113,11 +113,20 @@ class TestDocgen(unittest.TestCase):
         # print("\n\n"+docstr)
 
     def test_dpmd(self):
+        from dargs import dargs
         from dpmdargs import gen_doc
+        dargs.RAW_ANCHOR = False
         docstr = gen_doc(make_anchor=True, make_link=True)
         # print("\n\n"+docstr)
         # with open("out.rst", "w") as of:
         #     print(docstr, file=of)
+        # now testing raw anchor
+        dargs.RAW_ANCHOR = True
+        docstr = gen_doc(make_anchor=True, make_link=True)
+        # print("\n\n"+docstr)
+        # with open("outr.rst", "w") as of:
+        #     print(docstr, file=of)
+
 
 if __name__ == "__main__":
     unittest.main()

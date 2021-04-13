@@ -1,5 +1,5 @@
 from context import dargs
-from dargs import Argument, Variant
+from dargs import dargs, Argument, Variant
 
 ACTIVATION_FN_DICT = {
     "relu": None, 
@@ -30,7 +30,7 @@ def list_to_doc (xx):
 
 
 def make_link(content, ref_key) :
-    return f'`{content} <#{ref_key}>`__'
+    return f'`{content} <{ref_key}_>`_' if not dargs.RAW_ANCHOR else f'`{content} <#{ref_key}>`_'
 
 
 def descrpt_local_frame_args ():
@@ -553,7 +553,6 @@ example_json_str = '''
         "numb_test":	10,
         "save_freq":	1000,
         "save_ckpt":	"model.ckpt",
-        "load_ckpt":	"model.ckpt",
         "disp_training":true,
         "time_training":true,
         "tensorboard":	false,
