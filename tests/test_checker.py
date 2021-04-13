@@ -258,13 +258,6 @@ class TestChecker(unittest.TestCase):
                     Argument("type2", dict)])
             ])
 
-    def test_dpmd(self):
-        import json
-        from dpmdargs import check, example_json_str
-        data = json.loads(example_json_str)
-        check(data)
-        # print("\n\n"+docstr)
-
 
 if __name__ == "__main__":
     unittest.main()
