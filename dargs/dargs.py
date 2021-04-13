@@ -26,7 +26,7 @@ import fnmatch, re
 
 
 INDENT = "    " # doc is indented by four spaces
-RAW_ANCHOR = True # whether to use raw html anchors or RST ones
+RAW_ANCHOR = False # whether to use raw html anchors or RST ones
 
 
 _DUMMYHOOK = lambda a,x: None # for doing nothing in traversing
@@ -555,10 +555,10 @@ def make_rst_refid(name):
 def make_ref_pair(path, text=None, prefix=None):
     if not isinstance(path, str):
         path = '/'.join(path)
-    url = f"`{path}`_" if not RAW_ANCHOR else f"#{path}"
+    tgt = f"`{path}`_" if not RAW_ANCHOR else f"#{path}"
     ref = ("" if not prefix else f"{prefix}:") + path
     inline = f'`{ref}`_' if not text else f'|{ref}|_'
-    target = f'.. _`{ref}`: {url}'
+    target = f'.. _`{ref}`: {tgt}'
     if text:
         target = f'.. |{ref}| replace:: {text}\n' + target
     return inline, target
