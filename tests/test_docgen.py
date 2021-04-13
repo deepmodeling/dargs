@@ -114,7 +114,7 @@ class TestDocgen(unittest.TestCase):
 
     def test_dpmd(self):
         from dpmdargs import gen_doc
-        docstr = gen_doc(make_anchor=True)
+        docstr = gen_doc(make_anchor=True, make_link=True)
         # print("\n\n"+docstr)
         # with open("out.rst", "w") as of:
         #     print(docstr, file=of)

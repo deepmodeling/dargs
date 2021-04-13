@@ -140,7 +140,7 @@ class TestChecker(unittest.TestCase):
                 Argument("type2", dict, [
                     Argument("shared", int),
                     Argument("vnt2_1", int),
-                ]),
+                ], alias=['type2a']),
                 Argument("type3", dict, [
                     Argument("vnt3_1", int)
                 ], [ # testing cascade variants here
@@ -186,7 +186,9 @@ class TestChecker(unittest.TestCase):
                 "vnt2_1": 21}}
         self.assertSetEqual(set(ca.flatten_sub(test_dict2["base"]).keys()),
                             set(test_dict2["base"].keys()))
-        ca.check(test_dict2)
+        ca.check(test_dict2, strict=True)
+        test_dict2["base"]["vnt_flag"] = "type2a"
+        ca.check(test_dict2, strict=True)
         err_dict1 = {
             "base": {
                 "sub1": 1,

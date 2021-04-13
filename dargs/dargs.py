@@ -408,7 +408,8 @@ class Variant:
             self.optional = False
             self.default_tag = ""
         else:
-            assert default_tag in self.choice_dict
+            if default_tag not in self.choice_dict:
+                raise ValueError(f"trying to set invalid default_tag {default_tag}")
             self.optional = True
             self.default_tag = default_tag
 
@@ -423,7 +424,7 @@ class Variant:
             exclude={self.flag_name},
             err_msg=f"Variant with flag `{self.flag_name}`")
         update_nodup(self.choice_alias, 
-            *(((a, c.name) for a in c.alias) for c in choices),
+            *[[(a, c.name) for a in c.alias] for c in choices],
             exclude={self.flag_name, *self.choice_dict.keys()},
             err_msg=f"building alias dict for Variant with flag `{self.flag_name}`")
 
@@ -450,7 +451,12 @@ class Variant:
     def get_choice(self, argdict: dict) -> "Argument":
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
-            return self.choice_dict[tag]
+            if tag in self.choice_dict:
+                return self.choice_dict[tag]
+            elif tag in self.choice_alias:
+                return self.choice_dict[self.choice_alias[tag]]
+            else:
+                raise KeyError(f"get invalid choice {tag} for flag {self.flag_name}.")
         elif self.optional:
             return self.choice_dict[self.default_tag]
         else:
@@ -477,19 +483,23 @@ class Variant:
         body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
                           "different sub args are accepted. \n") 
-        body_list.append(self.gen_doc_flag(paths, **kwargs))
+        body_list.append(self.gen_doc_flag(paths, showflag=showflag, **kwargs))
+        fnstr = f"*{self.flag_name}*"
+        if kwargs.get("make_link"):
+            if not kwargs.get("make_anchor"):
+                raise ValueError("`make_link` only works with `make_anchor` set")
+            fnstr, target = make_ref_pair(paths+[self.flag_name], fnstr, "emph")
+            body_list.append("\n" + target)
         for choice in self.choice_dict.values():
-            f_str = f"{self.flag_name}=" if showflag else ""
-            c_str = f"[{f_str}{choice.name}]"
-            choice_path = [*paths[:-1], paths[-1]+c_str] if paths else [c_str]
             body_list.append("")
+            choice_path = self._make_cpath(choice.name, paths, showflag)
             if kwargs.get("make_anchor"):
                 body_list.append(make_rst_refid(choice_path))
             c_alias = (f" (or its alias{'es' if len(choice.alias) > 1 else ''} "
                       + ", ".join(f"``{al}``" for al in choice.alias) + ")"
                       if choice.alias else "")
             body_list.extend([
-                f"When *{self.flag_name}* is set to ``{choice.name}``{c_alias}: \n",
+                f"When {fnstr} is set to ``{choice.name}``{c_alias}: \n",
                 choice.gen_doc_body(choice_path, **kwargs), 
             ])
         body = "\n".join(body_list)
@@ -504,17 +514,49 @@ class Variant:
         if paths is None:
             paths = []
         arg_path = [*paths, self.flag_name]
-        pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` \n", INDENT)
+        pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` ", INDENT)
+        if kwargs.get("make_link"):
+            if not kwargs.get("make_anchor"):
+                raise ValueError("`make_link` only works with `make_anchor` set")
+            l_choice, l_target = zip(*(make_ref_pair(
+                    self._make_cpath(c.name, paths, kwargs["showflag"]),
+                    text=f"``{c.name}``", prefix="code") 
+                for c in self.choice_dict.values()))
+            targetdoc = indent('\n' + '\n'.join(l_target), INDENT)
+        else:
+            l_choice = [c.name for c in self.choice_dict.values()]
+            targetdoc = None
+        choicedoc = indent("| possible choices: " + ", ".join(l_choice), INDENT)
         realdoc = indent(self.doc + "\n", INDENT) if self.doc else None
         anchor = make_rst_refid(arg_path) if kwargs.get("make_anchor") else None
-        allparts = [anchor, headdoc, typedoc, pathdoc, realdoc]
-        return "\n".join(filter(None, allparts))
+        allparts = [anchor, headdoc, typedoc, pathdoc, choicedoc, "", realdoc, targetdoc]
+        return "\n".join(filter(None.__ne__, allparts))
+
+    def _make_cpath(self, cname: str, 
+                    paths: Optional[List[str]] = None, 
+                    showflag : bool = False):
+        f_str = f"{self.flag_name}=" if showflag else ""
+        c_str = f"[{f_str}{cname}]"
+        cpath = [*paths[:-1], paths[-1]+c_str] if paths else [c_str]
+        return cpath
 
 
 def make_rst_refid(name):
     if not isinstance(name, str):
         name = '/'.join(name)
     return f'.. raw:: html\n\n   <a id="{name}"></a>'
+
+
+def make_ref_pair(path, text=None, prefix=None):
+    if not isinstance(path, str):
+        path = '/'.join(path)
+    url = "#" + path
+    ref = ("" if not prefix else f"{prefix}:") + path
+    inline = f'`{ref}`_' if not text else f'|{ref}|_'
+    target = f'.. _`{ref}`: {url}'
+    if text:
+        target = f'.. |{ref}| replace:: {text}\n' + target
+    return inline, target
 
 
 def update_nodup(this : dict, 
