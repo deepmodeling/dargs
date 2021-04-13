@@ -337,6 +337,9 @@ class Argument:
             typesig += ", optional"
             if self.default is not _Flags.NONE:
                 typesig += f", default: ``{self.default}``"
+        if self.alias:
+            typesig += f", alias{'es' if len(self.alias) > 1 else ''}: "
+            typesig += ', '.join(f"*{al}*" for al in self.alias)
         head = f"{self.name}: \n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
             head = f"{make_rst_refid(paths)}\n" + head
@@ -482,8 +485,11 @@ class Variant:
             body_list.append("")
             if kwargs.get("make_anchor"):
                 body_list.append(make_rst_refid(choice_path))
+            c_alias = (f" (or its alias{'es' if len(choice.alias) > 1 else ''} "
+                      + ", ".join(f"``{al}``" for al in choice.alias) + ")"
+                      if choice.alias else "")
             body_list.extend([
-                f"When *{self.flag_name}* is set to ``{choice.name}``: \n",
+                f"When *{self.flag_name}* is set to ``{choice.name}``{c_alias}: \n",
                 choice.gen_doc_body(choice_path, **kwargs), 
             ])
         body = "\n".join(body_list)

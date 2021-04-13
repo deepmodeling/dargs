@@ -116,6 +116,8 @@ class TestDocgen(unittest.TestCase):
         from dpmdargs import gen_doc
         docstr = gen_doc(make_anchor=True)
         # print("\n\n"+docstr)
+        # with open("out.rst", "w") as of:
+        #     print(docstr, file=of)
 
 if __name__ == "__main__":
     unittest.main()
