@@ -492,8 +492,8 @@ class Variant:
         if kwargs.get("make_link"):
             if not kwargs.get("make_anchor"):
                 raise ValueError("`make_link` only works with `make_anchor` set")
-            fnstr, target = make_ref_pair(paths+[self.flag_name], fnstr, "emph")
-            body_list.append("\n" + target)
+            fnstr, target = make_ref_pair(paths+[self.flag_name], fnstr, "flag")
+            body_list.append(target + "\n")
         for choice in self.choice_dict.values():
             body_list.append("")
             choice_path = self._make_cpath(choice.name, paths, showflag)
@@ -526,7 +526,7 @@ class Variant:
                     self._make_cpath(c.name, paths, kwargs["showflag"]),
                     text=f"``{c.name}``", prefix="code") 
                 for c in self.choice_dict.values()))
-            targetdoc = indent('\n' + '\n'.join(l_target), INDENT)
+            targetdoc = indent('\n'.join(l_target) + "\n", INDENT)
         else:
             l_choice = [c.name for c in self.choice_dict.values()]
             targetdoc = None
