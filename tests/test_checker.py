@@ -1,7 +1,7 @@
 from context import dargs
 import unittest
 from dargs import Argument, Variant
-
+from dargs.dargs import ArgumentKeyError, ArgumentTypeError, ArgumentValueError
 
 class TestChecker(unittest.TestCase):
 
@@ -15,11 +15,11 @@ class TestChecker(unittest.TestCase):
         ca.check({"key1": [10, 20]})
         ca.check({"key1": "hello"})
         # possible error
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check({"key2": 1})
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check({"key1": 1, "key2": 1}, strict=True)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ArgumentTypeError):
             ca.check({"key1": 1.0})
         # special handle of None
         ca = Argument("key1", [int, None])
@@ -30,7 +30,7 @@ class TestChecker(unittest.TestCase):
         # extra checker
         ca = Argument("key1", int, extra_check=lambda v: v > 0)
         ca.check({"key1": 1})
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ArgumentValueError):
             ca.check({"key1": 0})
 
 
@@ -71,14 +71,14 @@ class TestChecker(unittest.TestCase):
                     "subsub1": 11,
                     "subsub2": {
                         "subsubsub2": 111}}}} # different name here
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1)
         err_dict1["base"]["sub2"]["subsub2"]["subsubsub1"] = 111
         ca.check(err_dict1) # now should pass
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict1["base"]["sub2"] = None
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict1)
         # make sure no dup keys is allowed
         with self.assertRaises(ValueError):
@@ -108,11 +108,11 @@ class TestChecker(unittest.TestCase):
                 {"sub1": 11,
                  "sub3": "world"}
             ]}
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1)
         err_dict1["base"][1]["sub2"] = "world too"
         ca.check(err_dict1) # now should pass
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict2 = {
             "base": [
@@ -121,7 +121,7 @@ class TestChecker(unittest.TestCase):
                 {"sub1": 11,
                  "sub2": None}
             ]}
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict2)
 
     def test_sub_variants(self):
@@ -198,13 +198,13 @@ class TestChecker(unittest.TestCase):
                 "vnt1_1": 11,
                 "vnt1_2": {
                     "vnt1_1_1": 111}}}
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1)
         err_dict1["base"]["vnt_flag"] = "type1"
         ca.check(err_dict1, strict=True) # no additional should pass
         err_dict1["base"]["additional"] = "hahaha"
         ca.check(err_dict1) # without strict should pass
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(err_dict1, strict=True) # but should fail when strict
         err_dict2 = {
             "base": {
@@ -213,11 +213,11 @@ class TestChecker(unittest.TestCase):
                 "vnt_flag" : "badtype", # here is wrong
                 "shared": 20,
                 "vnt2_1": 21}}
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentValueError):
             ca.check(err_dict2)
         # test optional choice
         test_dict1["base"].pop("vnt_flag")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(test_dict1)
         ca.sub_variants["vnt_flag"].optional = True
         ca.sub_variants["vnt_flag"].default_tag = "type1"
@@ -238,7 +238,7 @@ class TestChecker(unittest.TestCase):
                             set(test_dict3["base"].keys()))
         ca.check(test_dict3, strict=True)
         test_dict3["base"].pop("vnt3_flag2")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ArgumentKeyError):
             ca.check(test_dict3)
         ca.sub_variants['vnt_flag'].choice_dict["type3"].sub_variants["vnt3_flag2"].optional = True
         ca.sub_variants['vnt_flag'].choice_dict["type3"].sub_variants["vnt3_flag2"].default_tag = 'v3f2t2'

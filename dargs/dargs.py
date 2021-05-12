@@ -28,9 +28,44 @@ import fnmatch, re
 INDENT = "    " # doc is indented by four spaces
 RAW_ANCHOR = False # whether to use raw html anchors or RST ones
 
-
-_DUMMYHOOK = lambda a,x: None # for doing nothing in traversing
+# the third argument is the base path
+HookArgKType = Callable[["Argument", dict, List[str]], None]
+HookArgVType = Callable[["Argument", Any,  List[str]], None]
+HookVrntType = Callable[["Variant",  dict, List[str]], None]
+_DUMMYHOOK = lambda a,x,p: None # for doing nothing in traversing
 class _Flags(Enum): NONE = 0 # for no value in dict (when optional)
+
+
+class ArgumentError(Exception):
+    """Base error class for invalid argument values in argchecking."""
+
+    def __init__(self, 
+                 path: Union[None, str, List[str]] = None, 
+                 message: Optional[str] = None):
+        super().__init__(message)
+        if path is None:
+            path = ""
+        if not isinstance(path, str):
+            path = "/".join(path)
+        self.path = path.strip("/")
+        self.message = message
+    
+    def __str__(self) -> str:
+        loc_msg = ("at root location" if not self.path else
+                  f"at location `{self.path}`")
+        return f"[{loc_msg}] {self.message}"
+
+class ArgumentKeyError(ArgumentError):
+    """Error class for missing or invalid argument keys"""
+    pass
+
+class ArgumentTypeError(ArgumentError):
+    """Error class for invalid argument data types"""
+    pass
+
+class ArgumentValueError(ArgumentError):
+    """Error class for missing or invalid argument values"""
+    pass
 
 
 class Argument:
@@ -163,64 +198,73 @@ class Argument:
     # above are creation part
     # below are general traverse part
 
-    def flatten_sub(self, value: dict) -> Dict[str, "Argument"]:
+    def flatten_sub(self, value: dict, path=None) -> Dict[str, "Argument"]:
         sub_dicts = [self.sub_fields]
-        sub_dicts.extend(vrnt.flatten_sub(value) for vrnt in self.sub_variants.values())
+        sub_dicts.extend(vrnt.flatten_sub(value, path) 
+            for vrnt in self.sub_variants.values())
         flat_subs = {}
         update_nodup(flat_subs, *sub_dicts, 
             err_msg=f"flattening variants of {self.name}")
         return flat_subs
 
     def traverse(self, argdict: dict, 
-                 key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                 value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
-                 sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                 variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
+                 key_hook: HookArgKType = _DUMMYHOOK,
+                 value_hook: HookArgVType = _DUMMYHOOK,
+                 sub_hook: HookArgKType = _DUMMYHOOK,
+                 variant_hook: HookVrntType = _DUMMYHOOK, 
+                 path: Optional[List[str]] = None):
         # first, do something with the key
         # then, take out the vaule and do something with it
-        key_hook(self, argdict)
+        if path is None: path = []
+        key_hook(self, argdict, path)
         if self.name in argdict:
             # this is the key step that we traverse into the tree
             self.traverse_value(argdict[self.name], 
-                key_hook, value_hook, sub_hook, variant_hook)
+                key_hook, value_hook, sub_hook, variant_hook, path)
 
     def traverse_value(self, value: Any, 
-                       key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                       value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
-                       sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                       variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
+                       key_hook: HookArgKType = _DUMMYHOOK,
+                       value_hook: HookArgVType = _DUMMYHOOK,
+                       sub_hook: HookArgKType = _DUMMYHOOK,
+                       variant_hook: HookVrntType = _DUMMYHOOK,
+                       path: Optional[List[str]] = None):
         # this is not private, and can be called directly
         # in the condition where there is no leading key
-        value_hook(self, value)
+        if path is None: path = []
+        value_hook(self, value, path)
         if isinstance(value, dict):
             self._traverse_sub(value,
-                key_hook, value_hook, sub_hook, variant_hook)
+                key_hook, value_hook, sub_hook, variant_hook, path)
         if isinstance(value, list) and self.repeat:
-            for item in value:
+            for idx, item in enumerate(value):
                 self._traverse_sub(item,
-                    key_hook, value_hook, sub_hook, variant_hook)
+                    key_hook, value_hook, sub_hook, variant_hook, [*path, str(idx)])
 
     def _traverse_sub(self, value: dict, 
-                      key_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                      value_hook: Callable[["Argument", Any], None] = _DUMMYHOOK,
-                      sub_hook: Callable[["Argument", dict], None] = _DUMMYHOOK,
-                      variant_hook: Callable[["Variant", dict], None] = _DUMMYHOOK):
+                      key_hook: HookArgKType = _DUMMYHOOK,
+                      value_hook: HookArgVType = _DUMMYHOOK,
+                      sub_hook: HookArgKType = _DUMMYHOOK,
+                      variant_hook: HookVrntType = _DUMMYHOOK,
+                      path: Optional[List[str]] = None):
         assert isinstance(value, dict)
-        sub_hook(self, value)
+        if path is None: path = []
+        sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
-            variant_hook(subvrnt, value)
-        for subarg in self.flatten_sub(value).values():
+            variant_hook(subvrnt, value, path)
+        newpath = [*path, self.name]
+        for subarg in self.flatten_sub(value, path).values():
             subarg.traverse(value, 
-                key_hook, value_hook, sub_hook, variant_hook)
+                key_hook, value_hook, sub_hook, variant_hook, newpath)
 
     # above are general traverse part
     # below are type checking part
 
     def check(self, argdict: dict, strict: bool = False):
         if strict and len(argdict) != 1:
-            raise KeyError("only one single key of arg name is allowed "
-                           "for check in strict mode at top level, "
-                           "use check_value if you are checking subfields")
+            raise ArgumentKeyError(None,
+                "only one single key of arg name is allowed "
+                "for check in strict mode at top level, "
+                "use check_value if you are checking subfields")
         self.traverse(argdict, 
             key_hook=Argument._check_exist,
             value_hook=Argument._check_value,
@@ -232,27 +276,32 @@ class Argument:
             value_hook=Argument._check_value,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK)
 
-    def _check_exist(self, argdict: dict):
+    def _check_exist(self, argdict: dict, path=None):
         if self.optional is True:
             return
         if self.name not in argdict:
-            raise KeyError(f"key `{self.name}` is required "
-                            "in arguments but not found")
+            raise ArgumentKeyError(path,
+                f"key `{self.name}` is required "
+                 "in arguments but not found")
 
-    def _check_value(self, value: Any):
+    def _check_value(self, value: Any, path=None):
         if not isinstance(value, self.dtype):
-            raise TypeError(f"key `{self.name}` gets wrong value type: "
-                            f"requires {self.dtype} but gets {type(value)}")
+            raise ArgumentTypeError(path,
+                f"key `{self.name}` gets wrong value type, "
+                f"requires <{'|'.join(dd.__name__ for dd in self.dtype)}> "
+                f"but gets <{type(value).__name__}>")
         if self.extra_check is not None and not self.extra_check(value):
-            raise ValueError(f"key `{self.name}` gets bad value "
-                              "that fails to pass its extra checking")
+            raise ArgumentValueError(path,
+                f"key `{self.name}` gets bad value "
+                "that fails to pass its extra checking")
 
-    def _check_strict(self, value: dict):
-        allowed_keys = self.flatten_sub(value).keys()
+    def _check_strict(self, value: dict, path=None):
+        allowed_keys = self.flatten_sub(value, path).keys()
         for name in value.keys():
             if name not in allowed_keys:
-                raise KeyError(f"undefined key `{name}` is "
-                                "not allowed in strict mode")
+                raise ArgumentKeyError(path,
+                    f"undefined key `{name}` is "
+                    "not allowed in strict mode")
 
     # above are type checking part
     # below are normalizing part
@@ -271,8 +320,8 @@ class Argument:
                 key_hook=Argument._assign_default)
         if trim_pattern is not None:
             self._trim_unrequired(argdict, trim_pattern, reserved=[self.name])
-            self.traverse(argdict, sub_hook=lambda a, d: 
-                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d).keys()))
+            self.traverse(argdict, sub_hook=lambda a, d, p: 
+                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d, p).keys()))
         return argdict
 
     def normalize_value(self, value: Any, inplace: bool = False, 
@@ -288,17 +337,17 @@ class Argument:
             self.traverse_value(value, 
                 key_hook=Argument._assign_default)
         if trim_pattern is not None:
-            self.traverse_value(value, sub_hook=lambda a, d: 
-                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d).keys()))
+            self.traverse_value(value, sub_hook=lambda a, d, p: 
+                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d, p).keys()))
         return value
 
-    def _assign_default(self, argdict: dict):
+    def _assign_default(self, argdict: dict, path=None):
         if (self.name not in argdict 
         and self.optional 
         and self.default is not _Flags.NONE):
             argdict[self.name] = self.default
 
-    def _convert_alias(self, argdict: dict):
+    def _convert_alias(self, argdict: dict, path=None):
         if self.name not in argdict:
             for alias in self.alias:
                 if alias in argdict:
@@ -323,11 +372,11 @@ class Argument:
     # above are normalizing part
     # below are doc generation part
 
-    def gen_doc(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc(self, path: Optional[List[str]] = None, **kwargs) -> str:
         # the actual indentation is done here, and ONLY here
-        if paths is None:
-            paths = []
-        sub_paths = [*paths, self.name]
+        if path is None:
+            path = []
+        sub_paths = [*path, self.name]
         doc_list = [
             self.gen_doc_head(sub_paths, **kwargs),
             indent(self.gen_doc_path(sub_paths, **kwargs), INDENT),
@@ -335,7 +384,7 @@ class Argument:
         ]
         return "\n".join(filter(None, doc_list))
 
-    def gen_doc_head(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_head(self, path: Optional[List[str]] = None, **kwargs) -> str:
         typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
@@ -346,16 +395,16 @@ class Argument:
             typesig += ', '.join(f"*{al}*" for al in self.alias)
         head = f"{self.name}: \n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
-            head = f"{make_rst_refid(paths)}\n" + head
+            head = f"{make_rst_refid(path)}\n" + head
         return head
 
-    def gen_doc_path(self, paths: Optional[List[str]] = None, **kwargs) -> str:
-        if paths is None:
-            paths = [self.name]
-        pathdoc = f"| argument path: ``{'/'.join(paths)}``\n"
+    def gen_doc_path(self, path: Optional[List[str]] = None, **kwargs) -> str:
+        if path is None:
+            path = [self.name]
+        pathdoc = f"| argument path: ``{'/'.join(path)}``\n"
         return pathdoc
 
-    def gen_doc_body(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_body(self, path: Optional[List[str]] = None, **kwargs) -> str:
         body_list = []
         if self.doc:
             body_list.append(self.doc + "\n")
@@ -366,11 +415,11 @@ class Argument:
             # body_list.append("") # genetate a blank line
             # body_list.append("This argument accept the following sub arguments:")                
             for subarg in self.sub_fields.values():
-                body_list.append(subarg.gen_doc(paths, **kwargs))
+                body_list.append(subarg.gen_doc(path, **kwargs))
         if self.sub_variants:
             showflag = len(self.sub_variants) > 1
             for subvrnt in self.sub_variants.values():
-                body_list.append(subvrnt.gen_doc(paths, showflag, **kwargs))
+                body_list.append(subvrnt.gen_doc(path, showflag, **kwargs))
         body = "\n".join(body_list)
         return body
 
@@ -413,7 +462,7 @@ class Variant:
             self.default_tag = ""
         else:
             if default_tag not in self.choice_dict:
-                raise ValueError(f"trying to set invalid default_tag {default_tag}")
+                raise ValueError(f"trying to set invalid default_tag `{default_tag}`")
             self.optional = True
             self.default_tag = default_tag
 
@@ -452,7 +501,7 @@ class Variant:
     # above are creation part
     # below are helpers for traversing
 
-    def get_choice(self, argdict: dict) -> "Argument":
+    def get_choice(self, argdict: dict, path=None) -> "Argument":
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             if tag in self.choice_dict:
@@ -460,20 +509,22 @@ class Variant:
             elif tag in self.choice_alias:
                 return self.choice_dict[self.choice_alias[tag]]
             else:
-                raise KeyError(f"get invalid choice {tag} for flag {self.flag_name}.")
+                raise ArgumentValueError(path,
+                    f"get invalid choice `{tag}` for flag key `{self.flag_name}`.")
         elif self.optional:
             return self.choice_dict[self.default_tag]
         else:
-            raise KeyError(f"key `{self.flag_name}` is required "
-                            "to choose variant but not found.")
+            raise ArgumentKeyError(path,
+                f"key `{self.flag_name}` is required "
+                 "to choose variant but not found.")
 
-    def flatten_sub(self, argdict: dict) -> Dict[str, "Argument"]:
-        choice = self.get_choice(argdict)
+    def flatten_sub(self, argdict: dict, path=None) -> Dict[str, "Argument"]:
+        choice = self.get_choice(argdict, path)
         fields = {self.flag_name: self.dummy_argument(), # as a placeholder
-                  **choice.flatten_sub(argdict)}
+                  **choice.flatten_sub(argdict, path)}
         return fields
 
-    def _convert_choice_alias(self, argdict: dict):
+    def _convert_choice_alias(self, argdict: dict, path=None):
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             if tag not in self.choice_dict and tag in self.choice_alias:
@@ -482,21 +533,21 @@ class Variant:
     # above are traversing part
     # below are doc generation part
 
-    def gen_doc(self, paths: Optional[List[str]] = None, 
+    def gen_doc(self, path: Optional[List[str]] = None, 
                       showflag : bool = False, **kwargs) -> str:
         body_list = [""]
         body_list.append(f"Depending on the value of *{self.flag_name}*, "
                           "different sub args are accepted. \n") 
-        body_list.append(self.gen_doc_flag(paths, showflag=showflag, **kwargs))
+        body_list.append(self.gen_doc_flag(path, showflag=showflag, **kwargs))
         fnstr = f"*{self.flag_name}*"
         if kwargs.get("make_link"):
             if not kwargs.get("make_anchor"):
                 raise ValueError("`make_link` only works with `make_anchor` set")
-            fnstr, target = make_ref_pair(paths+[self.flag_name], fnstr, "flag")
+            fnstr, target = make_ref_pair(path+[self.flag_name], fnstr, "flag")
             body_list.append(target + "\n")
         for choice in self.choice_dict.values():
             body_list.append("")
-            choice_path = self._make_cpath(choice.name, paths, showflag)
+            choice_path = self._make_cpath(choice.name, path, showflag)
             if kwargs.get("make_anchor"):
                 body_list.append(make_rst_refid(choice_path))
             c_alias = (f" (or its alias{'es' if len(choice.alias) > 1 else ''} "
@@ -509,21 +560,21 @@ class Variant:
         body = "\n".join(body_list)
         return body
 
-    def gen_doc_flag(self, paths: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_flag(self, path: Optional[List[str]] = None, **kwargs) -> str:
         headdoc = f"{self.flag_name}:"
         typedoc = "| type: ``str`` (flag key)"
         if self.optional:
             typedoc += f", default: ``{self.default_tag}``"
         typedoc = indent(typedoc, INDENT)
-        if paths is None:
-            paths = []
-        arg_path = [*paths, self.flag_name]
+        if path is None:
+            path = []
+        arg_path = [*path, self.flag_name]
         pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` ", INDENT)
         if kwargs.get("make_link"):
             if not kwargs.get("make_anchor"):
-                raise ValueError("`make_link` only works with `make_anchor` set")
+                raise ValueError("`make_link` only works with `make_anchor` being set")
             l_choice, l_target = zip(*(make_ref_pair(
-                    self._make_cpath(c.name, paths, kwargs["showflag"]),
+                    self._make_cpath(c.name, path, kwargs["showflag"]),
                     text=f"``{c.name}``", prefix="code") 
                 for c in self.choice_dict.values()))
             targetdoc = indent('\n'.join(l_target) + "\n", INDENT)
@@ -537,11 +588,11 @@ class Variant:
         return "\n".join(filter(None.__ne__, allparts))
 
     def _make_cpath(self, cname: str, 
-                    paths: Optional[List[str]] = None, 
+                    path: Optional[List[str]] = None, 
                     showflag : bool = False):
         f_str = f"{self.flag_name}=" if showflag else ""
         c_str = f"[{f_str}{cname}]"
-        cpath = [*paths[:-1], paths[-1]+c_str] if paths else [c_str]
+        cpath = [*path[:-1], path[-1]+c_str] if path else [c_str]
         return cpath
 
 
@@ -574,6 +625,6 @@ def update_nodup(this : dict,
         for k, v in pair:
             if k in this or (exclude and k in exclude):
                 raise ValueError(f"duplicate key `{k}` when updating dict"
-                                 + "" if err_msg is None else f"in {err_msg}")
+                                 +("" if err_msg is None else f"in {err_msg}"))
             this[k] = v
     return this
