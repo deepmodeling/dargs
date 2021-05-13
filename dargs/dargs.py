@@ -305,7 +305,7 @@ class Argument:
             if name not in allowed_keys:
                 raise ArgumentKeyError(path,
                     f"undefined key `{name}` is "
-                    "not allowed in strict mode")
+                     "not allowed in strict mode")
 
     # above are type checking part
     # below are normalizing part
@@ -323,9 +323,9 @@ class Argument:
             self.traverse(argdict, 
                 key_hook=Argument._assign_default)
         if trim_pattern is not None:
-            self._trim_unrequired(argdict, trim_pattern, reserved=[self.name])
+            trim_by_pattern(argdict, trim_pattern, reserved=[self.name])
             self.traverse(argdict, sub_hook=lambda a, d, p: 
-                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d, p).keys()))
+                trim_by_pattern(d, trim_pattern, a.flatten_sub(d, p).keys()))
         return argdict
 
     def normalize_value(self, value: Any, inplace: bool = False, 
@@ -342,7 +342,7 @@ class Argument:
                 key_hook=Argument._assign_default)
         if trim_pattern is not None:
             self.traverse_value(value, sub_hook=lambda a, d, p: 
-                Argument._trim_unrequired(d, trim_pattern, a.flatten_sub(d, p).keys()))
+                trim_by_pattern(d, trim_pattern, a.flatten_sub(d, p).keys()))
         return value
 
     def _assign_default(self, argdict: dict, path=None):
@@ -357,21 +357,6 @@ class Argument:
                 if alias in argdict:
                     argdict[self.name] = argdict.pop(alias)
                     return
-
-    @staticmethod
-    def _trim_unrequired(argdict: dict, pattern: str, 
-                         reserved: Optional[List[str]] = None,
-                         use_regex: bool = False):
-        rep = fnmatch.translate(pattern) if not use_regex else pattern
-        rem = re.compile(rep)
-        if reserved:
-            conflict = list(filter(rem.match, reserved))
-            if conflict:
-                raise ValueError(f"pattern `{pattern}` conflicts with the "
-                                 f"following reserved names: {', '.join(conflict)}")
-        unrequired = list(filter(rem.match, argdict.keys()))
-        for key in unrequired:
-            argdict.pop(key)
 
     # above are normalizing part
     # below are doc generation part
@@ -633,3 +618,18 @@ def update_nodup(this : dict,
                                  +("" if err_msg is None else f"in {err_msg}"))
             this[k] = v
     return this
+
+
+def trim_by_pattern(argdict: dict, pattern: str, 
+                    reserved: Optional[List[str]] = None,
+                    use_regex: bool = False):
+    rep = fnmatch.translate(pattern) if not use_regex else pattern
+    rem = re.compile(rep)
+    if reserved:
+        conflict = list(filter(rem.match, reserved))
+        if conflict:
+            raise ValueError(f"pattern `{pattern}` conflicts with the "
+                                f"following reserved names: {', '.join(conflict)}")
+    unrequired = list(filter(rem.match, argdict.keys()))
+    for key in unrequired:
+        argdict.pop(key)
