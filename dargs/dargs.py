@@ -81,7 +81,8 @@ class Argument:
             default: Any = _Flags.NONE,
             alias: Optional[Iterable[str]] = None,
             extra_check: Optional[Callable[[Any], bool]] = None,
-            doc: str = ""):
+            doc: str = "",
+            fold_subdoc: bool = False):
         self.name = name
         self.dtype = dtype
         self.sub_fields : Dict[str, "Argument"] = {}
@@ -92,6 +93,7 @@ class Argument:
         self.alias = alias if alias is not None else []
         self.extra_check = extra_check
         self.doc = doc
+        self.fold_subdoc = fold_subdoc
         # adding subfields and subvariants
         self.extend_subfields(sub_fields)
         self.extend_subvariants(sub_variants)
@@ -218,9 +220,12 @@ class Argument:
         if path is None: path = []
         key_hook(self, argdict, path)
         if self.name in argdict:
+            value = argdict[self.name]
+            value_hook(self, value, path)
+            newpath = [*path, self.name]
             # this is the key step that we traverse into the tree
-            self.traverse_value(argdict[self.name], 
-                key_hook, value_hook, sub_hook, variant_hook, path)
+            self.traverse_value(value, 
+                key_hook, value_hook, sub_hook, variant_hook, newpath)
 
     def traverse_value(self, value: Any, 
                        key_hook: HookArgKType = _DUMMYHOOK,
@@ -231,7 +236,6 @@ class Argument:
         # this is not private, and can be called directly
         # in the condition where there is no leading key
         if path is None: path = []
-        value_hook(self, value, path)
         if isinstance(value, dict):
             self._traverse_sub(value,
                 key_hook, value_hook, sub_hook, variant_hook, path)
@@ -247,14 +251,13 @@ class Argument:
                       variant_hook: HookVrntType = _DUMMYHOOK,
                       path: Optional[List[str]] = None):
         assert isinstance(value, dict)
-        if path is None: path = []
+        if path is None: path = [self.name]
         sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
-        newpath = [*path, self.name]
         for subarg in self.flatten_sub(value, path).values():
             subarg.traverse(value, 
-                key_hook, value_hook, sub_hook, variant_hook, newpath)
+                key_hook, value_hook, sub_hook, variant_hook, path)
 
     # above are general traverse part
     # below are type checking part
@@ -297,6 +300,7 @@ class Argument:
 
     def _check_strict(self, value: dict, path=None):
         allowed_keys = self.flatten_sub(value, path).keys()
+        # curpath = [*path, self.name]
         for name in value.keys():
             if name not in allowed_keys:
                 raise ArgumentKeyError(path,
@@ -408,18 +412,19 @@ class Argument:
         body_list = []
         if self.doc:
             body_list.append(self.doc + "\n")
-        if self.repeat:
-            body_list.append("This argument takes a list with "
-                             "each element containing the following: \n")
-        if self.sub_fields:
-            # body_list.append("") # genetate a blank line
-            # body_list.append("This argument accept the following sub arguments:")                
-            for subarg in self.sub_fields.values():
-                body_list.append(subarg.gen_doc(path, **kwargs))
-        if self.sub_variants:
-            showflag = len(self.sub_variants) > 1
-            for subvrnt in self.sub_variants.values():
-                body_list.append(subvrnt.gen_doc(path, showflag, **kwargs))
+        if not self.fold_subdoc:
+            if self.repeat:
+                body_list.append("This argument takes a list with "
+                                "each element containing the following: \n")
+            if self.sub_fields:
+                # body_list.append("") # genetate a blank line
+                # body_list.append("This argument accept the following sub arguments:")                
+                for subarg in self.sub_fields.values():
+                    body_list.append(subarg.gen_doc(path, **kwargs))
+            if self.sub_variants:
+                showflag = len(self.sub_variants) > 1
+                for subvrnt in self.sub_variants.values():
+                    body_list.append(subvrnt.gen_doc(path, showflag, **kwargs))
         body = "\n".join(body_list)
         return body
 
