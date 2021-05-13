@@ -19,11 +19,11 @@ class TestDocgen(unittest.TestCase):
         # print("\n\n"+docstr)
 
     def test_sub_repeat(self):
-        ca = Argument("base", dict, [
+        ca = Argument("base", list, [
             Argument("sub1", int, doc="sub doc." * 5),
             Argument("sub2", [None, str, dict], [
                 Argument("subsub1", int, doc="subsub doc." * 5, optional=True),
-                Argument("subsub2", dict, [
+                Argument("subsub2", list, [
                     Argument("subsubsub1", int, doc="subsubsub doc." * 5)
                 ], doc="subsub doc." * 5, repeat=True)
             ], doc="sub doc." * 5)

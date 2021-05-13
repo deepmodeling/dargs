@@ -170,7 +170,14 @@ def descrpt_hybrid_args():
     doc_list = f'A list of descriptor definitions'
     
     return [
-        Argument("list", list, optional = False, doc = doc_list)
+        Argument("list", list, [], [
+            Variant("type", [
+                Argument("loc_frame", dict, descrpt_local_frame_args()),
+                Argument("se_a", dict, descrpt_se_a_args()),
+                Argument("se_r", dict, descrpt_se_r_args()),
+                Argument("se_a_3be", dict, descrpt_se_a_3be_args(), alias = ['se_at']),
+                Argument("se_a_tpe", dict, descrpt_se_a_tpe_args(), alias = ['se_a_ebd'])])],
+            repeat=True, optional = False, doc = doc_list, fold_subdoc=True)
     ]
 
 
@@ -526,17 +533,29 @@ example_json_str = '''
     "_comment": " model parameters",
     "model": {
         "type_map":	["O", "H"],
-        "descriptor" :{
-            "type":		"se_a",
-            "sel":		[46, 92],
-            "rcut_smth":	5.80,
-            "rcut":		6.00,
-            "neuron":		[25, 50, 100],
-            "resnet_dt":	false,
-            "axis_neuron":	16,
-            "seed":		1,
-            "_comment":		" that's all"
-        },
+        "descriptor" : { 
+            "type": "hybrid",
+            "list": [{
+                "type":		"se_a",
+                "sel":		[46, 92],
+                "rcut_smth":	5.80,
+                "rcut":		6.00,
+                "neuron":		[25, 50, 100],
+                "resnet_dt":	false,
+                "axis_neuron":	16,
+                "seed":		1,
+                "_comment":		" that's all"
+            },{
+                "type":		"se_r",
+                "sel":		[46, 92],
+                "rcut_smth":	5.80,
+                "rcut":		6.00,
+                "neuron":		[25, 50, 100],
+                "resnet_dt":	false,
+                "seed":		1,
+                "_comment":		" that's all"
+            }]
+        }, 
         "fitting_net" : {
             "neuron":		[240, 240, 240],
             "resnet_dt":	true,
