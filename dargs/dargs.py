@@ -639,8 +639,8 @@ def trim_by_pattern(argdict: dict, pattern: str,
 class ArgumentEncoder(json.JSONEncoder):
     """Extended JSON Encoder to encode Argument object:
 
-    Usage
-    -----
+    Examples
+    --------
     >>> json.dumps(some_arg, cls=ArgumentEncoder)
     """
     def default(self, obj) -> Dict[str, Union[str, bool, List]]:
@@ -658,18 +658,18 @@ class ArgumentEncoder(json.JSONEncoder):
         """
         if isinstance(obj, Argument):
             return {
+                "object": "Argument",
                 "name": obj.name,
                 "type": obj.dtype,
                 "alias": obj.alias,
                 "doc": obj.doc,
-                "sub_filed": obj.sub_fields,
-                "fold_subdoc": obj.fold_subdoc,
                 "repeat": obj.repeat,
                 "sub_fields": obj.sub_fields,
                 "sub_variants": obj.sub_variants,
             }
         elif isinstance(obj, Variant):
             return {
+                "object": "Variant",
                 "flag_name": obj.flag_name,
                 "optional": obj.optional,
                 "default_tag": obj.default_tag,
