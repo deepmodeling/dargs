@@ -23,6 +23,7 @@ from textwrap import indent
 from copy import deepcopy
 from enum import Enum
 import fnmatch, re
+import json
 
 
 INDENT = "    " # doc is indented by four spaces
@@ -633,3 +634,48 @@ def trim_by_pattern(argdict: dict, pattern: str,
     unrequired = list(filter(rem.match, argdict.keys()))
     for key in unrequired:
         argdict.pop(key)
+
+
+class ArgumentEncoder(json.JSONEncoder):
+    """Extended JSON Encoder to encode Argument object:
+
+    Usage
+    -----
+    >>> json.dumps(some_arg, cls=ArgumentEncoder)
+    """
+    def default(self, obj) -> Dict[str, Union[str, bool, List]]:
+        """Generate a dict containing argument information, making it ready to be encoded
+        to JSON string.
+
+        Note
+        ----
+        All object in the dict should be JSON serializable.
+
+        Returns
+        -------
+        dict: Dict
+            a dict containing argument information
+        """
+        if isinstance(obj, Argument):
+            return {
+                "name": obj.name,
+                "type": obj.dtype,
+                "alias": obj.alias,
+                "doc": obj.doc,
+                "sub_filed": obj.sub_fields,
+                "fold_subdoc": obj.fold_subdoc,
+                "repeat": obj.repeat,
+                "sub_fields": obj.sub_fields,
+                "sub_variants": obj.sub_variants,
+            }
+        elif isinstance(obj, Variant):
+            return {
+                "flag_name": obj.flag_name,
+                "optional": obj.optional,
+                "default_tag": obj.default_tag,
+                "choice_dict": obj.choice_dict,
+                "doc": obj.doc,
+            }
+        elif isinstance(obj, type):
+            return obj.__name__
+        return json.JSONEncoder.default(self, obj)
