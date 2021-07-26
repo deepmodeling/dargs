@@ -661,6 +661,7 @@ class ArgumentEncoder(json.JSONEncoder):
                 "object": "Argument",
                 "name": obj.name,
                 "type": obj.dtype,
+                "optional": obj.optional,
                 "alias": obj.alias,
                 "doc": obj.doc,
                 "repeat": obj.repeat,
@@ -674,6 +675,7 @@ class ArgumentEncoder(json.JSONEncoder):
                 "optional": obj.optional,
                 "default_tag": obj.default_tag,
                 "choice_dict": obj.choice_dict,
+                "choice_alias": obj.choice_alias,
                 "doc": obj.doc,
             }
         elif isinstance(obj, type):
