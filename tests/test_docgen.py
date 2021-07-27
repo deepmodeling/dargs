@@ -1,6 +1,7 @@
 from context import dargs
 import unittest
-from dargs import Argument, Variant
+import json
+from dargs import Argument, Variant, ArgumentEncoder
 
 
 class TestDocgen(unittest.TestCase):
@@ -16,6 +17,7 @@ class TestDocgen(unittest.TestCase):
             ], doc="sub doc." * 5)
         ], doc="Base doc. " * 10)
         docstr = ca.gen_doc()
+        jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
     def test_sub_repeat(self):
@@ -29,6 +31,7 @@ class TestDocgen(unittest.TestCase):
             ], doc="sub doc." * 5)
         ], doc="Base doc. " * 10, repeat=True)
         docstr = ca.gen_doc()
+        jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
     def test_sub_variants(self):
@@ -66,6 +69,7 @@ class TestDocgen(unittest.TestCase):
             ], optional=True, default_tag="type1", doc="another vnt")
         ])
         docstr = ca.gen_doc(make_anchor=True)
+        jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
     def test_multi_variants(self):
@@ -110,6 +114,7 @@ class TestDocgen(unittest.TestCase):
             ])
         ])
         docstr = ca.gen_doc()
+        jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
     def test_dpmd(self):
