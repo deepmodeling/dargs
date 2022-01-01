@@ -657,18 +657,20 @@ class ArgumentEncoder(json.JSONEncoder):
             a dict containing argument information
         """
         if isinstance(obj, Argument):
-            return {
+            output = {
                 "object": "Argument",
                 "name": obj.name,
                 "type": obj.dtype,
                 "optional": obj.optional,
-                "default": obj.default,
                 "alias": obj.alias,
                 "doc": obj.doc,
                 "repeat": obj.repeat,
                 "sub_fields": obj.sub_fields,
                 "sub_variants": obj.sub_variants,
             }
+            if obj.optional and obj.default is not _Flags.NONE:
+                output['default'] = obj.default
+            return output
         elif isinstance(obj, Variant):
             return {
                 "object": "Variant",

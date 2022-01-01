@@ -32,7 +32,11 @@ class TestChecker(unittest.TestCase):
         ca.check({"key1": 1})
         with self.assertRaises(ArgumentValueError):
             ca.check({"key1": 0})
-
+        # check any keywords
+        ca = Argument("kwargs", dict)
+        anydict = {"this": 1, "that": 2, "any": 3}
+        ca.check({"kwargs": anydict})
+        ca.check_value(anydict)
 
     def test_sub_fields(self):
         ca = Argument("base", dict, [
