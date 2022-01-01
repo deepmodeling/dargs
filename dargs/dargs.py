@@ -662,6 +662,7 @@ class ArgumentEncoder(json.JSONEncoder):
                 "name": obj.name,
                 "type": obj.dtype,
                 "optional": obj.optional,
+                "default": obj.default,
                 "alias": obj.alias,
                 "doc": obj.doc,
                 "repeat": obj.repeat,
