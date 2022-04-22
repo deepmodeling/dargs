@@ -302,6 +302,9 @@ class Argument:
     def _check_strict(self, value: dict, path=None):
         allowed_keys = self.flatten_sub(value, path).keys()
         # curpath = [*path, self.name]
+        if not len(allowed_keys):
+            # no allowed keys defined, allow any keys
+            return
         for name in value.keys():
             if name not in allowed_keys:
                 raise ArgumentKeyError(path,
