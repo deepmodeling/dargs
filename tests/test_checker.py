@@ -35,7 +35,7 @@ class TestChecker(unittest.TestCase):
         # check any keywords
         ca = Argument("kwargs", dict)
         anydict = {"this": 1, "that": 2, "any": 3}
-        ca.check({"kwargs": anydict})
+        ca.check({"kwargs": anydict}, strict=True)
         ca.check_value(anydict)
 
     def test_sub_fields(self):
