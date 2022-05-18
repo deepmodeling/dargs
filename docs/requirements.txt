@@ -1,0 +1,5 @@
+.
+numpydoc
+deepmodeling_sphinx
+myst_parser
+sphinx_rtd_theme
