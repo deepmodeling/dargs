@@ -650,8 +650,8 @@ class ArgumentEncoder(json.JSONEncoder):
         """Generate a dict containing argument information, making it ready to be encoded
         to JSON string.
 
-        Note
-        ----
+        Notes
+        -----
         All object in the dict should be JSON serializable.
 
         Returns
