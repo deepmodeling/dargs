@@ -70,7 +70,50 @@ class ArgumentValueError(ArgumentError):
 
 
 class Argument:
-    """Define possible arguments and their types and properties."""
+    """Define possible arguments and their types and properties.
+    
+    Each `Argument` instance contains a `name` and a `dtype`, that correspond
+    to the key and value type of the actual argument. Additionally, it can
+    include `sub_fields` and `sub_variants` to deal with nested dict arguments.
+
+    Parameters
+    ----------
+    name : str
+        The name of the current argument, i.e. the key in the arg dict.
+    dtype : type or list of type
+        The value type of the current argument, can be a list of possible types.
+        `None` will be treated as `NoneType`
+    sub_fields: list of Argument, optional
+        If given, `dtype` is assumed to be dict, whose items correspond
+        to the `Argument`s in the `sub_fields` list.
+    sub_variants: list of Variants, optional
+        If given, `dtype` is assumed to be dict, and its items are determined
+        by the `Variant`s in the given list and the value of their flag keys.
+    repeat: bool, optional
+        If true,  `dtype` is assume to be list of dict and each dict consists
+        of sub fields and sub variants described above. Defaults to false.
+    optional: bool, optional
+        If true, consider the current argument to be optional in checking.
+    default: any value type
+        The default value of the argument,used in normalization.
+    alias: list of str
+        Alternative names of the current argument, used in normalization.
+    extra_check: callable
+        Additional check to be done on the value of the argument.
+        Should be a function that takes the value and returns whether it passes.
+    doc: str
+        The doc string of the argument, used in doc generation.
+    fold_subdoc: bool, optional
+        If true, no doc will be generated for sub args.
+
+    Examples
+    --------
+    >>> ca = Argument("base", dict, [Argument("sub", int)])
+    >>> ca.check({"base": {"sub1": 1}})
+    >>> ca.check_value({"sub1": 1})
+
+    for more detailed examples, please check the unit tests.
+    """
 
     def __init__(self, 
             name: str,
@@ -156,14 +199,17 @@ class Argument:
         self.dtype = tuple(self.dtype)
 
     def set_dtype(self, dtype: Union[None, type, Iterable[type]]):
+        """Change the dtype of the current Argument."""
         self.dtype = dtype
         self._reorg_dtype()
 
     def set_repeat(self, repeat: bool = True):
+        """Change the repeat attribute of the current Argument."""
         self.repeat = repeat
         self._reorg_dtype()
     
     def extend_subfields(self, sub_fields: Optional[Iterable["Argument"]]):
+        """Add a list of sub fields to the current Argument."""
         if sub_fields is None:
             return
         assert all(isinstance(s, Argument) for s in sub_fields)
@@ -173,6 +219,7 @@ class Argument:
 
     def add_subfield(self, name: Union[str, "Argument"], 
                      *args, **kwargs) -> "Argument":
+        """Add a sub field to the current Argument."""
         if isinstance(name, Argument):
             newarg = name
         else:
@@ -181,6 +228,7 @@ class Argument:
         return newarg
 
     def extend_subvariants(self, sub_variants: Optional[Iterable["Variant"]]):
+        """Add a list of sub variants to the current Argument."""
         if sub_variants is None:
             return
         assert all(isinstance(s, Variant) for s in sub_variants)
@@ -191,6 +239,7 @@ class Argument:
 
     def add_subvariant(self, flag_name: Union[str, "Variant"], 
                        *args, **kwargs) -> "Variant":
+        """Add a sub variant to the current Argument."""
         if isinstance(flag_name, Variant):
             newvrnt = flag_name
         else:
@@ -264,6 +313,18 @@ class Argument:
     # below are type checking part
 
     def check(self, argdict: dict, strict: bool = False):
+        """Check whether `argdict` meets the structure defined in self.
+
+        Will recursively check nested dicts according to 
+        sub_fields and sub_variants. Raise an error if the check fails.
+        
+        Parameters
+        ----------
+        argdict: dict
+            The arg dict to be checked
+        strict: bool, optional
+            If true, only keys defined in `Argument` are allowed.
+        """
         if strict and len(argdict) != 1:
             raise ArgumentKeyError(None,
                 "only one single key of arg name is allowed "
@@ -271,13 +332,25 @@ class Argument:
                 "use check_value if you are checking subfields")
         self.traverse(argdict, 
             key_hook=Argument._check_exist,
-            value_hook=Argument._check_value,
+            value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK)
 
-    def check_value(self, argdict: dict, strict: bool = False):
-        self.traverse_value(argdict, 
+    def check_value(self, value: Any, strict: bool = False):
+        """Check the value without the leading key.
+
+        Same as `check({self.name: value})`. 
+        Raise an error if the check fails.
+        
+        Parameters
+        ----------
+        value: any value type
+            The value to be checked
+        strict: bool, optional
+            If true, only keys defined in `Argument` are allowed.
+        """
+        self.traverse_value(value, 
             key_hook=Argument._check_exist,
-            value_hook=Argument._check_value,
+            value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK)
 
     def _check_exist(self, argdict: dict, path=None):
@@ -288,7 +361,7 @@ class Argument:
                 f"key `{self.name}` is required "
                  "in arguments but not found")
 
-    def _check_value(self, value: Any, path=None):
+    def _check_data(self, value: Any, path=None):
         if not isinstance(value, self.dtype):
             raise ArgumentTypeError(path,
                 f"key `{self.name}` gets wrong value type, "
@@ -317,6 +390,30 @@ class Argument:
     def normalize(self, argdict: dict, inplace: bool = False, 
                   do_default: bool = True, do_alias: bool = True, 
                   trim_pattern: Optional[str] = None):
+        """Modify `argdict` so that it meets the Argument structure
+        
+        Normalization can add default values to optional args, 
+        substitute alias by its standard names, and discard unnecessary
+        args following given pattern.
+
+        Parameters
+        ----------
+        argdict: dict
+            The arg dict to be normalized.
+        inplace: bool, optional
+            If true, modify the given dict. Otherwise return a new one.
+        do_default: bool, optional
+            Whether to add default values.
+        do_alias: bool, optional
+            Whether to transform alias names.
+        trim_pattern: str, optional
+            If given, discard keys that matches the glob pattern.
+
+        Returns
+        -------
+        dict:
+            The normalized arg dict.
+        """
         if not inplace:
             argdict = deepcopy(argdict)
         if do_alias:
@@ -335,6 +432,28 @@ class Argument:
     def normalize_value(self, value: Any, inplace: bool = False, 
                         do_default: bool = True, do_alias: bool = True, 
                         trim_pattern: Optional[str] = None):
+        """Modify the value so that it meets the Argument structure
+        
+        Same as `normalize({self.name: value})[self.name]`.
+
+        Parameters
+        ----------
+        value: any value type
+            The arg value to be normalized.
+        inplace: bool, optional
+            If true, modify the given dict. Otherwise return a new one.
+        do_default: bool, optional
+            Whether to add default values.
+        do_alias: bool, optional
+            Whether to transform alias names.
+        trim_pattern: str, optional
+            If given, discard keys that matches the glob pattern.
+
+        Returns
+        -------
+        value:
+            The normalized arg value.
+        """
         if not inplace:
             value = deepcopy(value)
         if do_alias:
@@ -366,6 +485,7 @@ class Argument:
     # below are doc generation part
 
     def gen_doc(self, path: Optional[List[str]] = None, **kwargs) -> str:
+        """Generate doc string for the current Argument."""
         # the actual indentation is done here, and ONLY here
         if path is None:
             path = []
@@ -419,7 +539,32 @@ class Argument:
 
 
 class Variant:
-    """Define multiple choices of possible argument sets."""
+    """Define multiple choices of possible argument sets.
+    
+    Each Variant contains a `flag_name` and a list of choices 
+    that are represented by `Argument`s. The choice is picked if its name 
+    matches the value of `flag_name` in the actual arguments. The actual 
+    arguments should then be a dict containing `flag_name` and sub fields
+    of the picked choice.
+
+    Parameters
+    ----------
+    flag_name: str
+        The name of the key to be used as the switching flag.
+    choices: list of Argument
+        A list of possible choices. Each of them should be an `Argument`.
+        The name of the `Argument` serves as the tag in the switching flag.
+    optional: bool, optional
+        If true, the flag_name can be optional and defaults to `defalut_flag`.
+    default_tag: str, optional
+        Needed if optional is true.
+    doc: str, optional
+        The doc string used in document generation.
+
+    Notes
+    -----
+    This class should only be used in sub variants of the `Argument` class.
+    """
 
     def __init__(self, 
             flag_name: str,
@@ -434,7 +579,7 @@ class Variant:
         self.optional = optional
         if optional and not default_tag:
             raise ValueError("default_tag is needed if optional is set to be True")
-        self.default_tag = default_tag
+        self.set_default(default_tag)
         self.doc = doc
 
     def __eq__(self, other: "Variant") -> bool:
@@ -451,6 +596,7 @@ class Variant:
         return self.choice_dict[key]
 
     def set_default(self, default_tag : Union[bool, str]):
+        """Change the default tag of the current Variant."""
         if not default_tag:
             self.optional = False
             self.default_tag = ""
@@ -461,6 +607,7 @@ class Variant:
             self.default_tag = default_tag
 
     def extend_choices(self, choices: Optional[Iterable["Argument"]]):
+        """Add a list of choice Arguments to the current Variant"""
         # choices is a list of arguments 
         # whose name is treated as the switch tag
         # we convert it into a dict for better reference
@@ -476,12 +623,13 @@ class Variant:
             err_msg=f"building alias dict for Variant with flag `{self.flag_name}`")
 
     def add_choice(self, tag: Union[str, "Argument"], 
-                   dtype: Union[None, type, Iterable[type]] = dict,
+                   _dtype: Union[None, type, Iterable[type]] = dict,
                    *args, **kwargs) -> "Argument":
+        """Add a choice Argument to the current Variant"""
         if isinstance(tag, Argument):
             newarg = tag
         else:
-            newarg = Argument(tag, dtype, *args, **kwargs)
+            newarg = Argument(tag, _dtype, *args, **kwargs)
         self.extend_choices([newarg])
         return newarg
     
