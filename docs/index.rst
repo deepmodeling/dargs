@@ -11,6 +11,7 @@ Welcome to dargs's documentation!
    :caption: Contents:
 
    intro
+   sphinx
    api/api
 
 
