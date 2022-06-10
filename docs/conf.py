@@ -46,6 +46,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'numpydoc',
     'myst_parser',
+    'dargs.sphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
