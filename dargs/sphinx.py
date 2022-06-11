@@ -85,8 +85,15 @@ class DargsDirective(Directive):
             if not isinstance(argument, (Argument, Variant)):
                 raise RuntimeError("The function doesn't return Argument")
             rst = argument.gen_doc(make_anchor=True, make_link=True)
-            items.extend(parse_rst(rst))
-
+            node = parse_rst(rst)
+            self.state.document.nameids.update(node.nameids)
+            self.state.document.ids.update(node.ids)
+            self.state.document.refnames.update(node.refnames)
+            self.state.document.substitution_defs.update(node.substitution_defs)
+            self.state.document.substitution_names.update(node.substitution_names)
+            self.state.document.nametypes.update(node.nametypes)
+            self.state.document.indirect_targets.extend(node.indirect_targets)
+            items.extend(node)
         return items
 
 
