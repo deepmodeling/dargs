@@ -56,13 +56,12 @@ class DargsDirective(Directive):
         if not isinstance(arguments, (list, tuple)):
             arguments = [arguments]
 
-        items = []
         for argument in arguments:
             if not isinstance(argument, (Argument, Variant)):
                 raise RuntimeError("The function doesn't return Argument")
             rst = argument.gen_doc(make_anchor=True, make_link=True)
             self.state_machine.insert_input(rst.split("\n"), "%s:%s" %(module_name, attr_name))
-        return items
+        return []
 
 
 def setup(app):
