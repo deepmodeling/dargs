@@ -61,7 +61,6 @@ class DargsDirective(Directive):
             if not isinstance(argument, (Argument, Variant)):
                 raise RuntimeError("The function doesn't return Argument")
             rst = argument.gen_doc(make_anchor=True, make_link=True)
-            print(rst)
             self.state_machine.insert_input(rst.split("\n"), "%s:%s" %(module_name, attr_name))
         return items
 
