@@ -21,34 +21,10 @@ where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`
 """
 import sys
 
-from docutils import nodes
-from docutils.parsers.rst import Directive, Parser
+from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
-from docutils.statemachine import ViewList
-from docutils.frontend import OptionParser
-from docutils.utils import new_document
 
 from .dargs import Argument, Variant
-
-def parse_rst(text: str) -> nodes.document:
-    """Parse rst texts to nodes.
-
-    Parameters
-    ----------
-    text : str
-        raw rst texts
-
-    Returns
-    -------
-    nodes.document
-        nodes
-    """
-    parser = Parser()
-    components = (Parser,)
-    settings = OptionParser(components=components).get_default_values()
-    document = new_document('', settings=settings)
-    parser.parse(text, document)
-    return document
 
 
 class DargsDirective(Directive):
@@ -85,15 +61,8 @@ class DargsDirective(Directive):
             if not isinstance(argument, (Argument, Variant)):
                 raise RuntimeError("The function doesn't return Argument")
             rst = argument.gen_doc(make_anchor=True, make_link=True)
-            node = parse_rst(rst)
-            self.state.document.nameids.update(node.nameids)
-            self.state.document.ids.update(node.ids)
-            self.state.document.refnames.update(node.refnames)
-            self.state.document.substitution_defs.update(node.substitution_defs)
-            self.state.document.substitution_names.update(node.substitution_names)
-            self.state.document.nametypes.update(node.nametypes)
-            self.state.document.indirect_targets.extend(node.indirect_targets)
-            items.extend(node)
+            print(rst)
+            self.state_machine.insert_input(rst.split("\n"), "%s:%s" %(module_name, attr_name))
         return items
 
 
@@ -105,4 +74,16 @@ def setup(app):
 
 def _test_argument() -> Argument:
     """This internal function is used to generate docs of dargs."""
-    return Argument(name="test", dtype=str, doc="This argument is only used to test.")
+    doc_test = "This argument/variant is only used to test."
+    return Argument(name="test", dtype=str, doc=doc_test,
+        sub_fields=[
+            Argument("test_argument", dtype=str, doc=doc_test, default="test"),
+        ],
+        sub_variants=[
+            Variant("test_variant", doc=doc_test,
+                choices=[
+                    Argument("test_variant_argument", dtype=str, doc=doc_test),
+                ],
+            ),
+        ],
+    )
