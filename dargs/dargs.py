@@ -506,7 +506,10 @@ class Argument:
         if self.alias:
             typesig += f", alias{'es' if len(self.alias) > 1 else ''}: "
             typesig += ', '.join(f"*{al}*" for al in self.alias)
-        head = f"{self.name}: \n{indent(typesig, INDENT)}"
+        head = f"{self.name}: "
+        if kwargs.get('use_sphinx_domain', False):
+            head = f".. dargs:argument:: {self.name}:\n   :path: {'/'.join(path)}\n"
+        head += f"\n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
             head = f"{make_rst_refid(path)}\n" + head
         return head
@@ -711,6 +714,8 @@ class Variant:
         if path is None:
             path = []
         arg_path = [*path, self.flag_name]
+        if kwargs.get('use_sphinx_domain', False):
+            headdoc = f".. dargs:argument:: {self.flag_name}:\n   :path: {'/'.join(arg_path)}\n"
         pathdoc = indent(f"| argument path: ``{'/'.join(arg_path)}`` ", INDENT)
         if kwargs.get("make_link"):
             if not kwargs.get("make_anchor"):

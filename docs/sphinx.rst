@@ -23,3 +23,23 @@ where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`
 .. dargs::
    :module: dargs.sphinx
    :func: _test_argument
+
+
+Cross-referencing Arguments
+---------------------------
+
+Both the following ways will create a cross-reference to the argument:
+
+.. code-block:: rst
+
+   Both :dargs:argument:`this <test/test_argument>` and :ref:`this <test/test_argument>` will create a cross-reference to the argument!
+
+It will be rendered as:
+
+   Both :dargs:argument:`this <test/test_argument>` and :ref:`this <test/test_argument>` will create a cross-reference to the argument!
+
+
+Index page
+----------
+
+The arguments will be added into the :ref:`genindex` page. See :ref:`test_argument <test/test_argument>` in the :ref:`genindex` page.
