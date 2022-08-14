@@ -13,6 +13,7 @@ Welcome to dargs's documentation!
    intro
    sphinx
    api/api
+   credits
 
 
 Indices and tables
