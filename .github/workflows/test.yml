@@ -18,4 +18,4 @@ jobs:
       run: cd tests && coverage run --source=../dargs -m unittest -v && coverage report
     - uses: codecov/codecov-action@v3
       with:
-        directory: tests
+        working-directory: tests
