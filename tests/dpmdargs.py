@@ -1,4 +1,4 @@
-from context import dargs
+from .context import dargs
 from dargs import dargs, Argument, Variant
 
 ACTIVATION_FN_DICT = {

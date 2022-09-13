@@ -1,4 +1,4 @@
-from context import dargs
+from .context import dargs
 import unittest
 from dargs import Argument, Variant
 from dargs.dargs import ArgumentKeyError, ArgumentTypeError, ArgumentValueError

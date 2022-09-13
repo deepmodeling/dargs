@@ -1,4 +1,4 @@
-from context import dargs
+from .context import dargs
 import unittest
 import json
 from dargs import Argument, Variant, ArgumentEncoder
@@ -119,7 +119,7 @@ class TestDocgen(unittest.TestCase):
 
     def test_dpmd(self):
         from dargs import dargs
-        from dpmdargs import gen_doc
+        from .dpmdargs import gen_doc
         dargs.RAW_ANCHOR = False
         docstr = gen_doc(make_anchor=True, make_link=True)
         # print("\n\n"+docstr)
