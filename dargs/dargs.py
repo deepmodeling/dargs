@@ -501,7 +501,9 @@ class Argument:
         typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
-            if self.default is not _Flags.NONE:
+            if self.default == "":
+                typesig += f", default: (empty string)"
+            elif self.default is not _Flags.NONE:
                 typesig += f", default: ``{self.default}``"
         if self.alias:
             typesig += f", alias{'es' if len(self.alias) > 1 else ''}: "
