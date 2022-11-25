@@ -20,6 +20,7 @@ Then `dargs` directive will be added:
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted. 
 """
 import sys
+from typing import List
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
@@ -61,11 +62,13 @@ class DargsDirective(Directive):
         if not isinstance(arguments, (list, tuple)):
             arguments = [arguments]
 
+        rsts = []
         for argument in arguments:
             if not isinstance(argument, (Argument, Variant)):
                 raise RuntimeError("The function doesn't return Argument")
             rst = argument.gen_doc(make_anchor=True, make_link=True, use_sphinx_domain=True)
-            self.state_machine.insert_input(rst.split("\n"), "%s:%s" %(module_name, attr_name))
+            rsts.extend(rst.split("\n"))
+        self.state_machine.insert_input(rsts, "%s:%s" %(module_name, attr_name))
         return []
 
 
@@ -157,3 +160,11 @@ def _test_argument() -> Argument:
             ),
         ],
     )
+
+def _test_arguments() -> List[Argument]:
+    """Returns a list of arguments."""
+    return [
+        Argument(name="test1", dtype=int, doc="Argument 1"),
+        Argument(name="test2", dtype=[float, None], doc="Argument 2"),
+        Argument(name="test3", dtype=list, doc="Argument 3"),
+    ]
