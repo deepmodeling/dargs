@@ -105,6 +105,8 @@ class Argument:
         The doc string of the argument, used in doc generation.
     fold_subdoc: bool, optional
         If true, no doc will be generated for sub args.
+    extra_check_errmsg : str
+        The error message if extra_check fails
 
     Examples
     --------
@@ -126,7 +128,9 @@ class Argument:
             alias: Optional[Iterable[str]] = None,
             extra_check: Optional[Callable[[Any], bool]] = None,
             doc: str = "",
-            fold_subdoc: bool = False):
+            fold_subdoc: bool = False,
+            extra_check_errmsg: str = "",
+            ):
         self.name = name
         self.dtype = dtype
         self.sub_fields : Dict[str, "Argument"] = {}
@@ -138,6 +142,7 @@ class Argument:
         self.extra_check = extra_check
         self.doc = doc
         self.fold_subdoc = fold_subdoc
+        self.extra_check_errmsg = extra_check_errmsg
         # adding subfields and subvariants
         self.extend_subfields(sub_fields)
         self.extend_subvariants(sub_variants)
@@ -370,7 +375,8 @@ class Argument:
         if self.extra_check is not None and not self.extra_check(value):
             raise ArgumentValueError(path,
                 f"key `{self.name}` gets bad value "
-                "that fails to pass its extra checking")
+                "that fails to pass its extra checking. "
+                + self.extra_check_errmsg)
 
     def _check_strict(self, value: dict, path=None):
         allowed_keys = self.flatten_sub(value, path).keys()
