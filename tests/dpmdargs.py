@@ -1,5 +1,6 @@
+from dargs import Argument, Variant, dargs
+
 from .context import dargs
-from dargs import dargs, Argument, Variant
 
 ACTIVATION_FN_DICT = {
     "relu": None,

@@ -1,3 +1,3 @@
-from .dargs import Argument, Variant, ArgumentEncoder
+from .dargs import Argument, ArgumentEncoder, Variant
 
 __all__ = ["Argument", "Variant", "ArgumentEncoder"]

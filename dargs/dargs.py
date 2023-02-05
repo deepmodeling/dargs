@@ -18,13 +18,13 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import Union, Any, List, Dict, Iterable, Optional, Callable
-from textwrap import indent
+import fnmatch
+import json
+import re
 from copy import deepcopy
 from enum import Enum
-import fnmatch, re
-import json
-
+from textwrap import indent
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 INDENT = "    "  # doc is indented by four spaces
 RAW_ANCHOR = False  # whether to use raw html anchors or RST ones

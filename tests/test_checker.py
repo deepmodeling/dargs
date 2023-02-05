@@ -1,7 +1,9 @@
-from .context import dargs
 import unittest
+
 from dargs import Argument, Variant
 from dargs.dargs import ArgumentKeyError, ArgumentTypeError, ArgumentValueError
+
+from .context import dargs
 
 
 class TestChecker(unittest.TestCase):
