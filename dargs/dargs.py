@@ -363,9 +363,9 @@ class Argument:
 
         Parameters
         ----------
-        argdict: dict
+        argdict : dict
             The arg dict to be checked
-        strict: bool, optional
+        strict : bool, optional
             If true, only keys defined in `Argument` are allowed.
         """
         if strict and len(argdict) != 1:
@@ -390,9 +390,9 @@ class Argument:
 
         Parameters
         ----------
-        value: any value type
+        value : any value type
             The value to be checked
-        strict: bool, optional
+        strict : bool, optional
             If true, only keys defined in `Argument` are allowed.
         """
         self.traverse_value(
@@ -456,15 +456,15 @@ class Argument:
 
         Parameters
         ----------
-        argdict: dict
+        argdict : dict
             The arg dict to be normalized.
-        inplace: bool, optional
+        inplace : bool, optional
             If true, modify the given dict. Otherwise return a new one.
-        do_default: bool, optional
+        do_default : bool, optional
             Whether to add default values.
-        do_alias: bool, optional
+        do_alias : bool, optional
             Whether to transform alias names.
-        trim_pattern: str, optional
+        trim_pattern : str, optional
             If given, discard keys that matches the glob pattern.
 
         Returns
@@ -506,15 +506,15 @@ class Argument:
 
         Parameters
         ----------
-        value: any value type
+        value : any value type
             The arg value to be normalized.
-        inplace: bool, optional
+        inplace : bool, optional
             If true, modify the given dict. Otherwise return a new one.
-        do_default: bool, optional
+        do_default : bool, optional
             Whether to add default values.
-        do_alias: bool, optional
+        do_alias : bool, optional
             Whether to transform alias names.
-        trim_pattern: str, optional
+        trim_pattern : str, optional
             If given, discard keys that matches the glob pattern.
 
         Returns
