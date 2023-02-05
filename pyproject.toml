@@ -30,3 +30,6 @@ include = ["dargs*"]
 
 [tool.setuptools_scm]
 write_to = "dargs/_version.py"
+
+[tool.isort]
+profile = "black"
