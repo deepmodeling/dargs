@@ -164,6 +164,7 @@ class TestNormalizer(unittest.TestCase):
                 "_comment2": None,
             }
         }
+        print(ca.normalize(beg2, do_default=False, trim_pattern="_*"))
         ref2 = {
             "base": {
                 "sub1": 2,
