@@ -38,7 +38,7 @@ _DUMMYHOOK = lambda a, x, p: None  # for doing nothing in traversing
 
 class _Flags(Enum):
     NONE = 0  # for no value in dict (when optional)
-    EMPTY_DICT = 1 # for empty dict as default value
+    EMPTY_DICT = 1  # for empty dict as default value
 
 
 class ArgumentError(Exception):
@@ -550,10 +550,9 @@ class Argument:
             and self.optional
             and self.default is not _Flags.NONE
         ):
-            default = (self.default 
-                if self.default != {} else _Flags.EMPTY_DICT)
+            default = self.default if self.default != {} else _Flags.EMPTY_DICT
             argdict[self.name] = default
-    
+
     def _handle_empty_dict(self, argdict: dict, path=None):
         if argdict.get(self.name, None) is _Flags.EMPTY_DICT:
             argdict[self.name] = {}
