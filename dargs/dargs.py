@@ -296,7 +296,6 @@ class Argument:
         # then, take out the vaule and do something with it
         if path is None:
             path = []
-        key_hook(self, argdict, path)
         if self.name in argdict:
             value = argdict[self.name]
             value_hook(self, value, path)
@@ -305,6 +304,7 @@ class Argument:
             self.traverse_value(
                 value, key_hook, value_hook, sub_hook, variant_hook, newpath
             )
+        key_hook(self, argdict, path)
 
     def traverse_value(
         self,

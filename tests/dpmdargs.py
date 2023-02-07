@@ -585,7 +585,7 @@ def loss_ener():
 
 
 def loss_variant_type_args():
-    doc_loss = "The type of the loss. \n\."
+    doc_loss = "The type of the loss. \n"
 
     return Variant(
         "type",

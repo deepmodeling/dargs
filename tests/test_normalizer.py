@@ -18,6 +18,15 @@ class TestNormalizer(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
 
+    def test_default_dict(self):
+        def make_arguments():
+            arg_foo = Argument("foo", int, optional=True, default=1)
+            arg_bar = Argument("bar", dict, [arg_foo], optional=True, default={})
+            return [arg_bar]
+        base = Argument("base", dict, make_arguments())
+        data = base.normalize_value({})
+        self.assertDictEqual(data, {'bar': {}})
+
     def test_alias(self):
         ca = Argument("Key1", int, alias=["Old1", "Old2"])
         beg = {"Old1": 1}
