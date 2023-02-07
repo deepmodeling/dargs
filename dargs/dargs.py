@@ -38,6 +38,7 @@ _DUMMYHOOK = lambda a, x, p: None  # for doing nothing in traversing
 
 class _Flags(Enum):
     NONE = 0  # for no value in dict (when optional)
+    EMPTY_DICT = 1 # for empty dict as default value
 
 
 class ArgumentError(Exception):
@@ -482,6 +483,7 @@ class Argument:
             )
         if do_default:
             self.traverse(argdict, key_hook=Argument._assign_default)
+            self.traverse(argdict, key_hook=Argument._handle_empty_dict)
         if trim_pattern is not None:
             trim_by_pattern(argdict, trim_pattern, reserved=[self.name])
             self.traverse(
@@ -532,6 +534,7 @@ class Argument:
             )
         if do_default:
             self.traverse_value(value, key_hook=Argument._assign_default)
+            self.traverse_value(value, key_hook=Argument._handle_empty_dict)
         if trim_pattern is not None:
             self.traverse_value(
                 value,
@@ -547,7 +550,13 @@ class Argument:
             and self.optional
             and self.default is not _Flags.NONE
         ):
-            argdict[self.name] = self.default
+            default = (self.default 
+                if self.default != {} else _Flags.EMPTY_DICT)
+            argdict[self.name] = default
+    
+    def _handle_empty_dict(self, argdict: dict, path=None):
+        if argdict.get(self.name, None) is _Flags.EMPTY_DICT:
+            argdict[self.name] = {}
 
     def _convert_alias(self, argdict: dict, path=None):
         if self.name not in argdict:
