@@ -414,8 +414,10 @@ class Argument:
             )
 
     def _check_data(self, value: Any, path=None):
-        if not (isinstance(value, self.dtype)
-                or (float in self.dtype and isinstance(value, Real))):
+        if not (
+            isinstance(value, self.dtype)
+            or (float in self.dtype and isinstance(value, Real))
+        ):
             raise ArgumentTypeError(
                 path,
                 f"key `{self.name}` gets wrong value type, "
