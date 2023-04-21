@@ -18,12 +18,14 @@ We also need to pay special attention to flat the keys of its choices.
 """
 
 
-from typing import Union, Any, List, Dict, Iterable, Optional, Callable
-from textwrap import indent
+import fnmatch
+import json
+import re
 from copy import deepcopy
 from enum import Enum
-import fnmatch, re
-import json
+from numbers import Real
+from textwrap import indent
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 
 INDENT = "    "  # doc is indented by four spaces
@@ -412,7 +414,8 @@ class Argument:
             )
 
     def _check_data(self, value: Any, path=None):
-        if not isinstance(value, self.dtype):
+        if not (isinstance(value, self.dtype)
+                or (float in self.dtype and isinstance(value, Real))):
             raise ArgumentTypeError(
                 path,
                 f"key `{self.name}` gets wrong value type, "

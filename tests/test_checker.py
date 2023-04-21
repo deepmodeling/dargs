@@ -24,6 +24,9 @@ class TestChecker(unittest.TestCase):
         # special handle of None
         ca = Argument("key1", [int, None])
         ca.check({"key1": None})
+        # special handel of int and float
+        ca = Argument("key1", float)
+        ca.check({"key1": 1})
         # optional case
         ca = Argument("key1", int, optional=True)
         ca.check({})
