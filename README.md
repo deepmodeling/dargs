@@ -1,5 +1,9 @@
 # Argument checking for python programs
 
+[![conda-forge](https://img.shields.io/conda/dn/conda-forge/dargs?color=red&label=conda-forge&logo=conda-forge)](https://anaconda.org/conda-forge/dargs)
+[![pip install](https://img.shields.io/pypi/dm/dargs?label=pip%20install&logo=pypi)](https://pypi.org/project/dargs)
+[![Documentation Status](https://readthedocs.org/projects/dargs/badge/)](https://dargs.readthedocs.io/)
+
 This is a minimum version for checking the input argument dict.
 It would examine argument's type,  as well as keys and types of its sub-arguments.
 
