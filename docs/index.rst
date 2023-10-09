@@ -12,6 +12,7 @@ Welcome to dargs's documentation!
 
    intro
    sphinx
+   dpgui
    api/api
    credits
 
