@@ -596,7 +596,9 @@ class Argument:
         return "\n".join(filter(None, doc_list))
 
     def gen_doc_head(self, path: Optional[List[str]] = None, **kwargs) -> str:
-        typesig = "| type: " + " | ".join([f"``{self._get_type_name(dt)}``" for dt in self.dtype])
+        typesig = "| type: " + " | ".join(
+            [f"``{self._get_type_name(dt)}``" for dt in self.dtype]
+        )
         if self.optional:
             typesig += ", optional"
             if self.default == "":
