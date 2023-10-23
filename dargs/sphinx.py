@@ -192,5 +192,5 @@ def _test_arguments() -> List[Argument]:
     return [
         Argument(name="test1", dtype=int, doc="Argument 1"),
         Argument(name="test2", dtype=[float, None], doc="Argument 2"),
-        Argument(name="test3", dtype=list, doc="Argument 3"),
+        Argument(name="test3", dtype=List[str], doc="Argument 3"),
     ]

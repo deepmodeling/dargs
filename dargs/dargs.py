@@ -176,7 +176,7 @@ class Argument:
         )
 
     def __repr__(self) -> str:
-        return f"<Argument {self.name}: {' | '.join(dd.__name__ for dd in self.dtype)}>"
+        return f"<Argument {self.name}: {' | '.join(self._get_type_name(dd) for dd in self.dtype)}>"
 
     def __getitem__(self, key: str) -> "Argument":
         key = key.lstrip("/")
@@ -431,7 +431,7 @@ class Argument:
             raise ArgumentTypeError(
                 path,
                 f"key `{self.name}` gets wrong value type, "
-                f"requires <{'|'.join(str(dd) if isinstance(get_origin(dd), type) else dd.__name__ for dd in self.dtype)}> "
+                f"requires <{'|'.join(self._get_type_name(dd) for dd in self.dtype)}> "
                 f"but " + str(e),
             ) from e
         if self.extra_check is not None and not self.extra_check(value):
@@ -596,7 +596,7 @@ class Argument:
         return "\n".join(filter(None, doc_list))
 
     def gen_doc_head(self, path: Optional[List[str]] = None, **kwargs) -> str:
-        typesig = "| type: " + " | ".join([f"``{dt.__name__}``" for dt in self.dtype])
+        typesig = "| type: " + " | ".join([f"``{self._get_type_name(dt)}``" for dt in self.dtype])
         if self.optional:
             typesig += ", optional"
             if self.default == "":
@@ -641,6 +641,10 @@ class Argument:
                     body_list.append(subvrnt.gen_doc(path, showflag, **kwargs))
         body = "\n".join(body_list)
         return body
+
+    def _get_type_name(self, dd) -> str:
+        """Get type name for doc/message generation."""
+        return str(dd) if isinstance(get_origin(dd), type) else dd.__name__
 
 
 class Variant:
