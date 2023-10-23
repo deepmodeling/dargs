@@ -1010,7 +1010,7 @@ class ArgumentEncoder(json.JSONEncoder):
                 "doc": obj.doc,
             }
         elif isinstance(get_origin(obj), type):
-            return str(obj)
+            return get_origin(obj).__name__
         elif isinstance(obj, type):
             return obj.__name__
         return json.JSONEncoder.default(self, obj)
