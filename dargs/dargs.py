@@ -205,10 +205,17 @@ class Argument:
         return Argument("_", dict, [self])
 
     def _reorg_dtype(self):
-        if isinstance(self.dtype, type) or isinstance(get_origin(self.dtype), type) or self.dtype is None:
+        if (
+            isinstance(self.dtype, type)
+            or isinstance(get_origin(self.dtype), type)
+            or self.dtype is None
+        ):
             self.dtype = [self.dtype]
         # remove duplicate
-        self.dtype = {dt if type(dt) is type or type(get_origin(dt)) is type else type(dt) for dt in self.dtype}
+        self.dtype = {
+            dt if type(dt) is type or type(get_origin(dt)) is type else type(dt)
+            for dt in self.dtype
+        }
         # check conner cases
         if self.sub_fields or self.sub_variants:
             self.dtype.add(list if self.repeat else dict)
@@ -415,7 +422,11 @@ class Argument:
 
     def _check_data(self, value: Any, path=None):
         try:
-            typeguard.check_type(value, self.dtype, collection_check_strategy=typeguard.CollectionCheckStrategy.ALL_ITEMS)
+            typeguard.check_type(
+                value,
+                self.dtype,
+                collection_check_strategy=typeguard.CollectionCheckStrategy.ALL_ITEMS,
+            )
         except typeguard.TypeCheckError as e:
             raise ArgumentTypeError(
                 path,
