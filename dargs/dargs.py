@@ -23,10 +23,10 @@ import json
 import re
 from copy import deepcopy
 from enum import Enum
-from numbers import Real
 from textwrap import indent
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union, get_origin
 
+import typeguard
 
 INDENT = "    "  # doc is indented by four spaces
 RAW_ANCHOR = False  # whether to use raw html anchors or RST ones
@@ -205,10 +205,10 @@ class Argument:
         return Argument("_", dict, [self])
 
     def _reorg_dtype(self):
-        if isinstance(self.dtype, type) or self.dtype is None:
+        if isinstance(self.dtype, type) or isinstance(get_origin(self.dtype), type) or self.dtype is None:
             self.dtype = [self.dtype]
         # remove duplicate
-        self.dtype = {dt if type(dt) is type else type(dt) for dt in self.dtype}
+        self.dtype = {dt if type(dt) is type or type(get_origin(dt)) is type else type(dt) for dt in self.dtype}
         # check conner cases
         if self.sub_fields or self.sub_variants:
             self.dtype.add(list if self.repeat else dict)
@@ -414,16 +414,15 @@ class Argument:
             )
 
     def _check_data(self, value: Any, path=None):
-        if not (
-            isinstance(value, self.dtype)
-            or (float in self.dtype and isinstance(value, Real))
-        ):
+        try:
+            typeguard.check_type(value, self.dtype, collection_check_strategy=typeguard.CollectionCheckStrategy.ALL_ITEMS)
+        except typeguard.TypeCheckError as e:
             raise ArgumentTypeError(
                 path,
                 f"key `{self.name}` gets wrong value type, "
-                f"requires <{'|'.join(dd.__name__ for dd in self.dtype)}> "
-                f"but gets <{type(value).__name__}>",
-            )
+                f"requires <{'|'.join(str(dd) if isinstance(get_origin(dd), type) else dd.__name__ for dd in self.dtype)}> "
+                f"but " + str(e),
+            ) from e
         if self.extra_check is not None and not self.extra_check(value):
             raise ArgumentValueError(
                 path,
@@ -993,6 +992,8 @@ class ArgumentEncoder(json.JSONEncoder):
                 "choice_alias": obj.choice_alias,
                 "doc": obj.doc,
             }
+        elif isinstance(get_origin(obj), type):
+            return str(obj)
         elif isinstance(obj, type):
             return obj.__name__
         return json.JSONEncoder.default(self, obj)
