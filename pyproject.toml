@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
 ]
 dependencies = [
-    "typeguard>=3",
+    "typeguard>=4",
     'typing_extensions; python_version < "3.8"',
 ]
 requires-python = ">=3.7"
