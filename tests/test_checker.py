@@ -1,3 +1,4 @@
+from typing import List
 from .context import dargs
 import unittest
 from dargs import Argument, Variant
@@ -27,6 +28,11 @@ class TestChecker(unittest.TestCase):
         # special handel of int and float
         ca = Argument("key1", float)
         ca.check({"key1": 1})
+        # list[int]
+        ca = Argument("key1", List[float])
+        ca.check({"key1": [1, 2.0, 3]})
+        with self.assertRaises(ArgumentTypeError):
+            ca.check({"key1": [1, 2.0, "3"]})
         # optional case
         ca = Argument("key1", int, optional=True)
         ca.check({})

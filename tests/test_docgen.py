@@ -1,6 +1,7 @@
 from .context import dargs
 import unittest
 import json
+from typing import List
 from dargs import Argument, Variant, ArgumentEncoder
 
 
@@ -21,6 +22,11 @@ class TestDocgen(unittest.TestCase):
                             dict,
                             [Argument("subsubsub1", int, doc="subsubsub doc." * 5)],
                             doc="subsub doc." * 5,
+                        ),
+                        Argument(
+                            "list_of_float",
+                            List[float],
+                            doc="Check if List[float] works.",
                         ),
                     ],
                     doc="sub doc." * 5,
