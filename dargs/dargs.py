@@ -224,7 +224,11 @@ class Argument:
         # check conner cases
         if self.sub_fields or self.sub_variants:
             self.dtype.add(list if self.repeat else dict)
-        if self.optional and self.default is not _Flags.NONE and all([not isinstance_annotation(self.default, tt) for tt in self.dtype]):
+        if (
+            self.optional
+            and self.default is not _Flags.NONE
+            and all([not isinstance_annotation(self.default, tt) for tt in self.dtype])
+        ):
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
