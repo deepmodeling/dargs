@@ -33,6 +33,9 @@ class TestChecker(unittest.TestCase):
         ca.check({"key1": [1, 2.0, 3]})
         with self.assertRaises(ArgumentTypeError):
             ca.check({"key1": [1, 2.0, "3"]})
+        ca = Argument("key1", List[float], default=[], optional=True)
+        with self.assertRaises(ArgumentTypeError):
+            ca.check({"key1": [1, 2.0, "3"]})
         # optional case
         ca = Argument("key1", int, optional=True)
         ca.check({})
