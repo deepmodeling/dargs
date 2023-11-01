@@ -900,7 +900,7 @@ class Variant:
             realdoc,
             targetdoc,
         ]
-        return "\n".join(filter(None.__ne__, allparts))
+        return "\n".join([x for x in allparts if x is not None])
 
     def _make_cpath(
         self, cname: str, path: Optional[List[str]] = None, showflag: bool = False
