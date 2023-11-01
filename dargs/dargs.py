@@ -224,7 +224,11 @@ class Argument:
         # check conner cases
         if self.sub_fields or self.sub_variants:
             self.dtype.add(list if self.repeat else dict)
-        if self.optional and self.default is not _Flags.NONE:
+        if (
+            self.optional
+            and self.default is not _Flags.NONE
+            and all([not isinstance_annotation(self.default, tt) for tt in self.dtype])
+        ):
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
         self.dtype = tuple(self.dtype)
@@ -896,7 +900,7 @@ class Variant:
             realdoc,
             targetdoc,
         ]
-        return "\n".join(filter(None.__ne__, allparts))
+        return "\n".join([x for x in allparts if x is not None])
 
     def _make_cpath(
         self, cname: str, path: Optional[List[str]] = None, showflag: bool = False
@@ -966,6 +970,19 @@ def trim_by_pattern(
     unrequired = list(filter(rem.match, argdict.keys()))
     for key in unrequired:
         argdict.pop(key)
+
+
+def isinstance_annotation(value, dtype) -> bool:
+    """Same as isinstance(), but supports arbitrary type annotations."""
+    try:
+        typeguard.check_type(
+            value,
+            dtype,
+            collection_check_strategy=typeguard.CollectionCheckStrategy.ALL_ITEMS,
+        )
+    except typeguard.TypeCheckError as e:
+        return False
+    return True
 
 
 class ArgumentEncoder(json.JSONEncoder):
