@@ -189,9 +189,9 @@ class ArgumentData:
                 else:
                     raise ValueError(f"Unknown type: {type(self.arg)}")
 
-                buff.append(linebreak)
-                buff.append(linebreak)
                 doc_body = self.arg.doc.strip()
+                if doc_body:
+                    buff.append("<hr/>")
                 doc_body = re.sub(r"""\n+""", "\n", doc_body)
                 doc_body = doc_body.replace("\n", linebreak)
                 doc_body = re.sub(
