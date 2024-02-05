@@ -122,6 +122,13 @@ class ArgumentData:
                     )
                 else:
                     self.subdata.append(ArgumentData(self.data[kk], kk))
+        elif (
+            isinstance(self.data, list)
+            and isinstance(self.arg, Argument)
+            and self.arg.repeat
+        ):
+            for dd in self.data:
+                self.subdata.append(ArgumentData(dd, self.arg))
 
     def print_html(self, _level=0, _last_one=True):
         linebreak = "<br/>"
@@ -132,7 +139,11 @@ class ArgumentData:
         )
         buff = []
         buff.append(indent)
-        if _level > 0:
+        if _level > 0 and not (
+            isinstance(self.data, dict)
+            and isinstance(self.arg, Argument)
+            and self.arg.repeat
+        ):
             if isinstance(self.arg, (Argument, Variant)):
                 buff.append(r"""<span class="dargs-key">""")
             else:
@@ -193,7 +204,7 @@ class ArgumentData:
             buff.append(r"""<code class="dargs-code">""")
             buff.append(": ")
             buff.append("</code>")
-        if self.subdata:
+        if self.subdata and isinstance(self.data, dict):
             buff.append(r"""<code class="dargs-code">""")
             buff.append("{")
             buff.append("</code>")
@@ -205,6 +216,22 @@ class ArgumentData:
             buff.append(indent)
             buff.append(r"""<code class="dargs-code">""")
             buff.append("}")
+            if not _last_one:
+                buff.append(",")
+            buff.append("</code>")
+            buff.append(linebreak)
+        elif self.subdata and isinstance(self.data, list):
+            buff.append(r"""<code class="dargs-code">""")
+            buff.append("[")
+            buff.append("</code>")
+            buff.append(linebreak)
+            for ii, sub in enumerate(self.subdata):
+                buff.append(
+                    sub.print_html(_level + 1, _last_one=(ii == len(self.subdata) - 1))
+                )
+            buff.append(indent)
+            buff.append(r"""<code class="dargs-code">""")
+            buff.append("]")
             if not _last_one:
                 buff.append(",")
             buff.append("</code>")
