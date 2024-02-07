@@ -2,6 +2,7 @@ import json
 import unittest
 from typing import List
 
+import dargs
 from dargs import Argument, ArgumentEncoder, Variant
 
 
