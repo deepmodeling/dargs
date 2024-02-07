@@ -20,7 +20,7 @@ Then `dargs` directive will be added:
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 """
 import sys
-from typing import List
+from typing import List, ClassVar
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
@@ -34,10 +34,10 @@ from .dargs import Argument, Variant
 
 
 class DargsDirective(Directive):
-    """dargs directive"""
+    """dargs directive."""
 
-    has_content = True
-    option_spec = dict(
+    has_content: ClassVar[bool] = True
+    option_spec: ClassVar[dict] = dict(
         module=unchanged,
         func=unchanged,
     )
@@ -88,7 +88,7 @@ class DargsObject(ObjectDescription):
     This directive creates a signature node for an argument.
     """
 
-    option_spec = dict(
+    option_spec: ClassVar[dict] = dict(
         path=unchanged,
     )
 
@@ -117,7 +117,7 @@ class DargsObject(ObjectDescription):
         self.indexnode["entries"].append(
             (
                 "pair",
-                "%s ; %s (%s) " % (name, path, self.objtype.title()),
+                f"{name}; {path} ({self.objtype.title()})",
                 targetid,
                 "main",
                 None,
@@ -133,19 +133,19 @@ class DargsDomain(Domain):
     - dargs::argument role
     """
 
-    name = "dargs"
-    label = "dargs"
-    object_types = {
+    name: ClassVar[str] = "dargs"
+    label: ClassVar[str] = "dargs"
+    object_types: ClassVar[dict] = {
         "argument": ObjType("argument", "argument"),
     }
-    directives = {
+    directives: ClassVar[dict] = {
         "argument": DargsObject,
     }
-    roles = {
+    roles: ClassVar[dict] = {
         "argument": XRefRole(),
     }
 
-    initial_data = {
+    initial_data[dict] = {
         "arguments": {},  # fullname -> docname, objtype
     }
 
