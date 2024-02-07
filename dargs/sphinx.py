@@ -85,9 +85,9 @@ class DargsObject(ObjectDescription):
     This directive creates a signature node for an argument.
     """
 
-    option_spec: ClassVar[dict] = dict(
-        path=unchanged,
-    )
+    option_spec: ClassVar[dict] = {
+        "path": unchanged,
+    }
 
     def handle_signature(self, sig, signode):
         signode += addnodes.desc_name(sig, sig)
@@ -95,7 +95,7 @@ class DargsObject(ObjectDescription):
 
     def add_target_and_index(self, name, sig, signode):
         path = self.options["path"]
-        targetid = "%s:%s" % (self.objtype, path)
+        targetid = f"{self.objtype}:{path}"
         if targetid not in self.state.document.ids:
             signode["names"].append(targetid)
             signode["ids"].append(targetid)
@@ -105,8 +105,7 @@ class DargsObject(ObjectDescription):
             inv = self.env.domaindata["dargs"]["arguments"]
             if targetid in inv:
                 self.state.document.reporter.warning(
-                    'Duplicated argument "%s" described in "%s".'
-                    % (targetid, self.env.doc2path(inv[targetid][0])),
+                    f'Duplicated argument "{targetid}" described in "{self.env.doc2path(inv[targetid][0])}".',
                     line=self.lineno,
                 )
             inv[targetid] = (self.env.docname, self.objtype)
