@@ -1,9 +1,10 @@
-from typing import List, Union
-from IPython.core.display import display, HTML
-
-from dargs import Argument, Variant
 import json
 import re
+from typing import List, Union
+
+from IPython.core.display import HTML, display
+
+from dargs import Argument, Variant
 
 __all__ = ["JSON"]
 
