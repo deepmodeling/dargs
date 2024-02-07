@@ -58,10 +58,8 @@ class DargsDirective(Directive):
 
         if not hasattr(mod, attr_name):
             raise self.error(
-                (
-                    f'Module "{module_name}" has no attribute "{attr_name}"\n'
-                    "Incorrect argparse :module: or :func: values?"
-                )
+                f'Module "{module_name}" has no attribute "{attr_name}"\n'
+                "Incorrect argparse :module: or :func: values?"
             )
         func = getattr(mod, attr_name)
         arguments = func()
