@@ -52,21 +52,19 @@ class TestNotebook(unittest.TestCase):
                 ),
             ],
         )
-        jdata =  {
+        jdata = {
             "test_argument": "test1",
             "test_variant": "test_variant_argument",
-            "test_repeat": [
-                {"test_repeat_item": False},
-                {"test_repeat_item": True}
-            ],
-            "_comment": "This is an example data"
+            "test_repeat": [{"test_repeat_item": False}, {"test_repeat_item": True}],
+            "_comment": "This is an example data",
         }
         html = print_html(
-            jdata, test_arg,
+            jdata,
+            test_arg,
         )
         # https://stackoverflow.com/a/29533744/9567349
         # https://stackoverflow.com/a/35591479/9567349
-        magic = '''<!DOCTYPE html [
+        magic = """<!DOCTYPE html [
             <!ENTITY nbsp ' '>
-            ]>'''
+            ]>"""
         ET.fromstring(magic + f"<html>{html}</html>")
