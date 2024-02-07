@@ -40,6 +40,8 @@ RAW_ANCHOR = False  # whether to use raw html anchors or RST ones
 HookArgKType = Callable[["Argument", dict, List[str]], None]
 HookArgVType = Callable[["Argument", Any, List[str]], None]
 HookVrntType = Callable[["Variant", dict, List[str]], None]
+
+
 def _DUMMYHOOK(a, x, p):
     # for doing nothing in traversing
     pass
@@ -173,8 +175,10 @@ class Argument:
         # since they do not enter to the type checking
         def fkey(f):
             return f.name
+
         def vkey(v):
             return v.flag_name
+
         return (
             self.name == other.name
             and set(self.dtype) == set(other.dtype)

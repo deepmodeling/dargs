@@ -20,7 +20,7 @@ Then `dargs` directive will be added:
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 """
 import sys
-from typing import List, ClassVar
+from typing import ClassVar, List
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
