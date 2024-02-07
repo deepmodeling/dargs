@@ -53,7 +53,7 @@ css = """<style>
   background-color: black;
   color: #fff;
   padding: 1em 1em;
-  border-radius: 6px; 
+  border-radius: 6px;
   position: absolute;
   z-index: 1;
 }
@@ -159,7 +159,9 @@ class ArgumentData:
                     )
                     # use re to replace ``xx`` to <code>xx</code>
                     doc_head = re.sub(
-                        r"``(.*?)``", r'<span class="dargs-doc-code">\1</span>', doc_head
+                        r"``(.*?)``",
+                        r'<span class="dargs-doc-code">\1</span>',
+                        doc_head,
                     )
                     doc_head = re.sub(r"\*(.+)\*", r"<i>\1</i>", doc_head)
                     buff.append(doc_head)
@@ -175,7 +177,7 @@ class ArgumentData:
                         buff.append(r"""</span>""")
                 else:
                     raise ValueError(f"Unknown type: {type(self.arg)}")
-            
+
                 buff.append(linebreak)
                 buff.append(linebreak)
                 doc_body = self.arg.doc.strip()
@@ -197,7 +199,9 @@ class ArgumentData:
             buff.append("</code>")
             buff.append(linebreak)
             for ii, sub in enumerate(self.subdata):
-                buff.append(sub.print_html(_level + 1, _last_one=(ii == len(self.subdata) - 1)))
+                buff.append(
+                    sub.print_html(_level + 1, _last_one=(ii == len(self.subdata) - 1))
+                )
             buff.append(indent)
             buff.append(r"""<code class="dargs-code">""")
             buff.append("}")
