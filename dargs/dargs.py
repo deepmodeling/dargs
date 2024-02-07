@@ -1,5 +1,4 @@
-r"""
-Some (ocaml) pseudo-code here to show the intended type structure::
+r"""Some (ocaml) pseudo-code here to show the intended type structure.
 
     type args = {key: str; value: data; optional: bool; doc: str} list
     and  data =
@@ -235,7 +234,7 @@ class Argument:
         if (
             self.optional
             and self.default is not _Flags.NONE
-            and all([not isinstance_annotation(self.default, tt) for tt in self.dtype])
+            and all(not isinstance_annotation(self.default, tt) for tt in self.dtype)
         ):
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
@@ -741,7 +740,7 @@ class Variant:
             self.default_tag = default_tag
 
     def extend_choices(self, choices: Optional[Iterable["Argument"]]):
-        """Add a list of choice Arguments to the current Variant"""
+        """Add a list of choice Arguments to the current Variant."""
         # choices is a list of arguments
         # whose name is treated as the switch tag
         # we convert it into a dict for better reference
@@ -994,7 +993,7 @@ def isinstance_annotation(value, dtype) -> bool:
 
 
 class ArgumentEncoder(json.JSONEncoder):
-    """Extended JSON Encoder to encode Argument object:
+    """Extended JSON Encoder to encode Argument object.
 
     Examples
     --------

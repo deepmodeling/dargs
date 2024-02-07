@@ -37,10 +37,10 @@ class DargsDirective(Directive):
     """dargs directive."""
 
     has_content: ClassVar[bool] = True
-    option_spec: ClassVar[dict] = dict(
-        module=unchanged,
-        func=unchanged,
-    )
+    option_spec: ClassVar[dict] = {
+        "module": unchanged,
+        "func": unchanged,
+    }
 
     def run(self):
         if "module" in self.options and "func" in self.options:
@@ -59,10 +59,9 @@ class DargsDirective(Directive):
         if not hasattr(mod, attr_name):
             raise self.error(
                 (
-                    'Module "%s" has no attribute "%s"\n'
+                    f'Module "{module_name}" has no attribute "{attr_name}"\n'
                     "Incorrect argparse :module: or :func: values?"
                 )
-                % (module_name, attr_name)
             )
         func = getattr(mod, attr_name)
         arguments = func()
@@ -78,7 +77,7 @@ class DargsDirective(Directive):
                 make_anchor=True, make_link=True, use_sphinx_domain=True
             )
             rsts.extend(rst.split("\n"))
-        self.state_machine.insert_input(rsts, "%s:%s" % (module_name, attr_name))
+        self.state_machine.insert_input(rsts, f"{module_name}:{attr_name}")
         return []
 
 
@@ -145,13 +144,13 @@ class DargsDomain(Domain):
         "argument": XRefRole(),
     }
 
-    initial_data[dict] = {
+    initial_data: ClassVar[dict] = {
         "arguments": {},  # fullname -> docname, objtype
     }
 
     def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
         """Resolve cross-references."""
-        targetid = "%s:%s" % (typ, target)
+        targetid = f"{typ}:{target}"
         obj = self.data["arguments"].get(targetid)
         if obj is None:
             return None
