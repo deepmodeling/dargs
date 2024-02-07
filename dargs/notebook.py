@@ -14,7 +14,7 @@ Examples
 ...     "_comment": "This is an example data"
 ... }
 ... """
->>> JSON(jstr, _test_argument()) 
+>>> JSON(jstr, _test_argument())
 '''
 
 import json
