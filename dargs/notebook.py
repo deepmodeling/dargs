@@ -97,6 +97,24 @@ def JSON(data: Union[dict, str], arg: Union[Argument, List[Argument]]):
     arg : dargs.Argument or list[dargs.Argument]
         The Argument that describes the JSON data.
     """
+    display(HTML(print_html(data, arg)))
+
+
+def print_html(data: Union[dict, str], arg: Union[Argument, List[Argument]]) -> str:
+    """Print HTML string with Argument in the Jupyter Notebook.
+
+    Parameters
+    ----------
+    data : dict or str
+        The JSON data to be displayed, either JSON string or a dict.
+    arg : dargs.Argument or list[dargs.Argument]
+        The Argument that describes the JSON data.
+
+    Returns
+    -------
+    str
+        The HTML string.
+    """
     if isinstance(data, str):
         data = json.loads(data)
     elif isinstance(data, dict):
@@ -111,9 +129,8 @@ def JSON(data: Union[dict, str], arg: Union[Argument, List[Argument]]):
     else:
         raise ValueError(f"Unknown type: {type(arg)}")
     argdata = ArgumentData(data, arg)
-    buff = [css, r"""<div class="dargs-codeblock">""", argdata.print_html(), "</div>"]
-
-    display(HTML("".join(buff)))
+    buff = [css, r"""<div class="dargs-codeblock">""", argdata.print_html(), r"</div>"]
+    return "".join(buff)
 
 
 class ArgumentData:
@@ -241,7 +258,8 @@ class ArgumentData:
                 doc_body = re.sub(r"\*(.+)\*", r"<i>\1</i>", doc_body)
                 buff.append(doc_body)
 
-                buff.append(r"""</span></span>""")
+                buff.append(r"""</span>""")
+            buff.append(r"""</span>""")
             buff.append(r"""<code class="dargs-code">""")
             buff.append(": ")
             buff.append("</code>")
