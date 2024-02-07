@@ -1,5 +1,4 @@
-from .context import dargs
-from dargs import dargs, Argument, Variant
+from dargs import Argument, Variant, dargs
 
 ACTIVATION_FN_DICT = {
     "relu": None,
@@ -202,7 +201,7 @@ def descrpt_se_ar_args():
 
 
 def descrpt_hybrid_args():
-    doc_list = f"A list of descriptor definitions"
+    doc_list = "A list of descriptor definitions"
 
     return [
         Argument(
@@ -243,7 +242,7 @@ def descrpt_variant_type_args():
     link_se_a_3be = make_link("se_a_3be", "model/descriptor[se_a_3be]")
     link_se_a_tpe = make_link("se_a_tpe", "model/descriptor[se_a_tpe]")
     link_hybrid = make_link("hybrid", "model/descriptor[hybrid]")
-    doc_descrpt_type = f"The type of the descritpor. See explanation below. \n\n\
+    doc_descrpt_type = "The type of the descritpor. See explanation below. \n\n\
 - `loc_frame`: Defines a local frame at each atom, and the compute the descriptor as local coordinates under this frame.\n\n\
 - `se_a`: Used by the smooth edition of Deep Potential. The full relative coordinates are used to construct the descriptor.\n\n\
 - `se_r`: Used by the smooth edition of Deep Potential. Only the distance between atoms is used to construct the descriptor.\n\n\
@@ -391,7 +390,7 @@ def modifier_dipole_charge():
     doc_model_name = "The name of the frozen dipole model file."
     doc_model_charge_map = f"The charge of the WFCC. The list length should be the same as the {make_link('sel_type', 'model/fitting_net[dipole]/sel_type')}. "
     doc_sys_charge_map = f"The charge of real atoms. The list length should be the same as the {make_link('type_map', 'model/type_map')}"
-    doc_ewald_h = f"The grid spacing of the FFT grid. Unit is A"
+    doc_ewald_h = "The grid spacing of the FFT grid. Unit is A"
     doc_ewald_beta = f"The splitting parameter of Ewald sum. Unit is A^{-1}"
 
     return [

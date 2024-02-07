@@ -1,8 +1,8 @@
-from .context import dargs
-import unittest
 import json
+import unittest
 from typing import List
-from dargs import Argument, Variant, ArgumentEncoder
+
+from dargs import Argument, ArgumentEncoder, Variant
 
 
 class TestDocgen(unittest.TestCase):
@@ -217,7 +217,6 @@ class TestDocgen(unittest.TestCase):
         # print("\n\n"+docstr)
 
     def test_dpmd(self):
-        from dargs import dargs
         from .dpmdargs import gen_doc
 
         dargs.RAW_ANCHOR = False

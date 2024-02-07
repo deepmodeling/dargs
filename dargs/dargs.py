@@ -611,7 +611,7 @@ class Argument:
         if self.optional:
             typesig += ", optional"
             if self.default == "":
-                typesig += f", default: (empty string)"
+                typesig += ", default: (empty string)"
             elif self.default is not _Flags.NONE:
                 typesig += f", default: ``{self.default}``"
         if self.alias:

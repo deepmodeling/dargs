@@ -1,5 +1,5 @@
-from .context import dargs
 import unittest
+
 from dargs import Argument, Variant
 
 
@@ -186,7 +186,8 @@ class TestNormalizer(unittest.TestCase):
 
     def test_dpmd(self):
         import json
-        from .dpmdargs import normalize, example_json_str
+
+        from .dpmdargs import example_json_str, normalize
 
         data = json.loads(example_json_str)
         normalize(data)
