@@ -176,7 +176,25 @@ def _test_argument() -> Argument:
                 "test_variant",
                 doc=doc_test,
                 choices=[
-                    Argument("test_variant_argument", dtype=str, doc=doc_test),
+                    Argument(
+                        "test_variant_argument",
+                        dtype=dict,
+                        optional=True,
+                        doc=doc_test,
+                        sub_fields=[
+                            Argument(
+                                "test_repeat",
+                                dtype=list,
+                                repeat=True,
+                                doc=doc_test,
+                                sub_fields=[
+                                    Argument(
+                                        "test_repeat_item", dtype=bool, doc=doc_test
+                                    ),
+                                ],
+                            )
+                        ],
+                    ),
                 ],
             ),
         ],
