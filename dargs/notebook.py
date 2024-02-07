@@ -1,3 +1,22 @@
+r'''IPython/Jupyter Notebook display for dargs.
+
+It is expected to be used in Jupyter Notebook, where
+the IPython module is available.
+
+Examples
+--------
+>>> from dargs.sphinx import _test_argument
+>>> from dargs.notebook import JSON
+>>> jstr = """
+... {
+...     "test_argument": "test1",
+...     "test_variant": "test_variant_argument",
+...     "_comment": "This is an example data"
+... }
+... """
+>>> JSON(jstr, _test_argument()) 
+'''
+
 import json
 import re
 from typing import List, Union
@@ -98,6 +117,18 @@ def JSON(data: Union[dict, str], arg: Union[Argument, List[Argument]]):
 
 
 class ArgumentData:
+    """ArgumentData is a class to hold the data and Argument.
+
+    It is used to print the data with Argument in the Jupyter Notebook.
+
+    Parameters
+    ----------
+    data : dict
+        The data to be displayed.
+    arg : dargs.Argument
+        The Argument that describes the data.
+    """
+
     def __init__(self, data: dict, arg: Argument):
         self.data = data
         self.arg = arg
@@ -132,6 +163,15 @@ class ArgumentData:
                 self.subdata.append(ArgumentData(dd, self.arg))
 
     def print_html(self, _level=0, _last_one=True):
+        """Print the data with Argument in HTML format.
+
+        Parameters
+        ----------
+        _level : int, optional
+            The level of indentation, by default 0
+        _last_one : bool, optional
+            Whether it is the last one, by default True
+        """
         linebreak = "<br/>"
         indent = (
             r"""<code class="dargs-code dargs-linebegin">"""
