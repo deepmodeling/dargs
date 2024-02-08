@@ -1,5 +1,5 @@
 .
 numpydoc
 deepmodeling_sphinx>=0.1.1
-myst_parser
+myst-nb
 sphinx_rtd_theme

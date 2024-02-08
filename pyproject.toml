@@ -27,6 +27,11 @@ Homepage = "https://github.com/deepmodeling/dargs"
 documentation = "https://docs.deepmodeling.com/projects/dargs"
 repository = "https://github.com/deepmodeling/dargs"
 
+[project.optional-dependencies]
+test = [
+    "ipython",
+]
+
 [tool.setuptools.packages.find]
 include = ["dargs*"]
 

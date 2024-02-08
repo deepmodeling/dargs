@@ -45,7 +45,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "numpydoc",
-    "myst_parser",
+    "myst_nb",
     "dargs.sphinx",
 ]
 
