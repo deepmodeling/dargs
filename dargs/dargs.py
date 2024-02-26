@@ -795,7 +795,12 @@ class Variant:
                 return self.choice_dict[self.choice_alias[tag]]
             else:
                 raise ArgumentValueError(
-                    path, f"get invalid choice `{tag}` for flag key `{self.flag_name}`." + did_you_mean(tag, list(self.choice_dict.keys()) + list(self.choice_alias.keys()))
+                    path,
+                    f"get invalid choice `{tag}` for flag key `{self.flag_name}`."
+                    + did_you_mean(
+                        tag,
+                        list(self.choice_dict.keys()) + list(self.choice_alias.keys()),
+                    ),
                 )
         elif self.optional:
             return self.choice_dict[self.default_tag]
@@ -1046,7 +1051,7 @@ def did_you_mean(choice: str, choices: List[str]) -> str:
     ----------
     choice : str
         the user's wrong choice
-    choices: list[str]
+    choices : list[str]
         all the choices
 
     Returns
