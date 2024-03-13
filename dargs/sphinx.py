@@ -19,6 +19,7 @@ Then `dargs` directive will be added:
 
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 """
+
 import sys
 from typing import ClassVar, List
 

@@ -16,7 +16,6 @@ separate class `Variant` so that multiple choices can be handled correctly.
 We also need to pay special attention to flat the keys of its choices.
 """
 
-
 import fnmatch
 import json
 import re
