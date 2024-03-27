@@ -19,8 +19,9 @@ Then `dargs` directive will be added:
 
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 """
+
 import sys
-from typing import List
+from typing import ClassVar, List
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
@@ -34,13 +35,13 @@ from .dargs import Argument, Variant
 
 
 class DargsDirective(Directive):
-    """dargs directive"""
+    """dargs directive."""
 
-    has_content = True
-    option_spec = dict(
-        module=unchanged,
-        func=unchanged,
-    )
+    has_content: ClassVar[bool] = True
+    option_spec: ClassVar[dict] = {
+        "module": unchanged,
+        "func": unchanged,
+    }
 
     def run(self):
         if "module" in self.options and "func" in self.options:
@@ -58,11 +59,8 @@ class DargsDirective(Directive):
 
         if not hasattr(mod, attr_name):
             raise self.error(
-                (
-                    'Module "%s" has no attribute "%s"\n'
-                    "Incorrect argparse :module: or :func: values?"
-                )
-                % (module_name, attr_name)
+                f'Module "{module_name}" has no attribute "{attr_name}"\n'
+                "Incorrect argparse :module: or :func: values?"
             )
         func = getattr(mod, attr_name)
         arguments = func()
@@ -78,7 +76,7 @@ class DargsDirective(Directive):
                 make_anchor=True, make_link=True, use_sphinx_domain=True
             )
             rsts.extend(rst.split("\n"))
-        self.state_machine.insert_input(rsts, "%s:%s" % (module_name, attr_name))
+        self.state_machine.insert_input(rsts, f"{module_name}:{attr_name}")
         return []
 
 
@@ -88,9 +86,9 @@ class DargsObject(ObjectDescription):
     This directive creates a signature node for an argument.
     """
 
-    option_spec = dict(
-        path=unchanged,
-    )
+    option_spec: ClassVar[dict] = {
+        "path": unchanged,
+    }
 
     def handle_signature(self, sig, signode):
         signode += addnodes.desc_name(sig, sig)
@@ -98,7 +96,7 @@ class DargsObject(ObjectDescription):
 
     def add_target_and_index(self, name, sig, signode):
         path = self.options["path"]
-        targetid = "%s:%s" % (self.objtype, path)
+        targetid = f"{self.objtype}:{path}"
         if targetid not in self.state.document.ids:
             signode["names"].append(targetid)
             signode["ids"].append(targetid)
@@ -108,8 +106,7 @@ class DargsObject(ObjectDescription):
             inv = self.env.domaindata["dargs"]["arguments"]
             if targetid in inv:
                 self.state.document.reporter.warning(
-                    'Duplicated argument "%s" described in "%s".'
-                    % (targetid, self.env.doc2path(inv[targetid][0])),
+                    f'Duplicated argument "{targetid}" described in "{self.env.doc2path(inv[targetid][0])}".',
                     line=self.lineno,
                 )
             inv[targetid] = (self.env.docname, self.objtype)
@@ -117,7 +114,7 @@ class DargsObject(ObjectDescription):
         self.indexnode["entries"].append(
             (
                 "pair",
-                "%s ; %s (%s) " % (name, path, self.objtype.title()),
+                f"{name}; {path} ({self.objtype.title()})",
                 targetid,
                 "main",
                 None,
@@ -133,25 +130,25 @@ class DargsDomain(Domain):
     - dargs::argument role
     """
 
-    name = "dargs"
-    label = "dargs"
-    object_types = {
+    name: ClassVar[str] = "dargs"
+    label: ClassVar[str] = "dargs"
+    object_types: ClassVar[dict] = {
         "argument": ObjType("argument", "argument"),
     }
-    directives = {
+    directives: ClassVar[dict] = {
         "argument": DargsObject,
     }
-    roles = {
+    roles: ClassVar[dict] = {
         "argument": XRefRole(),
     }
 
-    initial_data = {
+    initial_data: ClassVar[dict] = {
         "arguments": {},  # fullname -> docname, objtype
     }
 
     def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
         """Resolve cross-references."""
-        targetid = "%s:%s" % (typ, target)
+        targetid = f"{typ}:{target}"
         obj = self.data["arguments"].get(targetid)
         if obj is None:
             return None
@@ -180,7 +177,25 @@ def _test_argument() -> Argument:
                 "test_variant",
                 doc=doc_test,
                 choices=[
-                    Argument("test_variant_argument", dtype=str, doc=doc_test),
+                    Argument(
+                        "test_variant_argument",
+                        dtype=dict,
+                        optional=True,
+                        doc=doc_test,
+                        sub_fields=[
+                            Argument(
+                                "test_repeat",
+                                dtype=list,
+                                repeat=True,
+                                doc=doc_test,
+                                sub_fields=[
+                                    Argument(
+                                        "test_repeat_item", dtype=bool, doc=doc_test
+                                    ),
+                                ],
+                            )
+                        ],
+                    ),
                 ],
             ),
         ],

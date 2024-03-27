@@ -1,5 +1,4 @@
-r"""
-Some (ocaml) pseudo-code here to show the intended type structure::
+r"""Some (ocaml) pseudo-code here to show the intended type structure.
 
     type args = {key: str; value: data; optional: bool; doc: str} list
     and  data =
@@ -41,7 +40,11 @@ RAW_ANCHOR = False  # whether to use raw html anchors or RST ones
 HookArgKType = Callable[["Argument", dict, List[str]], None]
 HookArgVType = Callable[["Argument", Any, List[str]], None]
 HookVrntType = Callable[["Variant", dict, List[str]], None]
-_DUMMYHOOK = lambda a, x, p: None  # for doing nothing in traversing
+
+
+def _DUMMYHOOK(a, x, p):
+    # for doing nothing in traversing
+    pass
 
 
 class _Flags(Enum):
@@ -69,19 +72,19 @@ class ArgumentError(Exception):
 
 
 class ArgumentKeyError(ArgumentError):
-    """Error class for missing or invalid argument keys"""
+    """Error class for missing or invalid argument keys."""
 
     pass
 
 
 class ArgumentTypeError(ArgumentError):
-    """Error class for invalid argument data types"""
+    """Error class for invalid argument data types."""
 
     pass
 
 
 class ArgumentValueError(ArgumentError):
-    """Error class for missing or invalid argument values"""
+    """Error class for missing or invalid argument values."""
 
     pass
 
@@ -170,8 +173,12 @@ class Argument:
     def __eq__(self, other: "Argument") -> bool:
         # do not compare doc and default
         # since they do not enter to the type checking
-        fkey = lambda f: f.name
-        vkey = lambda v: v.flag_name
+        def fkey(f):
+            return f.name
+
+        def vkey(v):
+            return v.flag_name
+
         return (
             self.name == other.name
             and set(self.dtype) == set(other.dtype)
@@ -205,7 +212,7 @@ class Argument:
             return self[skey][rkey]
 
     @property
-    def I(self):
+    def I(self):  # noqa:E743
         # return a dummy argument that only has self as a sub field
         # can be used in indexing
         return Argument("_", dict, [self])
@@ -228,7 +235,7 @@ class Argument:
         if (
             self.optional
             and self.default is not _Flags.NONE
-            and all([not isinstance_annotation(self.default, tt) for tt in self.dtype])
+            and all(not isinstance_annotation(self.default, tt) for tt in self.dtype)
         ):
             self.dtype.add(type(self.default))
         # and make it compatible with `isinstance`
@@ -474,7 +481,7 @@ class Argument:
         do_alias: bool = True,
         trim_pattern: Optional[str] = None,
     ):
-        """Modify `argdict` so that it meets the Argument structure
+        """Modify `argdict` so that it meets the Argument structure.
 
         Normalization can add default values to optional args,
         substitute alias by its standard names, and discard unnecessary
@@ -527,7 +534,7 @@ class Argument:
         do_alias: bool = True,
         trim_pattern: Optional[str] = None,
     ):
-        """Modify the value so that it meets the Argument structure
+        """Modify the value so that it meets the Argument structure.
 
         Same as `normalize({self.name: value})[self.name]`.
 
@@ -612,7 +619,7 @@ class Argument:
         if self.optional:
             typesig += ", optional"
             if self.default == "":
-                typesig += f", default: (empty string)"
+                typesig += ", default: (empty string)"
             elif self.default is not _Flags.NONE:
                 typesig += f", default: ``{self.default}``"
         if self.alias:
@@ -734,7 +741,7 @@ class Variant:
             self.default_tag = default_tag
 
     def extend_choices(self, choices: Optional[Iterable["Argument"]]):
-        """Add a list of choice Arguments to the current Variant"""
+        """Add a list of choice Arguments to the current Variant."""
         # choices is a list of arguments
         # whose name is treated as the switch tag
         # we convert it into a dict for better reference
@@ -761,7 +768,7 @@ class Variant:
         *args,
         **kwargs,
     ) -> "Argument":
-        """Add a choice Argument to the current Variant"""
+        """Add a choice Argument to the current Variant."""
         if isinstance(tag, Argument):
             newarg = tag
         else:
@@ -841,7 +848,7 @@ class Variant:
         if kwargs.get("make_link"):
             if not kwargs.get("make_anchor"):
                 raise ValueError("`make_link` only works with `make_anchor` set")
-            fnstr, target = make_ref_pair(path + [self.flag_name], fnstr, "flag")
+            fnstr, target = make_ref_pair([*path, self.flag_name], fnstr, "flag")
             body_list.append(target + "\n")
         for choice in self.choice_dict.values():
             body_list.append("")
@@ -992,7 +999,7 @@ def isinstance_annotation(value, dtype) -> bool:
 
 
 class ArgumentEncoder(json.JSONEncoder):
-    """Extended JSON Encoder to encode Argument object:
+    """Extended JSON Encoder to encode Argument object.
 
     Examples
     --------

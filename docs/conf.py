@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
 #
@@ -46,7 +45,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "numpydoc",
-    "myst_parser",
+    "myst_nb",
     "dargs.sphinx",
 ]
 
