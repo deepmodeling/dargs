@@ -16,6 +16,7 @@ separate class `Variant` so that multiple choices can be handled correctly.
 We also need to pay special attention to flat the keys of its choices.
 """
 
+import difflib
 import fnmatch
 import json
 import re
@@ -800,7 +801,12 @@ class Variant:
                 return self.choice_dict[self.choice_alias[tag]]
             else:
                 raise ArgumentValueError(
-                    path, f"get invalid choice `{tag}` for flag key `{self.flag_name}`."
+                    path,
+                    f"get invalid choice `{tag}` for flag key `{self.flag_name}`."
+                    + did_you_mean(
+                        tag,
+                        list(self.choice_dict.keys()) + list(self.choice_alias.keys()),
+                    ),
                 )
         elif self.optional:
             return self.choice_dict[self.default_tag]
@@ -1042,3 +1048,22 @@ class ArgumentEncoder(json.JSONEncoder):
         elif isinstance(obj, type):
             return obj.__name__
         return json.JSONEncoder.default(self, obj)
+
+
+def did_you_mean(choice: str, choices: List[str]) -> str:
+    """Get did you mean message.
+
+    Parameters
+    ----------
+    choice : str
+        the user's wrong choice
+    choices : list[str]
+        all the choices
+
+    Returns
+    -------
+    str
+        did you mean error message
+    """
+    matches = difflib.get_close_matches(choice, choices)
+    return f"Did you mean: {matches[0]}?" if matches else ""
