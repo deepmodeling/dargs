@@ -249,8 +249,12 @@ class TestChecker(unittest.TestCase):
                 "vnt2_1": 21,
             }
         }
-        with self.assertRaises(ArgumentValueError):
+        with self.assertRaises(ArgumentValueError) as cm:
             ca.check(err_dict2)
+        self.assertEqual(
+            'Did you mean: type3?'
+            in str(cm.exception)
+        )
         # test optional choice
         test_dict1["base"].pop("vnt_flag")
         with self.assertRaises(ArgumentKeyError):
