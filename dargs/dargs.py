@@ -465,8 +465,10 @@ class Argument:
             return
         for name in value.keys():
             if name not in allowed_keys:
+                dym_message = did_you_mean(name, allowed_keys)
                 raise ArgumentKeyError(
-                    path, f"undefined key `{name}` is " "not allowed in strict mode"
+                    path,
+                    f"undefined key `{name}` is not allowed in strict mode. {dym_message}",
                 )
 
     # above are type checking part

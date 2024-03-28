@@ -88,8 +88,9 @@ class TestChecker(unittest.TestCase):
             ca.check(err_dict1)
         err_dict1["base"]["sub2"]["subsub2"]["subsubsub1"] = 111
         ca.check(err_dict1)  # now should pass
-        with self.assertRaises(ArgumentKeyError):
+        with self.assertRaises(ArgumentKeyError) as cm:
             ca.check(err_dict1, strict=True)  # but should fail when strict
+        self.assertIn("Did you mean: subsubsub1?", str(cm.exception))
         err_dict1["base"]["sub2"] = None
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict1)
