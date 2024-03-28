@@ -18,8 +18,9 @@ class TestChecker(unittest.TestCase):
         # possible error
         with self.assertRaises(ArgumentKeyError):
             ca.check({"key2": 1})
-        with self.assertRaises(ArgumentKeyError):
+        with self.assertRaises(ArgumentKeyError) as cm:
             ca.check({"key1": 1, "key2": 1}, strict=True)
+        self.assertIn("Did you mean: key1?", str(cm.exception))
         with self.assertRaises(ArgumentTypeError):
             ca.check({"key1": 1.0})
         # special handle of None
