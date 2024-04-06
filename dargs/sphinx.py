@@ -171,6 +171,7 @@ def _test_argument() -> Argument:
         doc=doc_test,
         sub_fields=[
             Argument("test_argument", dtype=str, doc=doc_test, default="test"),
+            Argument("test_list", type=List[int], optional=True),
         ],
         sub_variants=[
             Variant(
