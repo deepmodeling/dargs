@@ -298,9 +298,11 @@ class ArgumentData:
         else:
             buff.append(r"""<code class="dargs-code">""")
             buff.append(
-                json.dumps(self.data, indent=2).replace(
+                json.dumps(self.data, indent=2)
+                .replace(
                     "\n", f"""</code>{linebreak}{indent}<code class="dargs-code">"""
                 )
+                .replace(" ", "&nbsp;")
             )
             if not _last_one:
                 buff.append(",")
