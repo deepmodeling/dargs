@@ -25,7 +25,7 @@ The id is the same as the argument path. Variant types would be in square bracke
 
 Please refer to test files for detailed usage.
 
-## Features
+## Additional features
 
 - [PEP 484](https://peps.python.org/pep-0484/) type annotations
 - Native integration with [Sphinx](https://github.com/sphinx-doc/sphinx), [DP-GUI](https://github.com/deepmodeling/dpgui), and [Jupyter Notebook](https://jupyter.org/)
