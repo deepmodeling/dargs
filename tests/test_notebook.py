@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 from xml.etree import ElementTree as ET
 

@@ -20,8 +20,10 @@ Then `dargs` directive will be added:
 where `_test_argument` returns an :class:`Argument <dargs.Argument>`. A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 """
 
+from __future__ import annotations
+
 import sys
-from typing import ClassVar, List
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
@@ -33,12 +35,15 @@ from sphinx.util.nodes import make_refnode
 
 from .dargs import Argument, Variant
 
+if TYPE_CHECKING:
+    from sphinx.util.typing import RoleFunction
+
 
 class DargsDirective(Directive):
     """dargs directive."""
 
     has_content: ClassVar[bool] = True
-    option_spec: ClassVar[dict] = {
+    option_spec: ClassVar[dict[str, Callable[[str], Any]] | None] = {
         "module": unchanged,
         "func": unchanged,
     }
@@ -132,17 +137,17 @@ class DargsDomain(Domain):
 
     name: ClassVar[str] = "dargs"
     label: ClassVar[str] = "dargs"
-    object_types: ClassVar[dict] = {
+    object_types: ClassVar[dict[str, ObjType]] = {  # type: ignore
         "argument": ObjType("argument", "argument"),
     }
-    directives: ClassVar[dict] = {
+    directives: ClassVar[dict[str, type[Directive]]] = {  # type: ignore
         "argument": DargsObject,
     }
-    roles: ClassVar[dict] = {
+    roles: ClassVar[dict[str, RoleFunction | XRefRole]] = {  # type: ignore
         "argument": XRefRole(),
     }
 
-    initial_data: ClassVar[dict] = {
+    initial_data: ClassVar[dict] = {  # type: ignore
         "arguments": {},  # fullname -> docname, objtype
     }
 
@@ -203,7 +208,7 @@ def _test_argument() -> Argument:
     )
 
 
-def _test_arguments() -> List[Argument]:
+def _test_arguments() -> list[Argument]:
     """Returns a list of arguments."""
     return [
         Argument(name="test1", dtype=int, doc="Argument 1"),

@@ -31,6 +31,11 @@ repository = "https://github.com/deepmodeling/dargs"
 test = [
     "ipython",
 ]
+typecheck = [
+    "basedpyright==1.12.2",
+    "sphinx",
+    "ipython",
+]
 
 [tool.setuptools.packages.find]
 include = ["dargs*"]
@@ -47,6 +52,7 @@ select = [
     "C4", # flake8-comprehensions
     "RUF", # ruff
     "I", # isort
+    "TCH", # flake8-type-checking
 ]
 
 ignore = [
@@ -68,3 +74,9 @@ ignore-init-module-imports = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.pyright]
+include = ["dargs"]

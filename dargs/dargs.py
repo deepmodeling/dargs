@@ -16,6 +16,8 @@ separate class `Variant` so that multiple choices can be handled correctly.
 We also need to pay special attention to flat the keys of its choices.
 """
 
+from __future__ import annotations
+
 import difflib
 import fnmatch
 import json
@@ -23,7 +25,7 @@ import re
 from copy import deepcopy
 from enum import Enum
 from textwrap import indent
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable, List
 
 try:
     from typing import get_origin
@@ -54,9 +56,7 @@ class _Flags(Enum):
 class ArgumentError(Exception):
     """Base error class for invalid argument values in argchecking."""
 
-    def __init__(
-        self, path: Union[None, str, List[str]] = None, message: Optional[str] = None
-    ):
+    def __init__(self, path: None | str | list[str] = None, message: str | None = None):
         super().__init__(message)
         if path is None:
             path = ""
@@ -139,26 +139,25 @@ class Argument:
     def __init__(
         self,
         name: str,
-        dtype: Union[None, type, Iterable[type]],
-        sub_fields: Optional[Iterable["Argument"]] = None,
-        sub_variants: Optional[Iterable["Variant"]] = None,
+        dtype: None | type | Iterable[type | Any | None],
+        sub_fields: Iterable[Argument] | None = None,
+        sub_variants: Iterable[Variant] | None = None,
         repeat: bool = False,
         optional: bool = False,
         default: Any = _Flags.NONE,
-        alias: Optional[Iterable[str]] = None,
-        extra_check: Optional[Callable[[Any], bool]] = None,
+        alias: Iterable[str] | None = None,
+        extra_check: Callable[[Any], bool] | None = None,
         doc: str = "",
         fold_subdoc: bool = False,
         extra_check_errmsg: str = "",
     ):
         self.name = name
-        self.dtype = dtype
-        self.sub_fields: Dict[str, "Argument"] = {}
-        self.sub_variants: Dict[str, "Variant"] = {}
+        self.sub_fields: dict[str, Argument] = {}
+        self.sub_variants: dict[str, Variant] = {}
         self.repeat = repeat
         self.optional = optional
         self.default = default
-        self.alias = alias if alias is not None else []
+        self.alias = tuple(alias) if alias is not None else []
         self.extra_check = extra_check
         self.doc = doc
         self.fold_subdoc = fold_subdoc
@@ -167,9 +166,12 @@ class Argument:
         self.extend_subfields(sub_fields)
         self.extend_subvariants(sub_variants)
         # handle the format of dtype, makeit a tuple
-        self._reorg_dtype()
+        self.dtype = self._reorg_dtype(dtype)
 
-    def __eq__(self, other: "Argument") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Argument):
+            return NotImplemented
+
         # do not compare doc and default
         # since they do not enter to the type checking
         def fkey(f):
@@ -190,7 +192,7 @@ class Argument:
     def __repr__(self) -> str:
         return f"<Argument {self.name}: {' | '.join(self._get_type_name(dd) for dd in self.dtype)}>"
 
-    def __getitem__(self, key: str) -> "Argument":
+    def __getitem__(self, key: str) -> Argument:
         key = key.lstrip("/")
         if key in ("", "."):
             return self
@@ -216,41 +218,43 @@ class Argument:
         # can be used in indexing
         return Argument("_", dict, [self])
 
-    def _reorg_dtype(self):
+    def _reorg_dtype(
+        self, dtype: None | type | Any | Iterable[type | Any | None]
+    ) -> tuple[type | Any | None, ...]:
         if (
-            isinstance(self.dtype, type)
-            or isinstance(get_origin(self.dtype), type)
-            or self.dtype is None
+            isinstance(dtype, type)
+            or isinstance(get_origin(dtype), type)
+            or dtype is None
         ):
-            self.dtype = [self.dtype]
+            dtype = [dtype]
+        assert dtype is not None
         # remove duplicate
-        self.dtype = {
+        dtype = {
             dt if type(dt) is type or type(get_origin(dt)) is type else type(dt)
-            for dt in self.dtype
+            for dt in dtype
         }
         # check conner cases
         if self.sub_fields or self.sub_variants:
-            self.dtype.add(list if self.repeat else dict)
+            dtype.add(list if self.repeat else dict)
         if (
             self.optional
             and self.default is not _Flags.NONE
-            and all(not isinstance_annotation(self.default, tt) for tt in self.dtype)
+            and all(not isinstance_annotation(self.default, tt) for tt in dtype)
         ):
-            self.dtype.add(type(self.default))
+            dtype.add(type(self.default))
         # and make it compatible with `isinstance`
-        self.dtype = tuple(self.dtype)
+        return tuple(dtype)
 
-    def set_dtype(self, dtype: Union[None, type, Iterable[type]]):
+    def set_dtype(self, dtype: None | type | Iterable[type]):
         """Change the dtype of the current Argument."""
-        self.dtype = dtype
-        self._reorg_dtype()
+        self.dtype = self._reorg_dtype(dtype)
 
     def set_repeat(self, repeat: bool = True):
         """Change the repeat attribute of the current Argument."""
         self.repeat = repeat
-        self._reorg_dtype()
+        self.dtype = self._reorg_dtype(self.dtype)
 
-    def extend_subfields(self, sub_fields: Optional[Iterable["Argument"]]):
+    def extend_subfields(self, sub_fields: Iterable[Argument] | None):
         """Add a list of sub fields to the current Argument."""
         if sub_fields is None:
             return
@@ -260,9 +264,9 @@ class Argument:
             ((s.name, s) for s in sub_fields),
             err_msg=f"building Argument `{self.name}`",
         )
-        self._reorg_dtype()
+        self.dtype = self._reorg_dtype(self.dtype)
 
-    def add_subfield(self, name: Union[str, "Argument"], *args, **kwargs) -> "Argument":
+    def add_subfield(self, name: str | Argument, *args, **kwargs) -> Argument:
         """Add a sub field to the current Argument."""
         if isinstance(name, Argument):
             newarg = name
@@ -271,7 +275,7 @@ class Argument:
         self.extend_subfields([newarg])
         return newarg
 
-    def extend_subvariants(self, sub_variants: Optional[Iterable["Variant"]]):
+    def extend_subvariants(self, sub_variants: Iterable[Variant] | None):
         """Add a list of sub variants to the current Argument."""
         if sub_variants is None:
             return
@@ -282,11 +286,9 @@ class Argument:
             exclude=self.sub_fields.keys(),
             err_msg=f"building Argument `{self.name}`",
         )
-        self._reorg_dtype()
+        self.dtype = self._reorg_dtype(self.dtype)
 
-    def add_subvariant(
-        self, flag_name: Union[str, "Variant"], *args, **kwargs
-    ) -> "Variant":
+    def add_subvariant(self, flag_name: str | Variant, *args, **kwargs) -> Variant:
         """Add a sub variant to the current Argument."""
         if isinstance(flag_name, Variant):
             newvrnt = flag_name
@@ -298,7 +300,7 @@ class Argument:
     # above are creation part
     # below are general traverse part
 
-    def flatten_sub(self, value: dict, path=None) -> Dict[str, "Argument"]:
+    def flatten_sub(self, value: dict, path=None) -> dict[str, Argument]:
         sub_dicts = [self.sub_fields]
         sub_dicts.extend(
             vrnt.flatten_sub(value, path) for vrnt in self.sub_variants.values()
@@ -316,7 +318,7 @@ class Argument:
         value_hook: HookArgVType = _DUMMYHOOK,
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
-        path: Optional[List[str]] = None,
+        path: list[str] | None = None,
     ):
         # first, do something with the key
         # then, take out the vaule and do something with it
@@ -339,7 +341,7 @@ class Argument:
         value_hook: HookArgVType = _DUMMYHOOK,
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
-        path: Optional[List[str]] = None,
+        path: list[str] | None = None,
     ):
         # this is not private, and can be called directly
         # in the condition where there is no leading key
@@ -367,7 +369,7 @@ class Argument:
         value_hook: HookArgVType = _DUMMYHOOK,
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
-        path: Optional[List[str]] = None,
+        path: list[str] | None = None,
     ):
         assert isinstance(value, dict)
         if path is None:
@@ -480,7 +482,7 @@ class Argument:
         inplace: bool = False,
         do_default: bool = True,
         do_alias: bool = True,
-        trim_pattern: Optional[str] = None,
+        trim_pattern: str | None = None,
     ):
         """Modify `argdict` so that it meets the Argument structure.
 
@@ -533,7 +535,7 @@ class Argument:
         inplace: bool = False,
         do_default: bool = True,
         do_alias: bool = True,
-        trim_pattern: Optional[str] = None,
+        trim_pattern: str | None = None,
     ):
         """Modify the value so that it meets the Argument structure.
 
@@ -600,7 +602,7 @@ class Argument:
     # above are normalizing part
     # below are doc generation part
 
-    def gen_doc(self, path: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc(self, path: list[str] | None = None, **kwargs) -> str:
         """Generate doc string for the current Argument."""
         # the actual indentation is done here, and ONLY here
         if path is None:
@@ -613,7 +615,7 @@ class Argument:
         ]
         return "\n".join(filter(None, doc_list))
 
-    def gen_doc_head(self, path: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_head(self, path: list[str] | None = None, **kwargs) -> str:
         typesig = "| type: " + " | ".join(
             [f"``{self._get_type_name(dt)}``" for dt in self.dtype]
         )
@@ -628,19 +630,20 @@ class Argument:
             typesig += ", ".join(f"*{al}*" for al in self.alias)
         head = f"{self.name}: "
         if kwargs.get("use_sphinx_domain", False):
+            assert path is not None
             head = f".. dargs:argument:: {self.name}:\n   :path: {'/'.join(path)}\n"
         head += f"\n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
             head = f"{make_rst_refid(path)}\n" + head
         return head
 
-    def gen_doc_path(self, path: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_path(self, path: list[str] | None = None, **kwargs) -> str:
         if path is None:
             path = [self.name]
         pathdoc = f"| argument path: ``{'/'.join(path)}``\n"
         return pathdoc
 
-    def gen_doc_body(self, path: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_body(self, path: list[str] | None = None, **kwargs) -> str:
         body_list = []
         if self.doc:
             body_list.append(self.doc + "\n")
@@ -698,14 +701,14 @@ class Variant:
     def __init__(
         self,
         flag_name: str,
-        choices: Optional[Iterable["Argument"]] = None,
+        choices: Iterable[Argument] | None = None,
         optional: bool = False,
         default_tag: str = "",  # this is indeed necessary in case of optional
         doc: str = "",
     ):
         self.flag_name = flag_name
-        self.choice_dict: Dict[str, Argument] = {}
-        self.choice_alias: Dict[str, str] = {}
+        self.choice_dict: dict[str, Argument] = {}
+        self.choice_alias: dict[str, str] = {}
         self.extend_choices(choices)
         self.optional = optional
         if optional and not default_tag:
@@ -713,7 +716,9 @@ class Variant:
         self.set_default(default_tag)
         self.doc = doc
 
-    def __eq__(self, other: "Variant") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Variant):
+            return NotImplemented
         # do not compare doc
         return (
             self.flag_name == other.flag_name
@@ -727,10 +732,10 @@ class Variant:
             f"<Variant {self.flag_name} in {{ {', '.join(self.choice_dict.keys())} }}>"
         )
 
-    def __getitem__(self, key: str) -> "Argument":
+    def __getitem__(self, key: str) -> Argument:
         return self.choice_dict[key]
 
-    def set_default(self, default_tag: Union[bool, str]):
+    def set_default(self, default_tag: bool | str):
         """Change the default tag of the current Variant."""
         if not default_tag:
             self.optional = False
@@ -741,7 +746,7 @@ class Variant:
             self.optional = True
             self.default_tag = default_tag
 
-    def extend_choices(self, choices: Optional[Iterable["Argument"]]):
+    def extend_choices(self, choices: Iterable[Argument] | None):
         """Add a list of choice Arguments to the current Variant."""
         # choices is a list of arguments
         # whose name is treated as the switch tag
@@ -764,11 +769,11 @@ class Variant:
 
     def add_choice(
         self,
-        tag: Union[str, "Argument"],
-        _dtype: Union[None, type, Iterable[type]] = dict,
+        tag: str | Argument,
+        _dtype: None | type | Iterable[type] = dict,
         *args,
         **kwargs,
-    ) -> "Argument":
+    ) -> Argument:
         """Add a choice Argument to the current Variant."""
         if isinstance(tag, Argument):
             newarg = tag
@@ -794,7 +799,7 @@ class Variant:
     # above are creation part
     # below are helpers for traversing
 
-    def get_choice(self, argdict: dict, path=None) -> "Argument":
+    def get_choice(self, argdict: dict, path=None) -> Argument:
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             if tag in self.choice_dict:
@@ -819,7 +824,7 @@ class Variant:
                 "to choose variant but not found.",
             )
 
-    def flatten_sub(self, argdict: dict, path=None) -> Dict[str, "Argument"]:
+    def flatten_sub(self, argdict: dict, path=None) -> dict[str, Argument]:
         choice = self.get_choice(argdict, path)
         fields = {
             self.flag_name: self.dummy_argument(),  # as a placeholder
@@ -837,7 +842,7 @@ class Variant:
     # below are doc generation part
 
     def gen_doc(
-        self, path: Optional[List[str]] = None, showflag: bool = False, **kwargs
+        self, path: list[str] | None = None, showflag: bool = False, **kwargs
     ) -> str:
         body_list = [""]
         body_list.append(
@@ -847,6 +852,7 @@ class Variant:
         body_list.append(self.gen_doc_flag(path, showflag=showflag, **kwargs))
         fnstr = f"*{self.flag_name}*"
         if kwargs.get("make_link"):
+            assert path is not None
             if not kwargs.get("make_anchor"):
                 raise ValueError("`make_link` only works with `make_anchor` set")
             fnstr, target = make_ref_pair([*path, self.flag_name], fnstr, "flag")
@@ -872,7 +878,7 @@ class Variant:
         body = "\n".join(body_list)
         return body
 
-    def gen_doc_flag(self, path: Optional[List[str]] = None, **kwargs) -> str:
+    def gen_doc_flag(self, path: list[str] | None = None, **kwargs) -> str:
         headdoc = f"{self.flag_name}:"
         typedoc = "| type: ``str`` (flag key)"
         if self.optional:
@@ -917,7 +923,7 @@ class Variant:
         return "\n".join([x for x in allparts if x is not None])
 
     def _make_cpath(
-        self, cname: str, path: Optional[List[str]] = None, showflag: bool = False
+        self, cname: str, path: list[str] | None = None, showflag: bool = False
     ):
         f_str = f"{self.flag_name}=" if showflag else ""
         c_str = f"[{f_str}{cname}]"
@@ -949,9 +955,9 @@ def make_ref_pair(path, text=None, prefix=None):
 
 def update_nodup(
     this: dict,
-    *others: Union[dict, Iterable[tuple]],
-    exclude: Optional[Iterable] = None,
-    err_msg: Optional[str] = None,
+    *others: dict | Iterable[tuple],
+    exclude: Iterable | None = None,
+    err_msg: str | None = None,
 ):
     for pair in others:
         if isinstance(pair, dict):
@@ -969,7 +975,7 @@ def update_nodup(
 def trim_by_pattern(
     argdict: dict,
     pattern: str,
-    reserved: Optional[List[str]] = None,
+    reserved: Iterable[str] | None = None,
     use_regex: bool = False,
 ):
     rep = fnmatch.translate(pattern) if not use_regex else pattern
@@ -1007,7 +1013,7 @@ class ArgumentEncoder(json.JSONEncoder):
     >>> json.dumps(some_arg, cls=ArgumentEncoder)
     """
 
-    def default(self, obj) -> Dict[str, Union[str, bool, List]]:
+    def default(self, o) -> Any:
         """Generate a dict containing argument information, making it ready to be encoded
         to JSON string.
 
@@ -1017,42 +1023,42 @@ class ArgumentEncoder(json.JSONEncoder):
 
         Returns
         -------
-        dict: Dict
-            a dict containing argument information
+        Any
+            any; for Argument and Variant, returns a dict containing argument information
         """
-        if isinstance(obj, Argument):
+        if isinstance(o, Argument):
             output = {
                 "object": "Argument",
-                "name": obj.name,
-                "type": obj.dtype,
-                "optional": obj.optional,
-                "alias": obj.alias,
-                "doc": obj.doc,
-                "repeat": obj.repeat,
-                "sub_fields": obj.sub_fields,
-                "sub_variants": obj.sub_variants,
+                "name": o.name,
+                "type": o.dtype,
+                "optional": o.optional,
+                "alias": o.alias,
+                "doc": o.doc,
+                "repeat": o.repeat,
+                "sub_fields": o.sub_fields,
+                "sub_variants": o.sub_variants,
             }
-            if obj.optional and obj.default is not _Flags.NONE:
-                output["default"] = obj.default
+            if o.optional and o.default is not _Flags.NONE:
+                output["default"] = o.default
             return output
-        elif isinstance(obj, Variant):
+        elif isinstance(o, Variant):
             return {
                 "object": "Variant",
-                "flag_name": obj.flag_name,
-                "optional": obj.optional,
-                "default_tag": obj.default_tag,
-                "choice_dict": obj.choice_dict,
-                "choice_alias": obj.choice_alias,
-                "doc": obj.doc,
+                "flag_name": o.flag_name,
+                "optional": o.optional,
+                "default_tag": o.default_tag,
+                "choice_dict": o.choice_dict,
+                "choice_alias": o.choice_alias,
+                "doc": o.doc,
             }
-        elif isinstance(get_origin(obj), type):
-            return get_origin(obj).__name__
-        elif isinstance(obj, type):
-            return obj.__name__
-        return json.JSONEncoder.default(self, obj)
+        elif isinstance(get_origin(o), type):
+            return get_origin(o).__name__
+        elif isinstance(o, type):
+            return o.__name__
+        return json.JSONEncoder.default(self, o)
 
 
-def did_you_mean(choice: str, choices: List[str]) -> str:
+def did_you_mean(choice: str, choices: Iterable[str]) -> str:
     """Get did you mean message.
 
     Parameters
