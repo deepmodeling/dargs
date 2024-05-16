@@ -1,11 +1,10 @@
-name: Python package
-
+name: Type check
 on:
   - push
   - pull_request
 
 jobs:
-  build:
+  type_check:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
