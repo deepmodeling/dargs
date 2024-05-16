@@ -162,11 +162,11 @@ class Argument:
         self.doc = doc
         self.fold_subdoc = fold_subdoc
         self.extra_check_errmsg = extra_check_errmsg
+        # handle the format of dtype, makeit a tuple
+        self.dtype = self._reorg_dtype(dtype)
         # adding subfields and subvariants
         self.extend_subfields(sub_fields)
         self.extend_subvariants(sub_variants)
-        # handle the format of dtype, makeit a tuple
-        self.dtype = self._reorg_dtype(dtype)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Argument):
