@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dargs import Argument, Variant, dargs
 
 ACTIVATION_FN_DICT = {

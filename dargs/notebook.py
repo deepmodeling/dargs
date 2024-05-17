@@ -17,9 +17,11 @@ Examples
 >>> JSON(jstr, _test_argument())
 '''
 
+from __future__ import annotations
+
 import json
 import re
-from typing import List, Union
+from typing import Any
 
 from IPython.display import HTML, display
 
@@ -87,7 +89,7 @@ css = """<style>
 """
 
 
-def JSON(data: Union[dict, str], arg: Union[Argument, List[Argument]]):
+def JSON(data: dict | str, arg: Argument | list[Argument]):
     """Display JSON data with Argument in the Jupyter Notebook.
 
     Parameters
@@ -100,7 +102,7 @@ def JSON(data: Union[dict, str], arg: Union[Argument, List[Argument]]):
     display(HTML(print_html(data, arg)))
 
 
-def print_html(data: Union[dict, str], arg: Union[Argument, List[Argument]]) -> str:
+def print_html(data: Any, arg: Argument | list[Argument]) -> str:
     """Print HTML string with Argument in the Jupyter Notebook.
 
     Parameters
@@ -142,11 +144,11 @@ class ArgumentData:
     ----------
     data : dict
         The data to be displayed.
-    arg : dargs.Argument
+    arg : Union[dargs.Argument, dargs.Variant]
         The Argument that describes the data.
     """
 
-    def __init__(self, data: dict, arg: Argument):
+    def __init__(self, data: dict, arg: Argument | Variant):
         self.data = data
         self.arg = arg
         self.subdata = []
