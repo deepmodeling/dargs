@@ -1,6 +1,8 @@
 """Generate JSON schema from a given dargs.Argument."""
 
-from dargs.dargs import _Flags, Argument
+from __future__ import annotations
+
+from dargs.dargs import Argument, _Flags
 
 try:
     from typing import get_origin

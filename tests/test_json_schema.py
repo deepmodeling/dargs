@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import json
 import unittest
-from .dpmdargs import gen_args, example_json_str
+
+from jsonschema import validate
 
 from dargs.json_schema import generate_json_schema
-from jsonschema import validate
+
+from .dpmdargs import example_json_str, gen_args
 
 
 class TestJsonSchema(unittest.TestCase):

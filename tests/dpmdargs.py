@@ -773,6 +773,7 @@ def gen_args() -> Argument:
     base = Argument("base", dict, [ma, lra, la, ta])
     return base
 
+
 example_json_str = """
 {
     "_comment": " model parameters",
