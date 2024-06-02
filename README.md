@@ -30,3 +30,4 @@ Please refer to test files for detailed usage.
 - [PEP 484](https://peps.python.org/pep-0484/) type annotations
 - Native integration with [Sphinx](https://github.com/sphinx-doc/sphinx), [DP-GUI](https://github.com/deepmodeling/dpgui), and [Jupyter Notebook](https://jupyter.org/)
 - JSON encoder for `Argument` and `Variant` classes
+- Generate [JSON schema](https://json-schema.org/) from an `Argument`, which can be further integrated with JSON editors such as [Visual Studio Code](https://code.visualstudio.com/)

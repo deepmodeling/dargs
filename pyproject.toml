@@ -30,6 +30,7 @@ repository = "https://github.com/deepmodeling/dargs"
 [project.optional-dependencies]
 test = [
     "ipython",
+    "jsonschema",
 ]
 typecheck = [
     "basedpyright==1.12.2",

@@ -764,6 +764,15 @@ def normalize(data):
     return data
 
 
+def gen_args() -> Argument:
+    ma = model_args()
+    lra = learning_rate_args()
+    la = loss_args()
+    ta = training_args()
+
+    base = Argument("base", dict, [ma, lra, la, ta])
+    return base
+
 example_json_str = """
 {
     "_comment": " model parameters",
