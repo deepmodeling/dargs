@@ -1,6 +1,7 @@
 """Generate JSON schema from a given dargs.Argument."""
 
 from __future__ import annotations
+from typing import Any
 
 from dargs.dargs import Argument, _Flags
 
@@ -122,12 +123,12 @@ def _convert_single_argument(argument: Argument) -> dict:
     return data
 
 
-def _convert_types(T: type) -> str:
+def _convert_types(T: type | Any | None) -> str:
     """Convert a type to JSON schema type.
 
     Parameters
     ----------
-    T : type
+    T : type | Any | None
         The type to convert.
 
     Returns
