@@ -5,7 +5,7 @@ import unittest
 
 from jsonschema import validate
 
-from dargs.json_schema import generate_json_schema, _convert_types
+from dargs.json_schema import _convert_types, generate_json_schema
 
 from .dpmdargs import example_json_str, gen_args
 

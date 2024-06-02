@@ -1,6 +1,7 @@
 """Generate JSON schema from a given dargs.Argument."""
 
 from __future__ import annotations
+
 from typing import Any
 
 from dargs.dargs import Argument, _Flags
