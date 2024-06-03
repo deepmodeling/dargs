@@ -216,7 +216,7 @@ def descrpt_hybrid_args():
                     "type",
                     [
                         Argument("loc_frame", dict, descrpt_local_frame_args()),
-                        Argument("se_a", dict, descrpt_se_a_args()),
+                        Argument("se_e2_a", dict, descrpt_se_a_args(), alias=["se_a"]),
                         Argument("se_r", dict, descrpt_se_r_args()),
                         Argument(
                             "se_a_3be", dict, descrpt_se_a_3be_args(), alias=["se_at"]

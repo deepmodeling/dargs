@@ -78,7 +78,7 @@ def _convert_single_argument(argument: Argument) -> dict:
         **{
             vv.flag_name: {
                 "type": "string",
-                "enum": list(vv.choice_dict.keys()),
+                "enum": list(vv.choice_dict.keys()) + list(vv.choice_alias.keys()),
                 "default": vv.default_tag,
                 "description": vv.doc,
             }
@@ -93,7 +93,10 @@ def _convert_single_argument(argument: Argument) -> dict:
     allof = [
         {
             "if": {
-                "properties": {vv.flag_name: {"const": kk}},
+                "oneOf": [
+                    { "properties": {vv.flag_name: {"const": kkaa}}, }
+                    for kkaa in (kk, *aa.alias)
+                ],
                 "required": [vv.flag_name]
                 if not (vv.optional and vv.default_tag == kk)
                 else [],
