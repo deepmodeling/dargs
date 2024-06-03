@@ -216,7 +216,7 @@ def descrpt_hybrid_args():
                     "type",
                     [
                         Argument("loc_frame", dict, descrpt_local_frame_args()),
-                        Argument("se_a", dict, descrpt_se_a_args()),
+                        Argument("se_e2_a", dict, descrpt_se_a_args(), alias=["se_a"]),
                         Argument("se_r", dict, descrpt_se_r_args()),
                         Argument(
                             "se_a_3be", dict, descrpt_se_a_3be_args(), alias=["se_at"]
@@ -764,8 +764,19 @@ def normalize(data):
     return data
 
 
+def gen_args() -> Argument:
+    ma = model_args()
+    lra = learning_rate_args()
+    la = loss_args()
+    ta = training_args()
+
+    base = Argument("base", dict, [ma, lra, la, ta])
+    return base
+
+
 example_json_str = """
 {
+    "$schema": "this should be ignored by dargs",
     "_comment": " model parameters",
     "model": {
         "type_map":	["O", "H"],

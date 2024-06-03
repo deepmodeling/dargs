@@ -460,11 +460,15 @@ class Argument:
             )
 
     def _check_strict(self, value: dict, path=None):
-        allowed_keys = self.flatten_sub(value, path).keys()
+        allowed_keys = set(self.flatten_sub(value, path).keys())
         # curpath = [*path, self.name]
         if not len(allowed_keys):
             # no allowed keys defined, allow any keys
             return
+        # A special case to allow $schema in any dict to be compatible with vscode + json schema
+        # https://code.visualstudio.com/docs/languages/json#_mapping-in-the-json
+        # considering usually it's not a typo of users when they use $schema
+        allowed_keys.add("$schema")
         for name in value.keys():
             if name not in allowed_keys:
                 dym_message = did_you_mean(name, allowed_keys)
