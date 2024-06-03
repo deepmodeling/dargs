@@ -14,6 +14,7 @@ Welcome to dargs's documentation!
    sphinx
    dpgui
    nb
+   json_schema
    api/api
    credits
 

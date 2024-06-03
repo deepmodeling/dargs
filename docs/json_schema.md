@@ -1,6 +1,6 @@
 ## Generate JSON schema from an argument
 
-One can use {func}`dargs.json_schema_generate_json_schema` to generate [JSON schema](https://json-schema.org/).
+One can use {func}`dargs.json_schema.generate_json_schema` to generate [JSON schema](https://json-schema.org/).
 
 ```py
 import json
