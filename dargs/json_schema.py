@@ -94,7 +94,9 @@ def _convert_single_argument(argument: Argument) -> dict:
         {
             "if": {
                 "oneOf": [
-                    { "properties": {vv.flag_name: {"const": kkaa}}, }
+                    {
+                        "properties": {vv.flag_name: {"const": kkaa}},
+                    }
                     for kkaa in (kk, *aa.alias)
                 ],
                 "required": [vv.flag_name]
