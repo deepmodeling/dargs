@@ -30,3 +30,13 @@ JSON schema can be used in several JSON editors. For example, in [Visual Studio 
     ]
 }
 ```
+
+VS Code also allows one to [specify the JSON schema in a JSON file](https://code.visualstudio.com/docs/languages/json#_mapping-in-the-json) with the `$schema` key.
+To be compatible, dargs will not throw an error for `$schema` in the strict mode even if `$schema` is not defined in the argument.
+
+```json
+{
+  "$schema": "./deepmd.json",
+  "model": {}
+}
+```

@@ -776,6 +776,7 @@ def gen_args() -> Argument:
 
 example_json_str = """
 {
+    "$schema": "this should be ignored by dargs",
     "_comment": " model parameters",
     "model": {
         "type_map":	["O", "H"],
