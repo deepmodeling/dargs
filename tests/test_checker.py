@@ -100,9 +100,9 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ValueError):
             Argument("base", dict, [Argument("sub1", int), Argument("sub1", int)])
 
-    def test_sub_repeat(self):
+    def test_sub_repeat_list(self):
         ca = Argument(
-            "base", dict, [Argument("sub1", int), Argument("sub2", str)], repeat=True
+            "base", list, [Argument("sub1", int), Argument("sub2", str)], repeat=True
         )
         test_dict1 = {
             "base": [{"sub1": 10, "sub2": "hello"}, {"sub1": 11, "sub2": "world"}]
@@ -120,6 +120,39 @@ class TestChecker(unittest.TestCase):
             ca.check(err_dict1, strict=True)  # but should fail when strict
         err_dict2 = {
             "base": [{"sub1": 10, "sub2": "hello"}, {"sub1": 11, "sub2": None}]
+        }
+        with self.assertRaises(ArgumentTypeError):
+            ca.check(err_dict2)
+
+    def test_sub_repeat_dict(self):
+        ca = Argument(
+            "base", dict, [Argument("sub1", int), Argument("sub2", str)], repeat=True
+        )
+        test_dict1 = {
+            "base": {
+                "item1": {"sub1": 10, "sub2": "hello"},
+                "item2": {"sub1": 11, "sub2": "world"},
+            }
+        }
+        ca.check(test_dict1)
+        ca.check_value(test_dict1["base"])
+        err_dict1 = {
+            "base": {
+                "item1": {"sub1": 10, "sub2": "hello"},
+                "item2": {"sub1": 11, "sub3": "world"},
+            }
+        }
+        with self.assertRaises(ArgumentKeyError):
+            ca.check(err_dict1)
+        err_dict1["base"]["item2"]["sub2"] = "world too"
+        ca.check(err_dict1)  # now should pass
+        with self.assertRaises(ArgumentKeyError):
+            ca.check(err_dict1, strict=True)  # but should fail when strict
+        err_dict2 = {
+            "base": {
+                "item1": {"sub1": 10, "sub2": "hello"},
+                "item2": {"sub1": 11, "sub2": None},
+            }
         }
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict2)
