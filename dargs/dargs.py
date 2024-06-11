@@ -679,16 +679,13 @@ class Argument:
                 }
                 allowed_types = []
                 allowed_element = []
-                if list in unsubscripted_dtype:
-                    allowed_types.append("list")
-                    allowed_element.append("element")
-                elif dict in unsubscripted_dtype:
-                    allowed_types.append("dict")
-                    allowed_element.append("key-value pair")
-                else:
-                    raise ValueError(
-                        "When `repeat` is True, `dtype` should contain `dict` OR `list`."
-                    )
+                if list in unsubscripted_dtype or dict in unsubscripted_dtype:
+                    if list in unsubscripted_dtype:
+                        allowed_types.append("list")
+                        allowed_element.append("element")
+                    if dict in unsubscripted_dtype:
+                        allowed_types.append("dict")
+                        allowed_element.append("key-value pair")
                 body_list.append(
                     f"This argument takes a {' or '.join(allowed_types)} with "
                     f"each {' or '.join(allowed_element)} containing the following: \n"
