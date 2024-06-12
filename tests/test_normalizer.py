@@ -93,6 +93,13 @@ class TestNormalizer(unittest.TestCase):
                     repeat=True,
                     alias=["sub2a"],
                 ),
+                Argument(
+                    "sub2_dict",
+                    dict,
+                    [Argument("ss1", int, optional=True, default=21, alias=["ss1a"])],
+                    repeat=True,
+                    alias=["sub2a_dict"],
+                ),
             ],
             [
                 Variant(
@@ -145,11 +152,12 @@ class TestNormalizer(unittest.TestCase):
                 )
             ],
         )
-        beg1 = {"base": {"sub2": [{}, {}]}}
+        beg1 = {"base": {"sub2": [{}, {}], "sub2_dict": {"item1": {}, "item2": {}}}}
         ref1 = {
             "base": {
                 "sub1": 1,
                 "sub2": [{"ss1": 21}, {"ss1": 21}],
+                "sub2_dict": {"item1": {"ss1": 21}, "item2": {"ss1": 21}},
                 "vnt_flag": "type1",
                 "shared": -1,
                 "vnt1": 111,
@@ -161,6 +169,7 @@ class TestNormalizer(unittest.TestCase):
             "base": {
                 "sub1a": 2,
                 "sub2a": [{"ss1a": 22}, {"_comment1": None}],
+                "sub2a_dict": {"item1": {"ss1a": 22}, "item2": {"_comment1": None}},
                 "vnt_flag": "type3",
                 "sharedb": -3,
                 "vnt2a": 223,
@@ -172,6 +181,7 @@ class TestNormalizer(unittest.TestCase):
             "base": {
                 "sub1": 2,
                 "sub2": [{"ss1": 22}, {"ss1": 21}],
+                "sub2_dict": {"item1": {"ss1": 22}, "item2": {"ss1": 21}},
                 "vnt_flag": "type2",
                 "shared": -3,
                 "vnt2": 223,

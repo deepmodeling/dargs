@@ -190,7 +190,7 @@ def _test_argument() -> Argument:
                         doc=doc_test,
                         sub_fields=[
                             Argument(
-                                "test_repeat",
+                                "test_repeat_list",
                                 dtype=list,
                                 repeat=True,
                                 doc=doc_test,
@@ -199,7 +199,18 @@ def _test_argument() -> Argument:
                                         "test_repeat_item", dtype=bool, doc=doc_test
                                     ),
                                 ],
-                            )
+                            ),
+                            Argument(
+                                "test_repeat_dict",
+                                dtype=dict,
+                                repeat=True,
+                                doc=doc_test,
+                                sub_fields=[
+                                    Argument(
+                                        "test_repeat_item", dtype=bool, doc=doc_test
+                                    ),
+                                ],
+                            ),
                         ],
                     ),
                 ],

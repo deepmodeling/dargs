@@ -109,7 +109,7 @@ class Argument:
         If given, `dtype` is assumed to be dict, and its items are determined
         by the `Variant`s in the given list and the value of their flag keys.
     repeat: bool, optional
-        If true,  `dtype` is assume to be list of dict and each dict consists
+        If true,  `dtype` is assume to be list of dict or dict of dict, and each dict consists
         of sub fields and sub variants described above. Defaults to false.
     optional: bool, optional
         If true, consider the current argument to be optional in checking.
@@ -235,7 +235,17 @@ class Argument:
         }
         # check conner cases
         if self.sub_fields or self.sub_variants:
-            dtype.add(list if self.repeat else dict)
+            if not self.repeat:
+                dtype.add(dict)
+            else:
+                # convert dtypes to unsubscripted types
+                unsubscripted_dtype = {
+                    get_origin(dt) if get_origin(dt) is not None else dt for dt in dtype
+                }
+                if dict not in unsubscripted_dtype:
+                    # only add list (compatible with old behaviors) if no dict in dtype
+                    dtype.add(list)
+
         if (
             self.optional
             and self.default is not _Flags.NONE
@@ -347,11 +357,11 @@ class Argument:
         # in the condition where there is no leading key
         if path is None:
             path = []
-        if isinstance(value, dict):
+        if not self.repeat and isinstance(value, dict):
             self._traverse_sub(
                 value, key_hook, value_hook, sub_hook, variant_hook, path
             )
-        if isinstance(value, list) and self.repeat:
+        elif self.repeat and isinstance(value, list):
             for idx, item in enumerate(value):
                 self._traverse_sub(
                     item,
@@ -360,6 +370,16 @@ class Argument:
                     sub_hook,
                     variant_hook,
                     [*path, str(idx)],
+                )
+        elif self.repeat and isinstance(value, dict):
+            for kk, item in value.items():
+                self._traverse_sub(
+                    item,
+                    key_hook,
+                    value_hook,
+                    sub_hook,
+                    variant_hook,
+                    [*path, kk],
                 )
 
     def _traverse_sub(
@@ -653,9 +673,22 @@ class Argument:
             body_list.append(self.doc + "\n")
         if not self.fold_subdoc:
             if self.repeat:
+                unsubscripted_dtype = {
+                    get_origin(dt) if get_origin(dt) is not None else dt
+                    for dt in self.dtype
+                }
+                allowed_types = []
+                allowed_element = []
+                if list in unsubscripted_dtype or dict in unsubscripted_dtype:
+                    if list in unsubscripted_dtype:
+                        allowed_types.append("list")
+                        allowed_element.append("element")
+                    if dict in unsubscripted_dtype:
+                        allowed_types.append("dict")
+                        allowed_element.append("key-value pair")
                 body_list.append(
-                    "This argument takes a list with "
-                    "each element containing the following: \n"
+                    f"This argument takes a {' or '.join(allowed_types)} with "
+                    f"each {' or '.join(allowed_element)} containing the following: \n"
                 )
             if self.sub_fields:
                 # body_list.append("") # genetate a blank line

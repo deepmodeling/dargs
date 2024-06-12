@@ -41,7 +41,7 @@ class TestDocgen(unittest.TestCase):
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
-    def test_sub_repeat(self):
+    def test_sub_repeat_list(self):
         ca = Argument(
             "base",
             list,
@@ -69,6 +69,34 @@ class TestDocgen(unittest.TestCase):
         docstr = ca.gen_doc()
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
+
+    def test_sub_repeat_dict(self):
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("sub1", int, doc="sub doc." * 5),
+                Argument(
+                    "sub2",
+                    [None, str, dict],
+                    [
+                        Argument("subsub1", int, doc="subsub doc." * 5, optional=True),
+                        Argument(
+                            "subsub2",
+                            dict,
+                            [Argument("subsubsub1", int, doc="subsubsub doc." * 5)],
+                            doc="subsub doc." * 5,
+                            repeat=True,
+                        ),
+                    ],
+                    doc="sub doc." * 5,
+                ),
+            ],
+            doc="Base doc. " * 10,
+            repeat=True,
+        )
+        docstr = ca.gen_doc()
+        jsonstr = json.dumps(ca, cls=ArgumentEncoder)
 
     def test_sub_variants(self):
         ca = Argument(
