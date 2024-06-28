@@ -8,4 +8,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pipx run uv tool run basedpyright --with .[typecheck]
+    - run: pipx run uv tool run --with .[typecheck] basedpyright
