@@ -57,10 +57,10 @@ class DargsDirective(Directive):
 
         try:
             mod = __import__(module_name, globals(), locals(), [attr_name])
-        except ImportError:
+        except ImportError as e:
             raise self.error(
                 f'Failed to import "{attr_name}" from "{module_name}".\n{sys.exc_info()[1]}'
-            )
+            ) from e
 
         if not hasattr(mod, attr_name):
             raise self.error(
@@ -217,18 +217,3 @@ def _test_argument() -> Argument:
             ),
         ],
     )
-
-
-def _test_arguments() -> list[Argument]:
-    """Returns a list of arguments."""
-    return [
-        Argument(name="test1", dtype=int, doc="Argument 1"),
-        Argument(name="test2", dtype=[float, None], doc="Argument 2"),
-        Argument(
-            name="test3",
-            dtype=List[str],
-            default=["test"],
-            optional=True,
-            doc="Argument 3",
-        ),
-    ]

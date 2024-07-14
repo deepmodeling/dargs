@@ -15,20 +15,20 @@ Then `dargs` directive will be enabled:
 .. code-block:: rst
 
     .. dargs::
-       :module: dargs.sphinx
-       :func: _test_argument
+       :module: dargs._test
+       :func: test_argument
 
-where `_test_argument` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
+where `test_argument` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
 
 .. dargs::
-   :module: dargs.sphinx
-   :func: _test_argument
+   :module: dargs._test
+   :func: test_argument
 
 A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 
 .. dargs::
-   :module: dargs.sphinx
-   :func: _test_arguments
+   :module: dargs._test
+   :func: test_arguments
 
 Cross-referencing Arguments
 ---------------------------

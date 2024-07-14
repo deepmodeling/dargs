@@ -38,6 +38,9 @@ typecheck = [
     "ipython",
 ]
 
+[project.scripts]
+dargs = "dargs.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["dargs*"]
 
@@ -54,6 +57,7 @@ select = [
     "RUF", # ruff
     "I", # isort
     "TCH", # flake8-type-checking
+    "B904", # raise-without-from-inside-except
 ]
 
 ignore = [
