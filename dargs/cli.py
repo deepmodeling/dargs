@@ -22,7 +22,9 @@ def main_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(help="Sub-commands")
     parser_check = subparsers.add_parser(
-        "check", help="Check a JSON file against an Argument"
+        "check",
+        help="Check a JSON file against an Argument",
+        epilog="Example: dargs check dargs._test.test_arguments test_arguments.json",
     )
     parser_check.add_argument(
         "func",
@@ -40,6 +42,12 @@ def main_parser() -> argparse.ArgumentParser:
         action="store_false",
         dest="strict",
         help="Do not raise an error if the key is not pre-defined",
+    )
+    parser_check.add_argument(
+        "--trim-pattern",
+        type=str,
+        default="_*",
+        help="Pattern to trim the key",
     )
     parser_check.set_defaults(entrypoint=check_cli)
 
