@@ -26,10 +26,17 @@ repos:
     - id: velin
       args: ["--write"]
 # test if the hook in this repo is working
--   repo: ./
-    rev: adb9c21f9abc24b974a172c14869b58acc3d742f
+-   repo: local
     hooks:
     -   id: dargs-check
+        # copied from .pre-commit-hooks.yaml
+        name: dargs-check
+        description: "Run 'dargs check' to check JSON files."
+        entry: dargs check
+        language: python
+        types_or: [json]
+        minimum_pre_commit_version: "2.9.2"
+        # user-defined
         args: ["-f dargs._test.test_arguments"]
         files: "tests/test_arguments.json"
         additional_dependencies: []
