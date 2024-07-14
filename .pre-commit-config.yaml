@@ -39,4 +39,4 @@ repos:
         # user-defined
         args: ["-f dargs._test.test_arguments"]
         files: "tests/test_arguments.json"
-        additional_dependencies: []
+        additional_dependencies: ["./"]
