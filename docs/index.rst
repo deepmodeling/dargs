@@ -12,6 +12,7 @@ Welcome to dargs's documentation!
 
    intro
    cli
+   pre-commit
    sphinx
    dpgui
    nb
