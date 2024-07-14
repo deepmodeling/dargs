@@ -1,0 +1,9 @@
+- id: dargs-check
+  name: dargs-check
+  description: "Run 'dargs check' to check JSON files."
+  entry: dargs check
+  language: python
+  types_or: [json]
+  args: []
+  additional_dependencies: []
+  minimum_pre_commit_version: "2.9.2"
