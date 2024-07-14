@@ -46,6 +46,8 @@ include = ["dargs*"]
 
 [tool.setuptools_scm]
 write_to = "dargs/_version.py"
+# prevent dargs fetched by pre-commit incompatible with other packages
+fallback_version = "999999"
 
 [tool.ruff.lint]
 select = [
