@@ -11,6 +11,7 @@ Welcome to dargs's documentation!
    :caption: Contents:
 
    intro
+   cli
    sphinx
    dpgui
    nb

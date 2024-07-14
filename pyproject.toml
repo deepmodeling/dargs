@@ -38,6 +38,9 @@ typecheck = [
     "ipython",
 ]
 
+[project.scripts]
+dargs = "dargs.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["dargs*"]
 

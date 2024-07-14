@@ -3,3 +3,4 @@ numpydoc
 deepmodeling_sphinx>=0.1.1
 myst-nb
 sphinx_rtd_theme
+sphinx-argparse
