@@ -49,6 +49,7 @@ extensions = [
     "numpydoc",
     "myst_nb",
     "dargs.sphinx",
+    "sphinxarg.ext",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
