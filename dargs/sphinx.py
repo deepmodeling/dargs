@@ -217,4 +217,3 @@ def _test_argument() -> Argument:
             ),
         ],
     )
-

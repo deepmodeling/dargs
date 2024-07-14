@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from typing import List
+
 from dargs.dargs import Argument
 
 
@@ -15,6 +18,7 @@ def test_arguments() -> list[Argument]:
             doc="Argument 3",
         ),
     ]
+
 
 __all__ = [
     "test_arguments",
