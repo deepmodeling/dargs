@@ -90,10 +90,10 @@ def check_cli(
     module_name, attr_name = func.rsplit(".", 1)
     try:
         mod = __import__(module_name, globals(), locals(), [attr_name])
-    except ImportError:
+    except ImportError as e:
         raise RuntimeError(
             f'Failed to import "{attr_name}" from "{module_name}".\n{sys.exc_info()[1]}'
-        )
+        ) from e
 
     if not hasattr(mod, attr_name):
         raise RuntimeError(f'Module "{module_name}" has no attribute "{attr_name}"')

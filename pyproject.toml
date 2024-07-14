@@ -57,6 +57,7 @@ select = [
     "RUF", # ruff
     "I", # isort
     "TCH", # flake8-type-checking
+    "B904", # raise-without-from-inside-except
 ]
 
 ignore = [
