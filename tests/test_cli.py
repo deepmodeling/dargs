@@ -14,7 +14,9 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "check",
+                "-f",
                 "dargs._test.test_arguments",
+                str(this_directory / "test_arguments.json"),
                 str(this_directory / "test_arguments.json"),
             ]
         )
@@ -24,7 +26,19 @@ class TestCli(unittest.TestCase):
                 "-m",
                 "dargs",
                 "check",
+                "-f",
                 "dargs._test.test_arguments",
+                str(this_directory / "test_arguments.json"),
                 str(this_directory / "test_arguments.json"),
             ]
         )
+        with (this_directory / "test_arguments.json").open() as f:
+            subprocess.check_call(
+                [
+                    "dargs",
+                    "check",
+                    "-f",
+                    "dargs._test.test_arguments",
+                ],
+                stdin=f,
+            )

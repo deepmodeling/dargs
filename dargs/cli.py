@@ -24,17 +24,20 @@ def main_parser() -> argparse.ArgumentParser:
     parser_check = subparsers.add_parser(
         "check",
         help="Check a JSON file against an Argument",
-        epilog="Example: dargs check dargs._test.test_arguments test_arguments.json",
+        epilog="Example: dargs check -f dargs._test.test_arguments test_arguments.json",
     )
     parser_check.add_argument(
-        "func",
+        "-f",
+        "--func",
         type=str,
         help="Function that returns an Argument object. E.g., `dargs._test.test_arguments`",
+        required=True,
     )
     parser_check.add_argument(
         "jdata",
         type=argparse.FileType("r"),
-        default=sys.stdin,
+        default=[sys.stdin],
+        nargs="*",
         help="Path to the JSON file. If not given, read from stdin.",
     )
     parser_check.add_argument(
@@ -67,7 +70,7 @@ def main():
 def check_cli(
     *,
     func: str,
-    jdata: IO,
+    jdata: list[IO],
     strict: bool,
     **kwargs,
 ) -> None:
@@ -99,5 +102,6 @@ def check_cli(
         raise RuntimeError(f'Module "{module_name}" has no attribute "{attr_name}"')
     func_obj = getattr(mod, attr_name)
     arginfo = func_obj()
-    data = json.load(jdata)
-    check(arginfo, data, strict=strict)
+    for jj in jdata:
+        data = json.load(jj)
+        check(arginfo, data, strict=strict)
