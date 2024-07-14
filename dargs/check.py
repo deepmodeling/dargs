@@ -7,7 +7,7 @@ def check(
     arginfo: Argument | list[Argument] | tuple[Argument, ...],
     data: dict,
     strict: bool = True,
-) -> None:
+) -> dict:
     """Check and normalize input data.
 
     Parameters

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from typing import IO
 
 from dargs._version import __version__
 from dargs.check import check
@@ -58,7 +59,7 @@ def main():
 def check_cli(
     *,
     func: str,
-    jdata: argparse.FileType,
+    jdata: IO,
     strict: bool,
     **kwargs,
 ) -> None:
@@ -68,7 +69,7 @@ def check_cli(
     ----------
     func : str
         Function that returns an Argument object. E.g., `dargs._test.test_arguments`
-    jdata : argparse.FileType
+    jdata : IO
         File object that contains the JSON data
     strict : bool
         If True, raise an error if the key is not pre-defined
@@ -88,7 +89,7 @@ def check_cli(
 
     if not hasattr(mod, attr_name):
         raise RuntimeError(f'Module "{module_name}" has no attribute "{attr_name}"')
-    func = getattr(mod, attr_name)
-    arginfo = func()
+    func_obj = getattr(mod, attr_name)
+    arginfo = func_obj()
     data = json.load(jdata)
-    return check(arginfo, data, strict=strict)
+    check(arginfo, data, strict=strict)
