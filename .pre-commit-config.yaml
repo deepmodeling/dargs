@@ -25,3 +25,11 @@ repos:
     hooks:
     - id: velin
       args: ["--write"]
+# test if the hook in this repo is working
+-   repo: ./
+    rev: adb9c21f9abc24b974a172c14869b58acc3d742f
+    hooks:
+    -   id: dargs-check
+        args: ["-f dargs._test.test_arguments"]
+        files: "tests/test_arguments.json"
+        additional_dependencies: []
