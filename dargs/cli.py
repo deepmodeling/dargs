@@ -90,7 +90,7 @@ def check_cli(
     dict
         normalized data
     """
-    module_name, attr_name = func.rsplit(".", 1)
+    module_name, attr_name = func.strip().rsplit(".", 1)
     try:
         mod = __import__(module_name, globals(), locals(), [attr_name])
     except ImportError as e:
