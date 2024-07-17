@@ -30,6 +30,16 @@ A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
    :module: dargs._test
    :func: test_arguments
 
+To write Markdown files with `MyST-Parser <https://github.com/executablebooks/MyST-parser>`_, one can use:
+
+.. code-block:: markdown
+
+    ```{eval-rst}
+    .. dargs::
+       :module: dargs._test
+       :func: test_argument
+    ```
+
 Cross-referencing Arguments
 ---------------------------
 
