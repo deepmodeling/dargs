@@ -36,8 +36,8 @@ To write Markdown files with `MyST-Parser <https://github.com/executablebooks/My
 
     ```{eval-rst}
     .. dargs::
-       :module: deepmd.utils.argcheck
-       :func: gen_args_multi_task
+       :module: dargs._test
+       :func: test_argument
     ```
 
 Cross-referencing Arguments
