@@ -15,20 +15,20 @@ Then `dargs` directive will be enabled:
 .. code-block:: rst
 
     .. dargs::
-       :module: dargs._test
-       :func: test_arguments
+       :module: dargs.sphinx
+       :func: test_argument
 
-where `test_arguments` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
+where `test_argument` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
 
 .. dargs::
-   :module: dargs._test
-   :func: test_arguments
+   :module: dargs.sphinx
+   :func: test_argument
 
 A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 
 .. dargs::
-   :module: dargs._test
-   :func: test_arguments
+   :module: dargs.sphinx
+   :func: test_argument
 
 To write Markdown files with `MyST-Parser <https://github.com/executablebooks/MyST-parser>`_, one can use:
 
@@ -36,8 +36,8 @@ To write Markdown files with `MyST-Parser <https://github.com/executablebooks/My
 
     ```{eval-rst}
     .. dargs::
-       :module: dargs._test
-       :func: test_arguments
+       :module: dargs.sphinx
+       :func: test_argument
     ```
 
 Cross-referencing Arguments
