@@ -16,13 +16,13 @@ Then `dargs` directive will be enabled:
 
     .. dargs::
        :module: dargs.sphinx
-       :func: test_argument
+       :func: _test_argument
 
-where `test_argument` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
+where `_test_argument` returns an :class:`Argument <dargs.Argument>`. The documentation will be rendered as:
 
 .. dargs::
    :module: dargs.sphinx
-   :func: test_argument
+   :func: _test_argument
 
 A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 
@@ -37,7 +37,7 @@ To write Markdown files with `MyST-Parser <https://github.com/executablebooks/My
     ```{eval-rst}
     .. dargs::
        :module: dargs.sphinx
-       :func: test_argument
+       :func: _test_argument
     ```
 
 Cross-referencing Arguments
