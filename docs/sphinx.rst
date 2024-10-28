@@ -27,7 +27,7 @@ where `test_argument` returns an :class:`Argument <dargs.Argument>`. The documen
 A :class:`list` of :class:`Argument <dargs.Argument>` is also accepted.
 
 .. dargs::
-   :module: dargs.test
+   :module: dargs._test
    :func: test_arguments
 
 To write Markdown files with `MyST-Parser <https://github.com/executablebooks/MyST-parser>`_, one can use:
