@@ -952,6 +952,16 @@ class Variant:
         choicedoc = indent("| possible choices: " + ", ".join(l_choice), INDENT)
         realdoc = indent(self.doc + "\n", INDENT) if self.doc else None
         anchor = make_rst_refid(arg_path) if kwargs.get("make_anchor") else None
+        abstractdoc = indent(
+            "\n".join(
+                [
+                    f"* {ll}: {cc.doc}"
+                    for ll, cc in zip(l_choice, self.choice_dict.values())
+                    if cc.doc
+                ]
+            ),
+            INDENT,
+        )
         allparts = [
             anchor,
             headdoc,
@@ -960,6 +970,9 @@ class Variant:
             choicedoc,
             "",
             realdoc,
+            "",
+            abstractdoc,
+            "",
             targetdoc,
         ]
         return "\n".join([x for x in allparts if x is not None])
