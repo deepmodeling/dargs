@@ -391,7 +391,12 @@ class Argument:
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
     ):
-        assert isinstance(value, dict)
+        if not isinstance(value, dict):
+            raise ArgumentTypeError(
+                path,
+                f"key `{path[-1]}` gets wrong value type, "
+                f"requires dict but {type(value).__name__} is given",
+            )
         if path is None:
             path = [self.name]
         sub_hook(self, value, path)

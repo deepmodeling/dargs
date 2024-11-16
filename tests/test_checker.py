@@ -156,6 +156,14 @@ class TestChecker(unittest.TestCase):
         }
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict2)
+        err_dict3 = {
+            "base": {
+                "item1": {"sub1": 10, "sub2": "hello"},
+                "item2": "not_a_dict_error",
+            }
+        }
+        with self.assertRaises(ArgumentTypeError):
+            ca.check(err_dict3)
 
     def test_sub_variants(self):
         ca = Argument(
