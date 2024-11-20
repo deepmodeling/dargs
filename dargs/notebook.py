@@ -19,6 +19,7 @@ Examples
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from typing import Any
@@ -249,7 +250,7 @@ class ArgumentData:
                 else:
                     raise ValueError(f"Unknown type: {type(self.arg)}")
 
-                doc_body = self.arg.doc.strip()
+                doc_body = html.escape(self.arg.doc.strip())
                 if doc_body:
                     buff.append("<hr/>")
                 doc_body = re.sub(r"""\n+""", "\n", doc_body)
