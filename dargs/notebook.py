@@ -157,7 +157,7 @@ class ArgumentData:
 
     def _init_subdata(self):
         """Initialize sub ArgumentData."""
-        if isinstance(self.data, dict) and isinstance(self.arg, Argument):
+        if isinstance(self.data, dict) and isinstance(self.arg, Argument) and not self.arg.repeat:
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
@@ -175,7 +175,7 @@ class ArgumentData:
                 else:
                     self.subdata.append(ArgumentData(self.data[kk], kk))
         elif (
-            isinstance(self.data, list)
+            isinstance(self.data, (list, dict))
             and isinstance(self.arg, Argument)
             and self.arg.repeat
         ):
