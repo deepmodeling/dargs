@@ -147,17 +147,24 @@ class ArgumentData:
         The data to be displayed.
     arg : Union[dargs.Argument, dargs.Variant]
         The Argument that describes the data.
+    repeat : bool, optional
+        The argument is repeat
     """
 
-    def __init__(self, data: dict, arg: Argument | Variant):
+    def __init__(self, data: dict, arg: Argument | Variant, repeat: bool = False):
         self.data = data
         self.arg = arg
+        self.repeat = repeat
         self.subdata = []
         self._init_subdata()
 
     def _init_subdata(self):
         """Initialize sub ArgumentData."""
-        if isinstance(self.data, dict) and isinstance(self.arg, Argument):
+        if (
+            isinstance(self.data, dict)
+            and isinstance(self.arg, Argument)
+            and not (self.arg.repeat and not self.repeat)
+        ):
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
@@ -178,9 +185,18 @@ class ArgumentData:
             isinstance(self.data, list)
             and isinstance(self.arg, Argument)
             and self.arg.repeat
+            and not self.repeat
         ):
             for dd in self.data:
-                self.subdata.append(ArgumentData(dd, self.arg))
+                self.subdata.append(ArgumentData(dd, self.arg, repeat=True))
+        elif (
+            isinstance(self.data, dict)
+            and isinstance(self.arg, Argument)
+            and self.arg.repeat
+            and not self.repeat
+        ):
+            for dd in self.data.values():
+                self.subdata.append(ArgumentData(dd, self.arg, repeat=True))
 
     def print_html(self, _level=0, _last_one=True):
         """Print the data with Argument in HTML format.
@@ -203,7 +219,7 @@ class ArgumentData:
         if _level > 0 and not (
             isinstance(self.data, dict)
             and isinstance(self.arg, Argument)
-            and self.arg.repeat
+            and self.repeat
         ):
             if isinstance(self.arg, (Argument, Variant)):
                 buff.append(r"""<span class="dargs-key">""")
