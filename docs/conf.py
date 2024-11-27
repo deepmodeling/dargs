@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "dargs"
-copyright = "2020-{}, DeepModeling ".format(date.today().year)
+copyright = f"2020-{date.today().year}, DeepModeling "
 author = "DeepModeling"
 
 # The short X.Y version
