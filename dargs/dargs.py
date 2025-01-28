@@ -460,7 +460,7 @@ class Argument:
             return
         if self.name not in argdict:
             raise ArgumentKeyError(
-                path, f"key `{self.name}` is required " "in arguments but not found"
+                path, f"key `{self.name}` is required in arguments but not found"
             )
 
     def _check_data(self, value: Any, path=None):
@@ -862,8 +862,7 @@ class Variant:
         else:
             raise ArgumentKeyError(
                 path,
-                f"key `{self.flag_name}` is required "
-                "to choose variant but not found.",
+                f"key `{self.flag_name}` is required to choose variant but not found.",
             )
 
     def flatten_sub(self, argdict: dict, path=None) -> dict[str, Argument]:
