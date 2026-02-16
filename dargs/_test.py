@@ -17,30 +17,26 @@ def test_arguments() -> list[Argument]:
             optional=True,
             doc="Argument 3",
         ),
+        Argument(
+            "base",
+            dict,
+            [
+                Argument("sub1", int, doc="Sub argument 1"),
+                Argument(
+                    "sub2",
+                    dict,
+                    [
+                        Argument("subsub1", int, doc="Sub-sub argument 1"),
+                    ],
+                    doc="Sub argument 2",
+                ),
+            ],
+            optional=True,
+            doc="Base argument with nested structure",
+        ),
     ]
-
-
-def test_nested_arguments() -> Argument:
-    """Returns a nested argument for testing."""
-    return Argument(
-        "base",
-        dict,
-        [
-            Argument("sub1", int, doc="Sub argument 1"),
-            Argument(
-                "sub2",
-                dict,
-                [
-                    Argument("subsub1", int, doc="Sub-sub argument 1"),
-                ],
-                doc="Sub argument 2",
-            ),
-        ],
-        doc="Base argument with nested structure",
-    )
 
 
 __all__ = [
     "test_arguments",
-    "test_nested_arguments",
 ]

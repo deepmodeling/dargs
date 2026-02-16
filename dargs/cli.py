@@ -58,14 +58,12 @@ def main_parser() -> argparse.ArgumentParser:
     parser_doc = subparsers.add_parser(
         "doc",
         help="Print documentation for an Argument",
-        epilog="Example: dargs doc -f dargs._test.test_arguments [arg_path]",
+        epilog="Example: dargs doc dargs._test.test_arguments [arg_path]",
     )
     parser_doc.add_argument(
-        "-f",
-        "--func",
+        "func",
         type=str,
         help="Function that returns an Argument or list of Arguments. E.g., `dargs._test.test_arguments`",
-        required=True,
     )
     parser_doc.add_argument(
         "arg",

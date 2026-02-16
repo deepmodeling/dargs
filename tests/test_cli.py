@@ -49,17 +49,17 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
                 "dargs._test.test_arguments",
             ],
             capture_output=True,
             text=True,
             check=True,
         )
-        # Check that all three arguments are in the output
+        # Check that all arguments are in the output (including nested base)
         self.assertIn("test1:", result.stdout)
         self.assertIn("test2:", result.stdout)
         self.assertIn("test3:", result.stdout)
+        self.assertIn("base:", result.stdout)
         self.assertIn("Argument 1", result.stdout)
         self.assertIn("Argument 2", result.stdout)
         self.assertIn("Argument 3", result.stdout)
@@ -70,7 +70,6 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
                 "dargs._test.test_arguments",
                 "test1",
             ],
@@ -87,13 +86,13 @@ class TestCli(unittest.TestCase):
 
     def test_doc_nested_arguments(self):
         """Test printing documentation for nested arguments."""
-        # Test top-level
+        # Test top-level base argument
         result = subprocess.run(
             [
                 "dargs",
                 "doc",
-                "-f",
-                "dargs._test.test_nested_arguments",
+                "dargs._test.test_arguments",
+                "base",
             ],
             capture_output=True,
             text=True,
@@ -109,8 +108,7 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
-                "dargs._test.test_nested_arguments",
+                "dargs._test.test_arguments",
                 "base/sub1",
             ],
             capture_output=True,
@@ -127,8 +125,7 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
-                "dargs._test.test_nested_arguments",
+                "dargs._test.test_arguments",
                 "base/sub2/subsub1",
             ],
             capture_output=True,
@@ -144,7 +141,6 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
                 "dargs._test.test_arguments",
                 "invalid",
             ],
@@ -160,8 +156,7 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
-                "dargs._test.test_nested_arguments",
+                "dargs._test.test_arguments",
                 "base/invalid",
             ],
             capture_output=True,
@@ -178,7 +173,6 @@ class TestCli(unittest.TestCase):
                 "-m",
                 "dargs",
                 "doc",
-                "-f",
                 "dargs._test.test_arguments",
                 "test1",
             ],
@@ -195,7 +189,6 @@ class TestCli(unittest.TestCase):
             [
                 "dargs",
                 "doc",
-                "-f",
                 "invalid_func",
             ],
             capture_output=True,
