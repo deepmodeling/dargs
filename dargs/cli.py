@@ -185,7 +185,7 @@ def doc_cli(
                 current_arg = argument
                 # Navigate through sub-fields if path has more parts
                 for part in path_parts[1:]:
-                    if current_arg.sub_fields is not None and part in current_arg.sub_fields:
+                    if part in current_arg.sub_fields:
                         current_arg = current_arg.sub_fields[part]
                     else:
                         raise RuntimeError(
