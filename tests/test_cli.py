@@ -117,6 +117,8 @@ class TestCli(unittest.TestCase):
         )
         self.assertIn("sub1:", result.stdout)
         self.assertIn("Sub argument 1", result.stdout)
+        # Check that the full path is in the output
+        self.assertIn("base/sub1", result.stdout)
         # subsub1 should not be in the output
         self.assertNotIn("subsub1:", result.stdout)
 
@@ -134,6 +136,8 @@ class TestCli(unittest.TestCase):
         )
         self.assertIn("subsub1:", result.stdout)
         self.assertIn("Sub-sub argument 1", result.stdout)
+        # Check that the full path is in the output
+        self.assertIn("base/sub2/subsub1", result.stdout)
 
     def test_doc_invalid_path(self):
         """Test error handling for invalid argument path."""

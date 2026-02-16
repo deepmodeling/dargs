@@ -160,11 +160,24 @@ def doc_cli(
     func_obj = getattr(mod, attr_name)
     arginfo = func_obj()
 
-    # Handle both single Argument and list of Arguments
-    if isinstance(arginfo, list):
-        args_list = arginfo
+    # Handle both single Argument and iterable of Arguments (list or tuple)
+    if isinstance(arginfo, (list, tuple)):
+        args_list = list(arginfo)
     else:
         args_list = [arginfo]
+
+    # Validate that each item looks like an Argument/Variant before using it
+    for index, argument in enumerate(args_list):
+        if not (
+            hasattr(argument, "name")
+            and hasattr(argument, "sub_fields")
+            and callable(getattr(argument, "gen_doc", None))
+        ):
+            raise RuntimeError(
+                f"Invalid argument object at index {index}: expected an object with "
+                '"name", "sub_fields", and "gen_doc()" attributes, '
+                f"got {type(argument)!r}"
+            )
 
     # If no specific arg path is provided, print all top-level arguments
     if arg is None:
@@ -189,7 +202,9 @@ def doc_cli(
                         raise RuntimeError(
                             f'Argument path "{arg}" not found: "{part}" is not a sub-field of "{current_arg.name}"'
                         )
-                print(current_arg.gen_doc())
+                # Pass the parent path so gen_doc can render the full argument path
+                parent_path = path_parts[:-1]
+                print(current_arg.gen_doc(path=parent_path))
                 found = True
                 break
 
