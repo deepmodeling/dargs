@@ -188,3 +188,18 @@ class TestCli(unittest.TestCase):
         )
         self.assertIn("test1:", result.stdout)
         self.assertIn("Argument 1", result.stdout)
+
+    def test_doc_invalid_function_format(self):
+        """Test error handling for invalid function format."""
+        result = subprocess.run(
+            [
+                "dargs",
+                "doc",
+                "-f",
+                "invalid_func",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("module.function", result.stderr)

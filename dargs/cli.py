@@ -144,7 +144,12 @@ def doc_cli(
     arg : str, optional
         Optional argument path (e.g., 'base/sub1'). If not provided, prints all top-level arguments.
     """
-    module_name, attr_name = func.strip().rsplit(".", 1)
+    try:
+        module_name, attr_name = func.strip().rsplit(".", 1)
+    except ValueError as e:
+        raise RuntimeError(
+            f'Function must be in format "module.function", got: "{func}"'
+        ) from e
     try:
         mod = __import__(module_name, globals(), locals(), [attr_name])
     except ImportError as e:
@@ -180,7 +185,7 @@ def doc_cli(
                 current_arg = argument
                 # Navigate through sub-fields if path has more parts
                 for part in path_parts[1:]:
-                    if current_arg.sub_fields and part in current_arg.sub_fields:
+                    if current_arg.sub_fields is not None and part in current_arg.sub_fields:
                         current_arg = current_arg.sub_fields[part]
                     else:
                         raise RuntimeError(
