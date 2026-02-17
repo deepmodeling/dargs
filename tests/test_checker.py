@@ -8,7 +8,7 @@ from dargs.dargs import ArgumentKeyError, ArgumentTypeError, ArgumentValueError
 
 
 class TestChecker(unittest.TestCase):
-    def test_name_type(self):
+    def test_name_type(self) -> None:
         # naive
         ca = Argument("key1", int)
         ca.check({"key1": 10})
@@ -52,7 +52,7 @@ class TestChecker(unittest.TestCase):
         ca.check({"kwargs": anydict}, strict=True)
         ca.check_value(anydict)
 
-    def test_sub_fields(self):
+    def test_sub_fields(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -100,7 +100,7 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ValueError):
             Argument("base", dict, [Argument("sub1", int), Argument("sub1", int)])
 
-    def test_sub_repeat_list(self):
+    def test_sub_repeat_list(self) -> None:
         ca = Argument(
             "base", list, [Argument("sub1", int), Argument("sub2", str)], repeat=True
         )
@@ -124,7 +124,7 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict2)
 
-    def test_sub_repeat_dict(self):
+    def test_sub_repeat_dict(self) -> None:
         ca = Argument(
             "base", dict, [Argument("sub1", int), Argument("sub2", str)], repeat=True
         )
@@ -165,7 +165,7 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict3)
 
-    def test_sub_variants(self):
+    def test_sub_variants(self) -> None:
         ca = Argument(
             "base",
             dict,

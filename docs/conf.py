@@ -166,7 +166,7 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
-def run_apidoc(_):
+def run_apidoc(_) -> None:
     from sphinx.ext.apidoc import main
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -187,7 +187,7 @@ def run_apidoc(_):
     )
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("builder-inited", run_apidoc)
 
 

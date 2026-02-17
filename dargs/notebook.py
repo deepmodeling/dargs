@@ -90,7 +90,7 @@ css = """<style>
 """
 
 
-def JSON(data: dict | str, arg: Argument | list[Argument]):
+def JSON(data: dict | str, arg: Argument | list[Argument]) -> None:
     """Display JSON data with Argument in the Jupyter Notebook.
 
     Parameters
@@ -151,14 +151,14 @@ class ArgumentData:
         The argument is repeat
     """
 
-    def __init__(self, data: dict, arg: Argument | Variant, repeat: bool = False):
+    def __init__(self, data: dict, arg: Argument | Variant, repeat: bool = False) -> None:
         self.data = data
         self.arg = arg
         self.repeat = repeat
         self.subdata = []
         self._init_subdata()
 
-    def _init_subdata(self):
+    def _init_subdata(self) -> None:
         """Initialize sub ArgumentData."""
         if (
             isinstance(self.data, dict)
@@ -198,7 +198,7 @@ class ArgumentData:
             for dd in self.data.values():
                 self.subdata.append(ArgumentData(dd, self.arg, repeat=True))
 
-    def print_html(self, _level=0, _last_one=True):
+    def print_html(self, _level: int = 0, _last_one: bool = True) -> str:
         """Print the data with Argument in HTML format.
 
         Parameters

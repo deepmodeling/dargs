@@ -6,13 +6,13 @@ from dargs import Argument, Variant
 
 
 class TestCreation(unittest.TestCase):
-    def test_dtype(self):
+    def test_dtype(self) -> None:
         ref = Argument("key1", [bool, str, dict])
         ca = Argument("key1", int)
         ca.set_dtype([bool, str, dict])
         self.assertTrue(ca == ref)
 
-    def test_sub_fields(self):
+    def test_sub_fields(self) -> None:
         ref = Argument(
             "base",
             dict,
@@ -39,7 +39,7 @@ class TestCreation(unittest.TestCase):
         ca.set_repeat(True)
         self.assertTrue(ca == ref)
 
-    def test_idx_fields(self):
+    def test_idx_fields(self) -> None:
         s1 = Argument("sub1", int)
         vt1 = Argument(
             "type1",
@@ -73,7 +73,7 @@ class TestCreation(unittest.TestCase):
         self.assertTrue(ca.I["base[type1]"] is vt1)
         self.assertTrue(ca.I["base[type2]//shared"] == Argument("shared", int))
 
-    def test_sub_variants(self):
+    def test_sub_variants(self) -> None:
         ref = Argument(
             "base",
             dict,
@@ -153,7 +153,7 @@ class TestCreation(unittest.TestCase):
         v1.set_default(False)
         self.assertTrue(ca == ref)
 
-    def test_idx_variants(self):
+    def test_idx_variants(self) -> None:
         vt1 = Argument(
             "type1",
             dict,
@@ -177,7 +177,7 @@ class TestCreation(unittest.TestCase):
         with self.assertRaises(KeyError):
             vnt["type3"]
 
-    def test_complicated(self):
+    def test_complicated(self) -> None:
         ref = Argument(
             "base",
             dict,

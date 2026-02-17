@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import IO
+from typing import IO, Any
 
 from dargs._version import __version__
 from dargs.check import check
@@ -79,7 +79,7 @@ def main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main():
+def main() -> None:
     """Main entry point for the command line interface."""
     parser = main_parser()
     args = parser.parse_args()
@@ -92,7 +92,7 @@ def check_cli(
     func: str,
     jdata: list[IO],
     strict: bool,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """Normalize and check input data.
 
@@ -131,7 +131,7 @@ def doc_cli(
     *,
     func: str,
     arg: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """Print documentation for an Argument.
 

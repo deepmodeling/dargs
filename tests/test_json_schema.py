@@ -11,13 +11,13 @@ from .dpmdargs import example_json_str, gen_args
 
 
 class TestJsonSchema(unittest.TestCase):
-    def test_json_schema(self):
+    def test_json_schema(self) -> None:
         args = gen_args()
         schema = generate_json_schema(args)
         data = json.loads(example_json_str)
         validate(data, schema)
 
-    def test_convert_types(self):
+    def test_convert_types(self) -> None:
         self.assertEqual(_convert_types(int), "number")
         self.assertEqual(_convert_types(str), "string")
         self.assertEqual(_convert_types(float), "number")

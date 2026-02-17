@@ -9,7 +9,7 @@ from dargs import Argument, ArgumentEncoder, Variant
 
 
 class TestDocgen(unittest.TestCase):
-    def test_sub_fields(self):
+    def test_sub_fields(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -41,7 +41,7 @@ class TestDocgen(unittest.TestCase):
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
-    def test_sub_repeat_list(self):
+    def test_sub_repeat_list(self) -> None:
         ca = Argument(
             "base",
             list,
@@ -70,7 +70,7 @@ class TestDocgen(unittest.TestCase):
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
-    def test_sub_repeat_dict(self):
+    def test_sub_repeat_dict(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -98,7 +98,7 @@ class TestDocgen(unittest.TestCase):
         docstr = ca.gen_doc()
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
 
-    def test_sub_variants(self):
+    def test_sub_variants(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -174,7 +174,7 @@ class TestDocgen(unittest.TestCase):
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
-    def test_multi_variants(self):
+    def test_multi_variants(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -247,7 +247,7 @@ class TestDocgen(unittest.TestCase):
         jsonstr = json.dumps(ca, cls=ArgumentEncoder)
         # print("\n\n"+docstr)
 
-    def test_dpmd(self):
+    def test_dpmd(self) -> None:
         from .dpmdargs import gen_doc
 
         dargs.RAW_ANCHOR = False

@@ -30,7 +30,7 @@ def list_to_doc(xx):
     return "".join(items)
 
 
-def make_link(content, ref_key):
+def make_link(content, ref_key) -> str:
     return (
         f"`{content} <{ref_key}_>`_"
         if not dargs.RAW_ANCHOR
@@ -507,11 +507,11 @@ def learning_rate_args():
     )
 
 
-def start_pref(item):
+def start_pref(item) -> str:
     return f"The prefactor of {item} loss at the start of the training. Should be larger than or equal to 0. If set to none-zero value, the {item} label should be provided by file {item}.npy in each data system. If both start_pref_{item} and limit_pref_{item} are set to 0, then the {item} will be ignored."
 
 
-def limit_pref(item):
+def limit_pref(item) -> str:
     return f"The prefactor of {item} loss at the limit of the training, Should be larger than or equal to 0. i.e. the training step goes to infinity."
 
 
@@ -741,7 +741,7 @@ def gen_doc(*, make_anchor=True, make_link=True, **kwargs):
     return "\n\n".join(ptr)
 
 
-def check(data):
+def check(data) -> None:
     ma = model_args()
     lra = learning_rate_args()
     la = loss_args()
