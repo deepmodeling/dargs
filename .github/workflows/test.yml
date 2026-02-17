@@ -1,8 +1,8 @@
 name: Python package
 
 on:
-- push
-- pull_request
+  - push
+  - pull_request
 
 jobs:
   build:
@@ -10,8 +10,8 @@ jobs:
     strategy:
       matrix:
         python_version:
-        - "3"
-        - "3.7"
+          - "3"
+          - "3.7"
     steps:
     - uses: actions/checkout@v6
     - name: Set up Python
