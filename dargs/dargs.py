@@ -279,7 +279,13 @@ class Argument:
         self.dtype = self._reorg_dtype(self.dtype)
 
     def add_subfield(self, name: str | Argument, *args: Any, **kwargs: Any) -> Argument:
-        """Add a sub field to the current Argument."""
+        """Add a sub field to the current Argument.
+
+        Returns
+        -------
+        Argument
+            The newly added sub field
+        """
         if isinstance(name, Argument):
             newarg = name
         else:
@@ -303,7 +309,13 @@ class Argument:
     def add_subvariant(
         self, flag_name: str | Variant, *args: Any, **kwargs: Any
     ) -> Variant:
-        """Add a sub variant to the current Argument."""
+        """Add a sub variant to the current Argument.
+
+        Returns
+        -------
+        Variant
+            The newly added sub variant
+        """
         if isinstance(flag_name, Variant):
             newvrnt = flag_name
         else:
@@ -426,6 +438,11 @@ class Argument:
             The arg dict to be checked
         strict : bool, optional
             If true, only keys defined in `Argument` are allowed.
+
+        Raises
+        ------
+        ArgumentKeyError
+            If the check fails due to key errors
         """
         if strict and len(argdict) != 1:
             raise ArgumentKeyError(
@@ -638,7 +655,13 @@ class Argument:
     # below are doc generation part
 
     def gen_doc(self, path: list[str] | None = None, **kwargs: Any) -> str:
-        """Generate doc string for the current Argument."""
+        """Generate doc string for the current Argument.
+
+        Returns
+        -------
+        str
+            The generated documentation string
+        """
         # the actual indentation is done here, and ONLY here
         if path is None:
             path = []
@@ -715,7 +738,13 @@ class Argument:
         return body
 
     def _get_type_name(self, dd: type | Any | None) -> str:
-        """Get type name for doc/message generation."""
+        """Get type name for doc/message generation.
+
+        Returns
+        -------
+        str
+            The type name as a string
+        """
         if dd is None:
             return "None"
         return str(dd) if isinstance(get_origin(dd), type) else dd.__name__
@@ -787,7 +816,13 @@ class Variant:
         return self.choice_dict[key]
 
     def set_default(self, default_tag: bool | str) -> None:
-        """Change the default tag of the current Variant."""
+        """Change the default tag of the current Variant.
+
+        Raises
+        ------
+        ValueError
+            If trying to set an invalid default_tag
+        """
         if not default_tag:
             self.optional = False
             self.default_tag = ""
@@ -825,7 +860,13 @@ class Variant:
         *args: Any,
         **kwargs: Any,
     ) -> Argument:
-        """Add a choice Argument to the current Variant."""
+        """Add a choice Argument to the current Variant.
+
+        Returns
+        -------
+        Argument
+            The newly added choice argument
+        """
         if isinstance(tag, Argument):
             newarg = tag
         else:
@@ -1064,7 +1105,13 @@ def trim_by_pattern(
 
 
 def isinstance_annotation(value: Any, dtype: type | Any) -> bool:
-    """Same as isinstance(), but supports arbitrary type annotations."""
+    """Same as isinstance(), but supports arbitrary type annotations.
+
+    Returns
+    -------
+    bool
+        True if value matches the type annotation, False otherwise
+    """
     try:
         typeguard.check_type(
             value,

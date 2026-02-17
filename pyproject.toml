@@ -58,8 +58,10 @@ select = [
     "I", # isort
     "TCH", # flake8-type-checking
     "ANN", # flake8-annotations
+    "DOC", # pydoclint
     "B904", # raise-without-from-inside-except
 ]
+preview = true
 
 ignore = [
     "E501", # line too long
