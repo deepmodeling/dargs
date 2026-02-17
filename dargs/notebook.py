@@ -22,7 +22,7 @@ from __future__ import annotations
 import html
 import json
 import re
-from typing import Any
+from typing import Any, cast
 
 from IPython.display import HTML, display
 
@@ -126,7 +126,7 @@ def print_html(data: Any, arg: Argument | list[Argument]) -> str:
         raise ValueError(f"Unknown type: {type(data)}")
 
     if isinstance(arg, list):
-        arg = Argument("data", dtype=dict, sub_fields=arg)
+        arg = Argument("data", dtype=dict, sub_fields=cast("list[Argument]", arg))
     elif isinstance(arg, Argument):
         pass
     else:

@@ -33,7 +33,7 @@ test = [
     "jsonschema",
 ]
 typecheck = [
-    "basedpyright==1.12.2",
+    "ty==0.0.17",
     "sphinx",
     "ipython",
 ]
@@ -90,3 +90,8 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.pyright]
 include = ["dargs"]
+
+[tool.ty.src]
+root = "."
+include = ["dargs"]
+exclude = []

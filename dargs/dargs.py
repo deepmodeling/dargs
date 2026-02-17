@@ -1052,13 +1052,15 @@ def trim_by_pattern(
     rep = fnmatch.translate(pattern) if not use_regex else pattern
     rem = re.compile(rep)
     if reserved:
-        conflict = list(filter(rem.match, reserved))
+        # Use lambda instead of rem.match for ty type checker compatibility
+        conflict = list(filter(lambda x: rem.match(x) is not None, reserved))
         if conflict:
             raise ValueError(
                 f"pattern `{pattern}` conflicts with the "
                 f"following reserved names: {', '.join(conflict)}"
             )
-    unrequired = list(filter(rem.match, argdict.keys()))
+    # Use lambda instead of rem.match for ty type checker compatibility
+    unrequired = list(filter(lambda x: rem.match(x) is not None, argdict.keys()))
     for key in unrequired:
         argdict.pop(key)
 
