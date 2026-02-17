@@ -30,7 +30,9 @@ def check(
         normalized data
     """
     if isinstance(arginfo, (list, tuple)):
-        arginfo = Argument("base", dtype=dict, sub_fields=cast(list[Argument], arginfo))
+        arginfo = Argument(
+            "base", dtype=dict, sub_fields=cast("list[Argument]", arginfo)
+        )
 
     data = arginfo.normalize_value(data, trim_pattern=trim_pattern)
     arginfo.check_value(data, strict=strict)

@@ -126,7 +126,7 @@ def print_html(data: Any, arg: Argument | list[Argument]) -> str:
         raise ValueError(f"Unknown type: {type(data)}")
 
     if isinstance(arg, list):
-        arg = Argument("data", dtype=dict, sub_fields=cast(list[Argument], arg))
+        arg = Argument("data", dtype=dict, sub_fields=cast("list[Argument]", arg))
     elif isinstance(arg, Argument):
         pass
     else:
