@@ -33,7 +33,7 @@ test = [
     "jsonschema",
 ]
 typecheck = [
-    "basedpyright==1.12.2",
+    "ty==0.0.17",
     "sphinx",
     "ipython",
 ]
@@ -87,6 +87,3 @@ convention = "numpy"
 
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
-
-[tool.pyright]
-include = ["dargs"]
