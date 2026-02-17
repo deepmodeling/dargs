@@ -21,7 +21,7 @@ class TestNormalizer(unittest.TestCase):
         self.assertTrue(end1 is beg)
 
     def test_default_dict(self) -> None:
-        def make_arguments():
+        def make_arguments() -> list[Argument]:
             arg_foo = Argument("foo", int, optional=True, default=1)
             arg_bar = Argument("bar", dict, [arg_foo], optional=True, default={})
             return [arg_bar]

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from dargs import Argument, Variant, dargs
 
 ACTIVATION_FN_DICT = {
@@ -19,7 +21,7 @@ PRECISION_DICT = {
 }
 
 
-def list_to_doc(xx):
+def list_to_doc(xx: list) -> str:
     items = []
     for ii in xx:
         if len(items) == 0:
@@ -30,7 +32,7 @@ def list_to_doc(xx):
     return "".join(items)
 
 
-def make_link(content, ref_key) -> str:
+def make_link(content: str, ref_key: str) -> str:
     return (
         f"`{content} <{ref_key}_>`_"
         if not dargs.RAW_ANCHOR
@@ -38,7 +40,7 @@ def make_link(content, ref_key) -> str:
     )
 
 
-def descrpt_local_frame_args():
+def descrpt_local_frame_args() -> list[Argument]:
     doc_sel_a = "A list of integers. The length of the list should be the same as the number of atom types in the system. `sel_a[i]` gives the selected number of type-i neighbors. The full relative coordinates of the neighbors are used by the descriptor."
     doc_sel_r = "A list of integers. The length of the list should be the same as the number of atom types in the system. `sel_r[i]` gives the selected number of type-i neighbors. Only relative distance of the neighbors are used by the descriptor. sel_a[i] + sel_r[i] is recommended to be larger than the maximally possible number of type-i neighbors in the cut-off radius."
     doc_rcut = "The cut-off radius. The default value is 6.0"
@@ -58,7 +60,7 @@ def descrpt_local_frame_args():
     ]
 
 
-def descrpt_se_a_args():
+def descrpt_se_a_args() -> list[Argument]:
     doc_sel = "A list of integers. The length of the list should be the same as the number of atom types in the system. `sel[i]` gives the selected number of type-i neighbors. `sel[i]` is recommended to be larger than the maximally possible number of type-i neighbors in the cut-off radius."
     doc_rcut = "The cut-off radius."
     doc_rcut_smth = "Where to start smoothing. For example the 1/r term is smoothed from `rcut` to `rcut_smth`"
@@ -102,7 +104,7 @@ def descrpt_se_a_args():
     ]
 
 
-def descrpt_se_a_3be_args():
+def descrpt_se_a_3be_args() -> list[Argument]:
     doc_sel = "A list of integers. The length of the list should be the same as the number of atom types in the system. `sel[i]` gives the selected number of type-i neighbors. `sel[i]` is recommended to be larger than the maximally possible number of type-i neighbors in the cut-off radius."
     doc_rcut = "The cut-off radius."
     doc_rcut_smth = "Where to start smoothing. For example the 1/r term is smoothed from `rcut` to `rcut_smth`"
@@ -136,7 +138,7 @@ def descrpt_se_a_3be_args():
     ]
 
 
-def descrpt_se_a_tpe_args():
+def descrpt_se_a_tpe_args() -> list[Argument]:
     doc_type_nchanl = "number of channels for type embedding"
     doc_type_nlayer = "number of hidden layers of type embedding net"
     doc_numb_aparam = "dimension of atomic parameter. if set to a value > 0, the atomic parameters are embedded."
@@ -149,7 +151,7 @@ def descrpt_se_a_tpe_args():
     ]
 
 
-def descrpt_se_r_args():
+def descrpt_se_r_args() -> list[Argument]:
     doc_sel = "A list of integers. The length of the list should be the same as the number of atom types in the system. `sel[i]` gives the selected number of type-i neighbors. `sel[i]` is recommended to be larger than the maximally possible number of type-i neighbors in the cut-off radius."
     doc_rcut = "The cut-off radius."
     doc_rcut_smth = "Where to start smoothing. For example the 1/r term is smoothed from `rcut` to `rcut_smth`"
@@ -191,7 +193,7 @@ def descrpt_se_r_args():
     ]
 
 
-def descrpt_se_ar_args():
+def descrpt_se_ar_args() -> list[Argument]:
     link = make_link("se_a", "model/descriptor[se_a]")
     doc_a = f"The parameters of descriptor {link}"
     link = make_link("se_r", "model/descriptor[se_r]")
@@ -203,7 +205,7 @@ def descrpt_se_ar_args():
     ]
 
 
-def descrpt_hybrid_args():
+def descrpt_hybrid_args() -> list[Argument]:
     doc_list = "A list of descriptor definitions"
 
     return [
@@ -238,7 +240,7 @@ def descrpt_hybrid_args():
     ]
 
 
-def descrpt_variant_type_args():
+def descrpt_variant_type_args() -> Variant:
     link_lf = make_link("loc_frame", "model/descriptor[loc_frame]")
     link_se_a = make_link("se_a", "model/descriptor[se_a]")
     link_se_r = make_link("se_r", "model/descriptor[se_r]")
@@ -267,7 +269,7 @@ def descrpt_variant_type_args():
     )
 
 
-def fitting_ener():
+def fitting_ener() -> list[Argument]:
     doc_numb_fparam = "The dimension of the frame parameter. If set to >0, file `fparam.npy` should be included to provided the input fparams."
     doc_numb_aparam = "The dimension of the atomic parameter. If set to >0, file `aparam.npy` should be included to provided the input aparams."
     doc_neuron = "The number of neurons in each hidden layers of the fitting net. When two hidden layers are of the same size, a skip connection is built."
@@ -305,7 +307,7 @@ def fitting_ener():
     ]
 
 
-def fitting_polar():
+def fitting_polar() -> list[Argument]:
     doc_neuron = "The number of neurons in each hidden layers of the fitting net. When two hidden layers are of the same size, a skip connection is built."
     doc_activation_function = f"The activation function in the fitting net. Supported activation functions are {list_to_doc(ACTIVATION_FN_DICT.keys())}"
     doc_resnet_dt = 'Whether to use a "Timestep" in the skip connection'
@@ -339,11 +341,11 @@ def fitting_polar():
     ]
 
 
-def fitting_global_polar():
+def fitting_global_polar() -> list[Argument]:
     return fitting_polar()
 
 
-def fitting_dipole():
+def fitting_dipole() -> list[Argument]:
     doc_neuron = "The number of neurons in each hidden layers of the fitting net. When two hidden layers are of the same size, a skip connection is built."
     doc_activation_function = f"The activation function in the fitting net. Supported activation functions are {list_to_doc(ACTIVATION_FN_DICT.keys())}"
     doc_resnet_dt = 'Whether to use a "Timestep" in the skip connection'
@@ -368,7 +370,7 @@ def fitting_dipole():
     ]
 
 
-def fitting_variant_type_args():
+def fitting_variant_type_args() -> Variant:
     doc_descrpt_type = "The type of the fitting. See explanation below. \n\n\
 - `ener`: Fit an energy model (potential energy surface).\n\n\
 - `dipole`: Fit an atomic dipole model. Atomic dipole labels for all the selected atoms (see `sel_type`) should be provided by `dipole.npy` in each data system. The file has number of frames lines and 3 times of number of selected atoms columns.\n\n\
@@ -389,7 +391,7 @@ def fitting_variant_type_args():
     )
 
 
-def modifier_dipole_charge():
+def modifier_dipole_charge() -> list[Argument]:
     doc_model_name = "The name of the frozen dipole model file."
     doc_model_charge_map = f"The charge of the WFCC. The list length should be the same as the {make_link('sel_type', 'model/fitting_net[dipole]/sel_type')}. "
     doc_sys_charge_map = f"The charge of real atoms. The list length should be the same as the {make_link('type_map', 'model/type_map')}"
@@ -405,7 +407,7 @@ def modifier_dipole_charge():
     ]
 
 
-def modifier_variant_type_args():
+def modifier_variant_type_args() -> Variant:
     doc_modifier_type = "The type of modifier. See explanation below.\n\n\
 -`dipole_charge`: Use WFCC to model the electronic structure of the system. Correct the long-range interaction"
     return Variant(
@@ -418,7 +420,7 @@ def modifier_variant_type_args():
     )
 
 
-def model_args():
+def model_args() -> Argument:
     doc_type_map = "A list of strings. Give the name to each type of atoms."
     doc_data_stat_nbatch = "The model determines the normalization from the statistics of the data. This key specifies the number of `frames` in each `system` used for statistics."
     doc_data_stat_protect = "Protect parameter for atomic energy regression."
@@ -473,7 +475,7 @@ def model_args():
     return ca
 
 
-def learning_rate_exp():
+def learning_rate_exp() -> list[Argument]:
     doc_start_lr = "The learning rate the start of the training."
     doc_stop_lr = "The desired learning rate at the end of the training."
     doc_decay_steps = (
@@ -488,7 +490,7 @@ def learning_rate_exp():
     return args
 
 
-def learning_rate_variant_type_args():
+def learning_rate_variant_type_args() -> Variant:
     doc_lr = "The type of the learning rate."
 
     return Variant(
@@ -500,22 +502,22 @@ def learning_rate_variant_type_args():
     )
 
 
-def learning_rate_args():
+def learning_rate_args() -> Argument:
     doc_lr = "The definitio of learning rate"
     return Argument(
         "learning_rate", dict, [], [learning_rate_variant_type_args()], doc=doc_lr
     )
 
 
-def start_pref(item) -> str:
+def start_pref(item: str) -> str:
     return f"The prefactor of {item} loss at the start of the training. Should be larger than or equal to 0. If set to none-zero value, the {item} label should be provided by file {item}.npy in each data system. If both start_pref_{item} and limit_pref_{item} are set to 0, then the {item} will be ignored."
 
 
-def limit_pref(item) -> str:
+def limit_pref(item: str) -> str:
     return f"The prefactor of {item} loss at the limit of the training, Should be larger than or equal to 0. i.e. the training step goes to infinity."
 
 
-def loss_ener():
+def loss_ener() -> list[Argument]:
     doc_start_pref_e = start_pref("energy")
     doc_limit_pref_e = limit_pref("energy")
     doc_start_pref_f = start_pref("force")
@@ -586,7 +588,7 @@ def loss_ener():
     ]
 
 
-def loss_variant_type_args():
+def loss_variant_type_args() -> Variant:
     doc_loss = "The type of the loss. \n"
 
     return Variant(
@@ -598,7 +600,7 @@ def loss_variant_type_args():
     )
 
 
-def loss_args():
+def loss_args() -> Argument:
     doc_loss = "The definition of loss function. The type of the loss depends on the type of the fitting. For fitting type `ener`, the prefactors before energy, force, virial and atomic energy losses may be provided. For fitting type `dipole`, `polar` and `global_polar`, the loss may be an empty `dict` or unset."
     ca = Argument(
         "loss", dict, [], [loss_variant_type_args()], optional=True, doc=doc_loss
@@ -606,7 +608,7 @@ def loss_args():
     return ca
 
 
-def training_args():
+def training_args() -> Argument:
     link_sys = make_link("systems", "training/systems")
     doc_systems = "The data systems. This key can be provided with a listthat specifies the systems, or be provided with a string by which the prefix of all systems are given and the list of the systems is automatically generated."
     doc_set_prefix = f"The prefix of the sets in the {link_sys}."
@@ -712,14 +714,14 @@ def training_args():
     return Argument("training", dict, args, [], doc=doc_training)
 
 
-def make_index(keys):
+def make_index(keys: list[str]) -> str:
     ret = []
     for ii in keys:
         ret.append(make_link(ii, ii))
     return ", ".join(ret)
 
 
-def gen_doc(*, make_anchor=True, make_link=True, **kwargs):
+def gen_doc(*, make_anchor: bool = True, make_link: bool = True, **kwargs: Any) -> str:
     if make_link:
         make_anchor = True
     ma = model_args()
@@ -741,7 +743,7 @@ def gen_doc(*, make_anchor=True, make_link=True, **kwargs):
     return "\n\n".join(ptr)
 
 
-def check(data) -> None:
+def check(data: dict) -> None:
     ma = model_args()
     lra = learning_rate_args()
     la = loss_args()
@@ -751,7 +753,7 @@ def check(data) -> None:
     base.check_value(data)
 
 
-def normalize(data):
+def normalize(data: dict) -> dict:
     ma = model_args()
     lra = learning_rate_args()
     la = loss_args()
