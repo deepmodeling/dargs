@@ -43,7 +43,7 @@ HookArgVType = Callable[["Argument", Any, List[str]], None]
 HookVrntType = Callable[["Variant", dict, List[str]], None]
 
 
-def _DUMMYHOOK(a: Argument, x: dict | Any, p: list[str]) -> None:
+def _DUMMYHOOK(a: Argument | Variant, x: dict | Any, p: list[str]) -> None:
     # for doing nothing in traversing
     pass
 
@@ -669,7 +669,8 @@ class Argument:
             head = f".. dargs:argument:: {self.name}:\n   :path: {'/'.join(path)}\n"
         head += f"\n{indent(typesig, INDENT)}"
         if kwargs.get("make_anchor"):
-            head = f"{make_rst_refid(path)}\n" + head
+            anchor_path = path if path is not None else [self.name]
+            head = f"{make_rst_refid(anchor_path)}\n" + head
         return head
 
     def gen_doc_path(self, path: list[str] | None = None, **kwargs: Any) -> str:
@@ -715,6 +716,8 @@ class Argument:
 
     def _get_type_name(self, dd: type | Any | None) -> str:
         """Get type name for doc/message generation."""
+        if dd is None:
+            return "None"
         return str(dd) if isinstance(get_origin(dd), type) else dd.__name__
 
 
