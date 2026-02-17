@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from dargs.dargs import Argument
 
 
@@ -28,7 +30,7 @@ def check(
         normalized data
     """
     if isinstance(arginfo, (list, tuple)):
-        arginfo = Argument("base", dtype=dict, sub_fields=arginfo)
+        arginfo = Argument("base", dtype=dict, sub_fields=cast(list[Argument], arginfo))
 
     data = arginfo.normalize_value(data, trim_pattern=trim_pattern)
     arginfo.check_value(data, strict=strict)
