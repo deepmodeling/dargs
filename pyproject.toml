@@ -90,3 +90,8 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.pyright]
 include = ["dargs"]
+
+[tool.ty.src]
+root = "."
+include = ["dargs"]
+exclude = []
