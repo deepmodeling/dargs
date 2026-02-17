@@ -56,7 +56,9 @@ class _Flags(Enum):
 class ArgumentError(Exception):
     """Base error class for invalid argument values in argchecking."""
 
-    def __init__(self, path: None | str | list[str] = None, message: str | None = None) -> None:
+    def __init__(
+        self, path: None | str | list[str] = None, message: str | None = None
+    ) -> None:
         super().__init__(message)
         if path is None:
             path = ""
@@ -298,7 +300,9 @@ class Argument:
         )
         self.dtype = self._reorg_dtype(self.dtype)
 
-    def add_subvariant(self, flag_name: str | Variant, *args: Any, **kwargs: Any) -> Variant:
+    def add_subvariant(
+        self, flag_name: str | Variant, *args: Any, **kwargs: Any
+    ) -> Variant:
         """Add a sub variant to the current Argument."""
         if isinstance(flag_name, Variant):
             newvrnt = flag_name
@@ -310,7 +314,9 @@ class Argument:
     # above are creation part
     # below are general traverse part
 
-    def flatten_sub(self, value: dict, path: list[str] | None = None) -> dict[str, Argument]:
+    def flatten_sub(
+        self, value: dict, path: list[str] | None = None
+    ) -> dict[str, Argument]:
         sub_dicts = [self.sub_fields]
         sub_dicts.extend(
             vrnt.flatten_sub(value, path) for vrnt in self.sub_variants.values()
@@ -865,7 +871,9 @@ class Variant:
                 f"key `{self.flag_name}` is required to choose variant but not found.",
             )
 
-    def flatten_sub(self, argdict: dict, path: list[str] | None = None) -> dict[str, Argument]:
+    def flatten_sub(
+        self, argdict: dict, path: list[str] | None = None
+    ) -> dict[str, Argument]:
         choice = self.get_choice(argdict, path)
         fields = {
             self.flag_name: self.dummy_argument(),  # as a placeholder
@@ -873,7 +881,9 @@ class Variant:
         }
         return fields
 
-    def _convert_choice_alias(self, argdict: dict, path: list[str] | None = None) -> None:
+    def _convert_choice_alias(
+        self, argdict: dict, path: list[str] | None = None
+    ) -> None:
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
             if tag not in self.choice_dict and tag in self.choice_alias:

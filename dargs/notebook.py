@@ -151,7 +151,9 @@ class ArgumentData:
         The argument is repeat
     """
 
-    def __init__(self, data: dict, arg: Argument | Variant, repeat: bool = False) -> None:
+    def __init__(
+        self, data: dict, arg: Argument | Variant, repeat: bool = False
+    ) -> None:
         self.data = data
         self.arg = arg
         self.repeat = repeat
