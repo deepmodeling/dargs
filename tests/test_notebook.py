@@ -15,7 +15,7 @@ else:
 
 @unittest.skipUnless(ipython_installed, "IPython not installed")
 class TestNotebook(unittest.TestCase):
-    def test_html_validation(self):
+    def test_html_validation(self) -> None:
         from dargs.notebook import print_html
 
         doc_test = "Test doc."

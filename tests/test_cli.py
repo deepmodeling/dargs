@@ -9,7 +9,7 @@ this_directory = Path(__file__).parent
 
 
 class TestCli(unittest.TestCase):
-    def test_check(self):
+    def test_check(self) -> None:
         subprocess.check_call(
             [
                 "dargs",
@@ -43,7 +43,7 @@ class TestCli(unittest.TestCase):
                 stdin=f,
             )
 
-    def test_doc_all_arguments(self):
+    def test_doc_all_arguments(self) -> None:
         """Test printing documentation for all arguments."""
         result = subprocess.run(
             [
@@ -64,7 +64,7 @@ class TestCli(unittest.TestCase):
         self.assertIn("Argument 2", result.stdout)
         self.assertIn("Argument 3", result.stdout)
 
-    def test_doc_specific_argument(self):
+    def test_doc_specific_argument(self) -> None:
         """Test printing documentation for a specific argument."""
         result = subprocess.run(
             [
@@ -84,7 +84,7 @@ class TestCli(unittest.TestCase):
         self.assertNotIn("Argument 2", result.stdout)
         self.assertNotIn("Argument 3", result.stdout)
 
-    def test_doc_nested_arguments(self):
+    def test_doc_nested_arguments(self) -> None:
         """Test printing documentation for nested arguments."""
         # Test top-level base argument
         result = subprocess.run(
@@ -139,7 +139,7 @@ class TestCli(unittest.TestCase):
         # Check that the full path is in the output
         self.assertIn("base/sub2/subsub1", result.stdout)
 
-    def test_doc_invalid_path(self):
+    def test_doc_invalid_path(self) -> None:
         """Test error handling for invalid argument path."""
         result = subprocess.run(
             [
@@ -154,7 +154,7 @@ class TestCli(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not found", result.stderr)
 
-    def test_doc_invalid_nested_path(self):
+    def test_doc_invalid_nested_path(self) -> None:
         """Test error handling for invalid nested argument path."""
         result = subprocess.run(
             [
@@ -169,7 +169,7 @@ class TestCli(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not found", result.stderr)
 
-    def test_doc_with_python_module(self):
+    def test_doc_with_python_module(self) -> None:
         """Test doc command using python -m."""
         result = subprocess.run(
             [
@@ -187,7 +187,7 @@ class TestCli(unittest.TestCase):
         self.assertIn("test1:", result.stdout)
         self.assertIn("Argument 1", result.stdout)
 
-    def test_doc_invalid_function_format(self):
+    def test_doc_invalid_function_format(self) -> None:
         """Test error handling for invalid function format."""
         result = subprocess.run(
             [

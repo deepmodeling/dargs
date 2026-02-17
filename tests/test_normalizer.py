@@ -6,7 +6,7 @@ from dargs import Argument, Variant
 
 
 class TestNormalizer(unittest.TestCase):
-    def test_default(self):
+    def test_default(self) -> None:
         # naive
         ca = Argument("Key1", int, optional=True, default=1)
         beg = {}
@@ -20,8 +20,8 @@ class TestNormalizer(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
 
-    def test_default_dict(self):
-        def make_arguments():
+    def test_default_dict(self) -> None:
+        def make_arguments() -> list[Argument]:
             arg_foo = Argument("foo", int, optional=True, default=1)
             arg_bar = Argument("bar", dict, [arg_foo], optional=True, default={})
             return [arg_bar]
@@ -30,7 +30,7 @@ class TestNormalizer(unittest.TestCase):
         data = base.normalize_value({})
         self.assertDictEqual(data, {"bar": {}})
 
-    def test_alias(self):
+    def test_alias(self) -> None:
         ca = Argument("Key1", int, alias=["Old1", "Old2"])
         beg = {"Old1": 1}
         end = ca.normalize(beg)
@@ -44,7 +44,7 @@ class TestNormalizer(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg1)
 
-    def test_trim(self):
+    def test_trim(self) -> None:
         ca = Argument("Key1", int)
         beg = {"Key1": 1, "_comment": 123}
         end = ca.normalize(beg, trim_pattern="_*")
@@ -60,7 +60,7 @@ class TestNormalizer(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
 
-    def test_combined(self):
+    def test_combined(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -80,7 +80,7 @@ class TestNormalizer(unittest.TestCase):
             ca.normalize_value(beg2["base"], trim_pattern="_*"), ref2["base"]
         )
 
-    def test_complicated(self):
+    def test_complicated(self) -> None:
         ca = Argument(
             "base",
             dict,
@@ -196,7 +196,7 @@ class TestNormalizer(unittest.TestCase):
         with self.assertRaises(ValueError):
             ca.normalize(beg2, trim_pattern="vnt*")
 
-    def test_dpmd(self):
+    def test_dpmd(self) -> None:
         import json
 
         from .dpmdargs import example_json_str, normalize
