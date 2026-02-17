@@ -6,6 +6,8 @@ on:
 jobs:
   type_check:
     runs-on: ubuntu-slim
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v6
     - run: pipx run uv tool run --with .[typecheck] ty check
