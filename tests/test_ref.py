@@ -35,6 +35,19 @@ class TestRef(unittest.TestCase):
             f.write(text)
         return path
 
+    def test_ref_not_allowed_by_default(self) -> None:
+        """$ref raises ValueError when allow_ref is not set (secure by default)."""
+        ref_path = self._write_json("ref_default.json", {"sub1": 1})
+        ca = Argument("base", dict, [Argument("sub1", int)])
+        with self.assertRaises(ValueError):
+            ca.check({"base": {"$ref": ref_path}})
+        with self.assertRaises(ValueError):
+            ca.normalize({"base": {"$ref": ref_path}})
+        with self.assertRaises(ValueError):
+            ca.check_value({"$ref": ref_path})
+        with self.assertRaises(ValueError):
+            ca.normalize_value({"$ref": ref_path})
+
     def test_ref_json_check(self) -> None:
         """$ref to a JSON file is resolved before check."""
         ref_path = self._write_json("ref_test.json", {"sub1": 1, "sub2": "hello"})
@@ -46,7 +59,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str),
             ],
         )
-        ca.check({"base": {"$ref": ref_path}})
+        ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
     def test_ref_json_normalize(self) -> None:
         """$ref to a JSON file is resolved before normalize."""
@@ -59,7 +72,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str, optional=True, default="default"),
             ],
         )
-        result = ca.normalize({"base": {"$ref": ref_path}})
+        result = ca.normalize({"base": {"$ref": ref_path}}, allow_ref=True)
         self.assertEqual(result["base"]["sub1"], 1)
         self.assertEqual(result["base"]["sub2"], "default")
 
@@ -76,7 +89,9 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str),
             ],
         )
-        result = ca.normalize({"base": {"$ref": ref_path, "sub2": "local"}})
+        result = ca.normalize(
+            {"base": {"$ref": ref_path, "sub2": "local"}}, allow_ref=True
+        )
         self.assertEqual(result["base"]["sub1"], 1)
         self.assertEqual(result["base"]["sub2"], "local")
 
@@ -93,7 +108,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str),
             ],
         )
-        ca.check({"base": {"$ref": ref_path}})
+        ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
     def test_ref_yml_extension(self) -> None:
         """$ref works with .yml extension as well."""
@@ -108,7 +123,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str),
             ],
         )
-        ca.check({"base": {"$ref": ref_path}})
+        ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
     def test_ref_unsupported_extension(self) -> None:
         """$ref with unsupported extension raises ValueError."""
@@ -117,7 +132,7 @@ class TestRef(unittest.TestCase):
             f.write("sub1 = 1\n")
         ca = Argument("base", dict, [Argument("sub1", int)])
         with self.assertRaises(ValueError):
-            ca.check({"base": {"$ref": ref_path}})
+            ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
     def test_ref_check_value(self) -> None:
         """$ref is resolved when using check_value."""
@@ -130,7 +145,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str),
             ],
         )
-        ca.check_value({"$ref": ref_path})
+        ca.check_value({"$ref": ref_path}, allow_ref=True)
 
     def test_ref_normalize_value(self) -> None:
         """$ref is resolved when using normalize_value."""
@@ -143,7 +158,7 @@ class TestRef(unittest.TestCase):
                 Argument("sub2", str, optional=True, default="d"),
             ],
         )
-        result = ca.normalize_value({"$ref": ref_path})
+        result = ca.normalize_value({"$ref": ref_path}, allow_ref=True)
         self.assertEqual(result["sub1"], 99)
         self.assertEqual(result["sub2"], "d")
 

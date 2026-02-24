@@ -336,6 +336,7 @@ class Argument:
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
+        allow_ref: bool = False,
     ) -> None:
         # first, do something with the key
         # then, take out the vaule and do something with it
@@ -348,7 +349,7 @@ class Argument:
             newpath = [*path, self.name]
             # this is the key step that we traverse into the tree
             self.traverse_value(
-                value, key_hook, value_hook, sub_hook, variant_hook, newpath
+                value, key_hook, value_hook, sub_hook, variant_hook, newpath, allow_ref
             )
 
     def traverse_value(
@@ -359,6 +360,7 @@ class Argument:
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
+        allow_ref: bool = False,
     ) -> None:
         # this is not private, and can be called directly
         # in the condition where there is no leading key
@@ -366,7 +368,7 @@ class Argument:
             path = []
         if not self.repeat and isinstance(value, dict):
             self._traverse_sub(
-                value, key_hook, value_hook, sub_hook, variant_hook, path
+                value, key_hook, value_hook, sub_hook, variant_hook, path, allow_ref
             )
         elif self.repeat and isinstance(value, list):
             for idx, item in enumerate(value):
@@ -377,6 +379,7 @@ class Argument:
                     sub_hook,
                     variant_hook,
                     [*path, str(idx)],
+                    allow_ref,
                 )
         elif self.repeat and isinstance(value, dict):
             for kk, item in value.items():
@@ -387,6 +390,7 @@ class Argument:
                     sub_hook,
                     variant_hook,
                     [*path, kk],
+                    allow_ref,
                 )
 
     def _traverse_sub(
@@ -397,6 +401,7 @@ class Argument:
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
+        allow_ref: bool = False,
     ) -> None:
         if path is None:
             path = [self.name]
@@ -406,17 +411,19 @@ class Argument:
                 f"key `{path[-1]}` gets wrong value type, "
                 f"requires dict but {type(value).__name__} is given",
             )
-        _resolve_ref(value)
+        _resolve_ref(value, allow_ref)
         sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
         for subarg in self.flatten_sub(value, path).values():
-            subarg.traverse(value, key_hook, value_hook, sub_hook, variant_hook, path)
+            subarg.traverse(
+                value, key_hook, value_hook, sub_hook, variant_hook, path, allow_ref
+            )
 
     # above are general traverse part
     # below are type checking part
 
-    def check(self, argdict: dict, strict: bool = False) -> None:
+    def check(self, argdict: dict, strict: bool = False, allow_ref: bool = False) -> None:
         """Check whether `argdict` meets the structure defined in self.
 
         Will recursively check nested dicts according to
@@ -428,6 +435,8 @@ class Argument:
             The arg dict to be checked
         strict : bool, optional
             If true, only keys defined in `Argument` are allowed.
+        allow_ref : bool, optional
+            If true, allow loading from external files via the ``$ref`` key.
         """
         if strict and len(argdict) != 1:
             raise ArgumentKeyError(
@@ -441,9 +450,10 @@ class Argument:
             key_hook=Argument._check_exist,
             value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK,
+            allow_ref=allow_ref,
         )
 
-    def check_value(self, value: Any, strict: bool = False) -> None:
+    def check_value(self, value: Any, strict: bool = False, allow_ref: bool = False) -> None:
         """Check the value without the leading key.
 
         Same as `check({self.name: value})`.
@@ -455,12 +465,15 @@ class Argument:
             The value to be checked
         strict : bool, optional
             If true, only keys defined in `Argument` are allowed.
+        allow_ref : bool, optional
+            If true, allow loading from external files via the ``$ref`` key.
         """
         self.traverse_value(
             value,
             key_hook=Argument._check_exist,
             value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK,
+            allow_ref=allow_ref,
         )
 
     def _check_exist(self, argdict: dict, path: list[str] | None = None) -> None:
@@ -520,6 +533,7 @@ class Argument:
         do_default: bool = True,
         do_alias: bool = True,
         trim_pattern: str | None = None,
+        allow_ref: bool = False,
     ) -> dict:
         """Modify `argdict` so that it meets the Argument structure.
 
@@ -539,6 +553,8 @@ class Argument:
             Whether to transform alias names.
         trim_pattern : str, optional
             If given, discard keys that matches the glob pattern.
+        allow_ref : bool, optional
+            If true, allow loading from external files via the ``$ref`` key.
 
         Returns
         -------
@@ -552,10 +568,11 @@ class Argument:
                 argdict,
                 key_hook=Argument._convert_alias,
                 variant_hook=Variant._convert_choice_alias,
+                allow_ref=allow_ref,
             )
         if do_default:
-            self.traverse(argdict, key_hook=Argument._assign_default)
-            self.traverse(argdict, key_hook=Argument._handle_empty_dict)
+            self.traverse(argdict, key_hook=Argument._assign_default, allow_ref=allow_ref)
+            self.traverse(argdict, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref)
         if trim_pattern is not None:
             trim_by_pattern(argdict, trim_pattern, reserved=[self.name])
             self.traverse(
@@ -563,6 +580,7 @@ class Argument:
                 sub_hook=lambda a, d, p: trim_by_pattern(
                     d, trim_pattern, a.flatten_sub(d, p).keys()
                 ),
+                allow_ref=allow_ref,
             )
         return argdict
 
@@ -573,6 +591,7 @@ class Argument:
         do_default: bool = True,
         do_alias: bool = True,
         trim_pattern: str | None = None,
+        allow_ref: bool = False,
     ) -> Any:
         """Modify the value so that it meets the Argument structure.
 
@@ -590,6 +609,8 @@ class Argument:
             Whether to transform alias names.
         trim_pattern : str, optional
             If given, discard keys that matches the glob pattern.
+        allow_ref : bool, optional
+            If true, allow loading from external files via the ``$ref`` key.
 
         Returns
         -------
@@ -603,16 +624,18 @@ class Argument:
                 value,
                 key_hook=Argument._convert_alias,
                 variant_hook=Variant._convert_choice_alias,
+                allow_ref=allow_ref,
             )
         if do_default:
-            self.traverse_value(value, key_hook=Argument._assign_default)
-            self.traverse_value(value, key_hook=Argument._handle_empty_dict)
+            self.traverse_value(value, key_hook=Argument._assign_default, allow_ref=allow_ref)
+            self.traverse_value(value, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref)
         if trim_pattern is not None:
             self.traverse_value(
                 value,
                 sub_hook=lambda a, d, p: trim_by_pattern(
                     d, trim_pattern, a.flatten_sub(d, p).keys()
                 ),
+                allow_ref=allow_ref,
             )
         return value
 
@@ -1108,7 +1131,7 @@ def _load_ref(ref_path: str) -> dict:
         )
 
 
-def _resolve_ref(d: dict) -> None:
+def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
     """Resolve the ``$ref`` key in a dict by loading from an external file.
 
     If ``$ref`` is present in ``d``, its value is treated as a file path.
@@ -1122,9 +1145,22 @@ def _resolve_ref(d: dict) -> None:
     ----------
     d : dict
         The dict that may contain a ``$ref`` key.
+    allow_ref : bool, optional
+        If False (the default), raise a ``ValueError`` when ``$ref`` is found.
+        Set to True to enable loading from external files.
+
+    Raises
+    ------
+    ValueError
+        If ``$ref`` is found but ``allow_ref`` is False.
     """
     if "$ref" not in d:
         return
+    if not allow_ref:
+        raise ValueError(
+            "$ref is not allowed by default. "
+            "Pass allow_ref=True to enable loading from external files."
+        )
     ref_path = d.pop("$ref")
     loaded = _load_ref(ref_path)
     # Merge: loaded content as base, local keys take precedence

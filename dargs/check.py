@@ -10,6 +10,7 @@ def check(
     data: dict,
     strict: bool = True,
     trim_pattern: str = "_*",
+    allow_ref: bool = False,
 ) -> dict:
     """Check and normalize input data.
 
@@ -23,6 +24,9 @@ def check(
         If True, raise an error if the key is not pre-defined, by default True
     trim_pattern : str, optional
         Pattern to trim the key, by default "_*"
+    allow_ref : bool, optional
+        If True, allow loading from external files via the ``$ref`` key,
+        by default False.
 
     Returns
     -------
@@ -34,6 +38,6 @@ def check(
             "base", dtype=dict, sub_fields=cast("list[Argument]", arginfo)
         )
 
-    data = arginfo.normalize_value(data, trim_pattern=trim_pattern)
-    arginfo.check_value(data, strict=strict)
+    data = arginfo.normalize_value(data, trim_pattern=trim_pattern, allow_ref=allow_ref)
+    arginfo.check_value(data, strict=strict, allow_ref=allow_ref)
     return data

@@ -6,6 +6,16 @@ Before validation or normalization, dargs will load that file and merge its
 contents into the dict, with any keys already present in the dict taking
 precedence (local overrides).
 
+Loading from external files is **disabled by default** for security.
+Pass ``allow_ref=True`` to the relevant method to enable this feature:
+
+```python
+argument.check(data, allow_ref=True)
+argument.normalize(data, allow_ref=True)
+argument.check_value(value, allow_ref=True)
+argument.normalize_value(value, allow_ref=True)
+```
+
 Supported file formats:
 
 - **JSON** (`.json`) — no extra dependencies required.
