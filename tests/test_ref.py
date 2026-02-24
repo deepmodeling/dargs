@@ -162,6 +162,70 @@ class TestRef(unittest.TestCase):
         self.assertEqual(result["sub1"], 99)
         self.assertEqual(result["sub2"], "d")
 
+    def test_ref_check_no_mutation(self) -> None:
+        """check() with allow_ref=True does not mutate the caller's data."""
+        ref_path = self._write_json("ref_nomut.json", {"sub1": 1, "sub2": "v"})
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("sub1", int),
+                Argument("sub2", str),
+            ],
+        )
+        original = {"base": {"$ref": ref_path}}
+        ca.check(original, allow_ref=True)
+        # $ref key must still be present in the original
+        self.assertIn("$ref", original["base"])
+
+    def test_ref_check_value_no_mutation(self) -> None:
+        """check_value() with allow_ref=True does not mutate the caller's data."""
+        ref_path = self._write_json("ref_nomut_val.json", {"sub1": 1, "sub2": "v"})
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("sub1", int),
+                Argument("sub2", str),
+            ],
+        )
+        original = {"$ref": ref_path}
+        ca.check_value(original, allow_ref=True)
+        self.assertIn("$ref", original)
+
+    def test_ref_non_dict_content(self) -> None:
+        """$ref pointing to a non-dict file raises ValueError."""
+        ref_path = self._write_json("ref_list.json", [1, 2, 3])
+        ca = Argument("base", dict, [Argument("sub1", int)])
+        with self.assertRaises(ValueError):
+            ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
+
+    def test_ref_cyclic_detection(self) -> None:
+        """Cyclic $ref raises ValueError."""
+        # Write a file that points back to itself
+        ref_path = self._tmpfile("ref_cyclic.json")
+        with open(ref_path, "w") as f:
+            json.dump({"$ref": ref_path}, f)
+        ca = Argument("base", dict, [Argument("sub1", int, optional=True)])
+        with self.assertRaises(ValueError, msg="Cyclic $ref"):
+            ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
+
+    def test_ref_chained(self) -> None:
+        """A $ref that loads a file containing another $ref is fully resolved."""
+        inner_path = self._write_json("ref_inner.json", {"sub1": 7, "sub2": "inner"})
+        outer_path = self._write_json("ref_outer.json", {"$ref": inner_path})
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("sub1", int),
+                Argument("sub2", str),
+            ],
+        )
+        result = ca.normalize({"base": {"$ref": outer_path}}, allow_ref=True)
+        self.assertEqual(result["base"]["sub1"], 7)
+        self.assertEqual(result["base"]["sub2"], "inner")
+
 
 if __name__ == "__main__":
     unittest.main()

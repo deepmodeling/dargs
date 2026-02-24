@@ -439,6 +439,8 @@ class Argument:
             If true, only keys defined in `Argument` are allowed.
         allow_ref : bool, optional
             If true, allow loading from external files via the ``$ref`` key.
+            A deep copy of ``argdict`` is made internally so the caller's
+            data is not mutated.
         """
         if strict and len(argdict) != 1:
             raise ArgumentKeyError(
@@ -447,6 +449,8 @@ class Argument:
                 "for check in strict mode at top level, "
                 "use check_value if you are checking subfields",
             )
+        if allow_ref:
+            argdict = deepcopy(argdict)
         self.traverse(
             argdict,
             key_hook=Argument._check_exist,
@@ -471,7 +475,11 @@ class Argument:
             If true, only keys defined in `Argument` are allowed.
         allow_ref : bool, optional
             If true, allow loading from external files via the ``$ref`` key.
+            A deep copy of ``value`` is made internally so the caller's
+            data is not mutated.
         """
+        if allow_ref:
+            value = deepcopy(value)
         self.traverse_value(
             value,
             key_hook=Argument._check_exist,
@@ -1118,14 +1126,15 @@ def _load_ref(ref_path: str) -> dict:
     Raises
     ------
     ValueError
-        If the file extension is not supported.
+        If the file extension is not supported, or if the file does not contain a
+        top-level mapping/object.
     ImportError
         If pyyaml is not installed and a YAML file is requested.
     """
     ext = os.path.splitext(ref_path)[1].lower()
     if ext == ".json":
-        with open(ref_path) as f:
-            return json.load(f)
+        with open(ref_path, encoding="utf-8") as f:
+            loaded = json.load(f)
     elif ext in (".yml", ".yaml"):
         try:
             import yaml
@@ -1134,13 +1143,19 @@ def _load_ref(ref_path: str) -> dict:
                 "pyyaml is required to load YAML files referenced by $ref. "
                 "Install it with: pip install pyyaml"
             ) from e
-        with open(ref_path) as f:
-            return yaml.safe_load(f)
+        with open(ref_path, encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
     else:
         raise ValueError(
             f"Unsupported file extension `{ext}` for $ref. "
             "Supported extensions are: .json, .yml, .yaml"
         )
+    if not isinstance(loaded, dict):
+        raise ValueError(
+            f"Referenced file {ref_path!r} must contain a mapping/object at the top "
+            f"level, but got {type(loaded).__name__!r}."
+        )
+    return loaded
 
 
 def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
@@ -1149,7 +1164,9 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
     If ``$ref`` is present in ``d``, its value is treated as a file path.
     The file is loaded and its contents are merged into ``d``.  Keys already
     present in ``d`` (other than ``$ref``) take precedence over keys from the
-    loaded file, allowing local overrides.
+    loaded file, allowing local overrides.  Chained ``$ref`` values in the
+    loaded content are resolved in turn.  Cyclic references are detected and
+    raise a ``ValueError``.
 
     The dict is modified **in place**.
 
@@ -1164,7 +1181,8 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
     Raises
     ------
     ValueError
-        If ``$ref`` is found but ``allow_ref`` is False.
+        If ``$ref`` is found but ``allow_ref`` is False, or if a cyclic
+        reference is detected.
     """
     if "$ref" not in d:
         return
@@ -1173,12 +1191,17 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
             "$ref is not allowed by default. "
             "Pass allow_ref=True to enable loading from external files."
         )
-    ref_path = d.pop("$ref")
-    loaded = _load_ref(ref_path)
-    # Merge: loaded content as base, local keys take precedence
-    merged = {**loaded, **d}
-    d.clear()
-    d.update(merged)
+    visited_refs: set[str] = set()
+    while "$ref" in d:
+        ref_path = d.pop("$ref")
+        if ref_path in visited_refs:
+            raise ValueError(f"Cyclic $ref detected for path: {ref_path!r}")
+        visited_refs.add(ref_path)
+        loaded = _load_ref(ref_path)
+        # Merge: loaded content as base, local keys take precedence
+        merged = {**loaded, **d}
+        d.clear()
+        d.update(merged)
 
 
 def isinstance_annotation(value: Any, dtype: type | Any) -> bool:

@@ -183,31 +183,33 @@ class ArgumentData:
             and isinstance(self.arg, Argument)
             and not (self.arg.repeat and not self.repeat)
         ):
-            _resolve_ref(self.data, self.allow_ref)
+            # Work on a copy to avoid mutating the caller's data
+            data = self.data.copy()
+            _resolve_ref(data, self.allow_ref)
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
-                choice = self.data.get(vv.flag_name, vv.default_tag)
+                choice = data.get(vv.flag_name, vv.default_tag)
                 if choice and choice in vv.choice_dict:
                     sub_fields.update(vv.choice_dict[choice].sub_fields)
 
-            for kk in self.data:
+            for kk in data:
                 if kk in sub_fields:
                     self.subdata.append(
                         ArgumentData(
-                            self.data[kk], sub_fields[kk], allow_ref=self.allow_ref
+                            data[kk], sub_fields[kk], allow_ref=self.allow_ref
                         )
                     )
                 elif kk in self.arg.sub_variants:
                     self.subdata.append(
                         ArgumentData(
-                            self.data[kk],
+                            data[kk],
                             self.arg.sub_variants[kk],
                             allow_ref=self.allow_ref,
                         )
                     )
                 else:
-                    self.subdata.append(ArgumentData(self.data[kk], kk))
+                    self.subdata.append(ArgumentData(data[kk], kk))
         elif (
             isinstance(self.data, list)
             and isinstance(self.arg, Argument)
