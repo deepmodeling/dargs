@@ -5,7 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/dargs/badge/)](https://dargs.readthedocs.io/)
 
 This is a minimum version for checking the input argument dict.
-It would examine argument's type,  as well as keys and types of its sub-arguments.
+It would examine argument's type, as well as keys and types of its sub-arguments.
 
 A special case called *variant* is also handled,
 where you can determine the items of a dict based the value of on one of its `flag_name` key.
