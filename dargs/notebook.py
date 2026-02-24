@@ -27,6 +27,7 @@ from typing import Any, cast
 from IPython.display import HTML, display
 
 from dargs import Argument, Variant
+from dargs.dargs import _resolve_ref
 
 __all__ = ["JSON"]
 
@@ -90,7 +91,7 @@ css = """<style>
 """
 
 
-def JSON(data: dict | str, arg: Argument | list[Argument]) -> None:
+def JSON(data: dict | str, arg: Argument | list[Argument], allow_ref: bool = False) -> None:
     """Display JSON data with Argument in the Jupyter Notebook.
 
     Parameters
@@ -99,11 +100,13 @@ def JSON(data: dict | str, arg: Argument | list[Argument]) -> None:
         The JSON data to be displayed, either JSON string or a dict.
     arg : dargs.Argument or list[dargs.Argument]
         The Argument that describes the JSON data.
+    allow_ref : bool, optional
+        If true, allow loading from external files via the ``$ref`` key.
     """
-    display(HTML(print_html(data, arg)))
+    display(HTML(print_html(data, arg, allow_ref=allow_ref)))
 
 
-def print_html(data: Any, arg: Argument | list[Argument]) -> str:
+def print_html(data: Any, arg: Argument | list[Argument], allow_ref: bool = False) -> str:
     """Print HTML string with Argument in the Jupyter Notebook.
 
     Parameters
@@ -112,6 +115,8 @@ def print_html(data: Any, arg: Argument | list[Argument]) -> str:
         The JSON data to be displayed, either JSON string or a dict.
     arg : dargs.Argument or list[dargs.Argument]
         The Argument that describes the JSON data.
+    allow_ref : bool, optional
+        If true, allow loading from external files via the ``$ref`` key.
 
     Returns
     -------
@@ -131,7 +136,7 @@ def print_html(data: Any, arg: Argument | list[Argument]) -> str:
         pass
     else:
         raise ValueError(f"Unknown type: {type(arg)}")
-    argdata = ArgumentData(data, arg)
+    argdata = ArgumentData(data, arg, allow_ref=allow_ref)
     buff = [css, r"""<div class="dargs-codeblock">""", argdata.print_html(), r"</div>"]
     return "".join(buff)
 
@@ -149,14 +154,21 @@ class ArgumentData:
         The Argument that describes the data.
     repeat : bool, optional
         The argument is repeat
+    allow_ref : bool, optional
+        If true, allow loading from external files via the ``$ref`` key.
     """
 
     def __init__(
-        self, data: dict, arg: Argument | Variant, repeat: bool = False
+        self,
+        data: dict,
+        arg: Argument | Variant,
+        repeat: bool = False,
+        allow_ref: bool = False,
     ) -> None:
         self.data = data
         self.arg = arg
         self.repeat = repeat
+        self.allow_ref = allow_ref
         self.subdata = []
         self._init_subdata()
 
@@ -167,6 +179,7 @@ class ArgumentData:
             and isinstance(self.arg, Argument)
             and not (self.arg.repeat and not self.repeat)
         ):
+            _resolve_ref(self.data, self.allow_ref)
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
@@ -176,10 +189,18 @@ class ArgumentData:
 
             for kk in self.data:
                 if kk in sub_fields:
-                    self.subdata.append(ArgumentData(self.data[kk], sub_fields[kk]))
+                    self.subdata.append(
+                        ArgumentData(
+                            self.data[kk], sub_fields[kk], allow_ref=self.allow_ref
+                        )
+                    )
                 elif kk in self.arg.sub_variants:
                     self.subdata.append(
-                        ArgumentData(self.data[kk], self.arg.sub_variants[kk])
+                        ArgumentData(
+                            self.data[kk],
+                            self.arg.sub_variants[kk],
+                            allow_ref=self.allow_ref,
+                        )
                     )
                 else:
                     self.subdata.append(ArgumentData(self.data[kk], kk))
@@ -190,7 +211,9 @@ class ArgumentData:
             and not self.repeat
         ):
             for dd in self.data:
-                self.subdata.append(ArgumentData(dd, self.arg, repeat=True))
+                self.subdata.append(
+                    ArgumentData(dd, self.arg, repeat=True, allow_ref=self.allow_ref)
+                )
         elif (
             isinstance(self.data, dict)
             and isinstance(self.arg, Argument)
@@ -198,7 +221,9 @@ class ArgumentData:
             and not self.repeat
         ):
             for dd in self.data.values():
-                self.subdata.append(ArgumentData(dd, self.arg, repeat=True))
+                self.subdata.append(
+                    ArgumentData(dd, self.arg, repeat=True, allow_ref=self.allow_ref)
+                )
 
     def print_html(self, _level: int = 0, _last_one: bool = True) -> str:
         """Print the data with Argument in HTML format.

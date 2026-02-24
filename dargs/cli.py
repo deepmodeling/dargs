@@ -52,6 +52,12 @@ def main_parser() -> argparse.ArgumentParser:
         default="_*",
         help="Pattern to trim the key",
     )
+    parser_check.add_argument(
+        "--allow-ref",
+        action="store_true",
+        dest="allow_ref",
+        help="Allow loading from external files via the $ref key",
+    )
     parser_check.set_defaults(entrypoint=check_cli)
 
     # doc subcommand
@@ -92,6 +98,7 @@ def check_cli(
     func: str,
     jdata: list[IO],
     strict: bool,
+    allow_ref: bool = False,
     **kwargs: Any,
 ) -> None:
     """Normalize and check input data.
@@ -104,6 +111,8 @@ def check_cli(
         File object that contains the JSON data
     strict : bool
         If True, raise an error if the key is not pre-defined
+    allow_ref : bool, optional
+        If True, allow loading from external files via the ``$ref`` key
 
     Returns
     -------
@@ -124,7 +133,7 @@ def check_cli(
     arginfo = func_obj()
     for jj in jdata:
         data = json.load(jj)
-        check(arginfo, data, strict=strict)
+        check(arginfo, data, strict=strict, allow_ref=allow_ref)
 
 
 def doc_cli(
