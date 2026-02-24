@@ -196,9 +196,7 @@ class ArgumentData:
             for kk in data:
                 if kk in sub_fields:
                     self.subdata.append(
-                        ArgumentData(
-                            data[kk], sub_fields[kk], allow_ref=self.allow_ref
-                        )
+                        ArgumentData(data[kk], sub_fields[kk], allow_ref=self.allow_ref)
                     )
                 elif kk in self.arg.sub_variants:
                     self.subdata.append(
