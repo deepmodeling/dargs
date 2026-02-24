@@ -141,6 +141,11 @@ def _convert_types(T: type | Any | None) -> str:
     -------
     str
         The JSON schema type.
+
+    Raises
+    ------
+    ValueError
+        If the type cannot be converted to a JSON schema type
     """
     # string, number, integer, object, array, boolean, null
     if T is None or T is type(None):

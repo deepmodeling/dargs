@@ -161,7 +161,13 @@ class DargsDomain(Domain):
         node: Any,
         contnode: Any,
     ) -> Any:
-        """Resolve cross-references."""
+        """Resolve cross-references.
+
+        Returns
+        -------
+        Any
+            The resolved reference node, or None if not found
+        """
         targetid = f"{typ}:{target}"
         obj = self.data["arguments"].get(targetid)
         if obj is None:
@@ -170,14 +176,26 @@ class DargsDomain(Domain):
 
 
 def setup(app: Any) -> dict[str, bool]:
-    """Setup sphinx app."""
+    """Setup sphinx app.
+
+    Returns
+    -------
+    dict[str, bool]
+        Configuration dictionary for Sphinx
+    """
     app.add_directive("dargs", DargsDirective)
     app.add_domain(DargsDomain)
     return {"parallel_read_safe": True}
 
 
 def _test_argument() -> Argument:
-    """This internal function is used to generate docs of dargs."""
+    """This internal function is used to generate docs of dargs.
+
+    Returns
+    -------
+    Argument
+        A test Argument object
+    """
     doc_test = "This argument/variant is only used to test."
     return Argument(
         name="test",
