@@ -423,7 +423,9 @@ class Argument:
     # above are general traverse part
     # below are type checking part
 
-    def check(self, argdict: dict, strict: bool = False, allow_ref: bool = False) -> None:
+    def check(
+        self, argdict: dict, strict: bool = False, allow_ref: bool = False
+    ) -> None:
         """Check whether `argdict` meets the structure defined in self.
 
         Will recursively check nested dicts according to
@@ -453,7 +455,9 @@ class Argument:
             allow_ref=allow_ref,
         )
 
-    def check_value(self, value: Any, strict: bool = False, allow_ref: bool = False) -> None:
+    def check_value(
+        self, value: Any, strict: bool = False, allow_ref: bool = False
+    ) -> None:
         """Check the value without the leading key.
 
         Same as `check({self.name: value})`.
@@ -571,8 +575,12 @@ class Argument:
                 allow_ref=allow_ref,
             )
         if do_default:
-            self.traverse(argdict, key_hook=Argument._assign_default, allow_ref=allow_ref)
-            self.traverse(argdict, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref)
+            self.traverse(
+                argdict, key_hook=Argument._assign_default, allow_ref=allow_ref
+            )
+            self.traverse(
+                argdict, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref
+            )
         if trim_pattern is not None:
             trim_by_pattern(argdict, trim_pattern, reserved=[self.name])
             self.traverse(
@@ -627,8 +635,12 @@ class Argument:
                 allow_ref=allow_ref,
             )
         if do_default:
-            self.traverse_value(value, key_hook=Argument._assign_default, allow_ref=allow_ref)
-            self.traverse_value(value, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref)
+            self.traverse_value(
+                value, key_hook=Argument._assign_default, allow_ref=allow_ref
+            )
+            self.traverse_value(
+                value, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref
+            )
         if trim_pattern is not None:
             self.traverse_value(
                 value,

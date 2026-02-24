@@ -7,7 +7,7 @@ contents into the dict, with any keys already present in the dict taking
 precedence (local overrides).
 
 Loading from external files is **disabled by default** for security.
-Pass ``allow_ref=True`` to the relevant method to enable this feature:
+Pass `allow_ref=True` to the relevant method to enable this feature:
 
 ```python
 argument.check(data, allow_ref=True)

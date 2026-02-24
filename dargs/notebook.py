@@ -91,7 +91,9 @@ css = """<style>
 """
 
 
-def JSON(data: dict | str, arg: Argument | list[Argument], allow_ref: bool = False) -> None:
+def JSON(
+    data: dict | str, arg: Argument | list[Argument], allow_ref: bool = False
+) -> None:
     """Display JSON data with Argument in the Jupyter Notebook.
 
     Parameters
@@ -106,7 +108,9 @@ def JSON(data: dict | str, arg: Argument | list[Argument], allow_ref: bool = Fal
     display(HTML(print_html(data, arg, allow_ref=allow_ref)))
 
 
-def print_html(data: Any, arg: Argument | list[Argument], allow_ref: bool = False) -> str:
+def print_html(
+    data: Any, arg: Argument | list[Argument], allow_ref: bool = False
+) -> str:
     """Print HTML string with Argument in the Jupyter Notebook.
 
     Parameters
