@@ -16,6 +16,7 @@ Welcome to dargs's documentation!
    dpgui
    nb
    json_schema
+   ref
    api/api
    credits
 
