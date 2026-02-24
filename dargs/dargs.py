@@ -21,6 +21,7 @@ from __future__ import annotations
 import difflib
 import fnmatch
 import json
+import os
 import re
 from copy import deepcopy
 from enum import Enum
@@ -405,6 +406,7 @@ class Argument:
                 f"key `{path[-1]}` gets wrong value type, "
                 f"requires dict but {type(value).__name__} is given",
             )
+        _resolve_ref(value)
         sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
@@ -1063,6 +1065,72 @@ def trim_by_pattern(
     unrequired = list(filter(lambda x: rem.match(x) is not None, argdict.keys()))
     for key in unrequired:
         argdict.pop(key)
+
+
+def _load_ref(ref_path: str) -> dict:
+    """Load a dict from an external file referenced by ``$ref``.
+
+    Parameters
+    ----------
+    ref_path : str
+        Path to the external file. Supported extensions: ``.json``, ``.yml``, ``.yaml``.
+
+    Returns
+    -------
+    dict
+        The loaded dict from the external file.
+
+    Raises
+    ------
+    ValueError
+        If the file extension is not supported.
+    ImportError
+        If pyyaml is not installed and a YAML file is requested.
+    """
+    ext = os.path.splitext(ref_path)[1].lower()
+    if ext == ".json":
+        with open(ref_path) as f:
+            return json.load(f)
+    elif ext in (".yml", ".yaml"):
+        try:
+            import yaml
+        except ImportError as e:
+            raise ImportError(
+                "pyyaml is required to load YAML files referenced by $ref. "
+                "Install it with: pip install pyyaml"
+            ) from e
+        with open(ref_path) as f:
+            return yaml.safe_load(f)
+    else:
+        raise ValueError(
+            f"Unsupported file extension `{ext}` for $ref. "
+            "Supported extensions are: .json, .yml, .yaml"
+        )
+
+
+def _resolve_ref(d: dict) -> None:
+    """Resolve the ``$ref`` key in a dict by loading from an external file.
+
+    If ``$ref`` is present in ``d``, its value is treated as a file path.
+    The file is loaded and its contents are merged into ``d``.  Keys already
+    present in ``d`` (other than ``$ref``) take precedence over keys from the
+    loaded file, allowing local overrides.
+
+    The dict is modified **in place**.
+
+    Parameters
+    ----------
+    d : dict
+        The dict that may contain a ``$ref`` key.
+    """
+    if "$ref" not in d:
+        return
+    ref_path = d.pop("$ref")
+    loaded = _load_ref(ref_path)
+    # Merge: loaded content as base, local keys take precedence
+    merged = {**loaded, **d}
+    d.clear()
+    d.update(merged)
 
 
 def isinstance_annotation(value: Any, dtype: type | Any) -> bool:

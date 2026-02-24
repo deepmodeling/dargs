@@ -31,11 +31,15 @@ repository = "https://github.com/deepmodeling/dargs"
 test = [
     "ipython",
     "jsonschema",
+    "pyyaml",
 ]
 typecheck = [
     "ty==0.0.17",
     "sphinx",
     "ipython",
+]
+yaml = [
+    "pyyaml",
 ]
 
 [project.scripts]
