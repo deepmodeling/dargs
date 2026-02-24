@@ -1,4 +1,5 @@
 """Tests for $ref loading from external JSON/YAML files."""
+
 from __future__ import annotations
 
 import importlib.util

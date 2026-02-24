@@ -32,4 +32,3 @@ Please refer to test files for detailed usage.
 - JSON encoder for `Argument` and `Variant` classes
 - Generate [JSON schema](https://json-schema.org/) from an `Argument`, which can be further integrated with JSON editors such as [Visual Studio Code](https://code.visualstudio.com/)
 - Load dict values from external JSON/YAML files via the `$ref` key
-
