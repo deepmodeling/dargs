@@ -10,4 +10,4 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v6
-    - run: pipx run uv tool run --with .[typecheck] ty check
+    - run: pipx run uv tool run --with .[typecheck,yaml] ty check

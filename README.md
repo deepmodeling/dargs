@@ -31,3 +31,4 @@ Please refer to test files for detailed usage.
 - Native integration with [Sphinx](https://github.com/sphinx-doc/sphinx), [DP-GUI](https://github.com/deepmodeling/dpgui), and [Jupyter Notebook](https://jupyter.org/)
 - JSON encoder for `Argument` and `Variant` classes
 - Generate [JSON schema](https://json-schema.org/) from an `Argument`, which can be further integrated with JSON editors such as [Visual Studio Code](https://code.visualstudio.com/)
+- Load dict values from external JSON/YAML files via the `$ref` key
