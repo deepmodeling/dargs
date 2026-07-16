@@ -165,6 +165,27 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ArgumentTypeError):
             ca.check(err_dict3)
 
+    def test_variant_choice_type(self) -> None:
+        ca = Argument(
+            "base",
+            dict,
+            sub_variants=[
+                Variant("kind", [Argument("alpha", dict, alias=["a"])])
+            ],
+        )
+        for tag in ([], {}, 1, None):
+            with self.subTest(tag=tag):
+                with self.assertRaises(ArgumentTypeError) as cm:
+                    ca.normalize_value({"kind": tag})
+                self.assertEqual(cm.exception.path, "")
+                self.assertIn("requires <str>", str(cm.exception))
+                self.assertIn("expected choices are <alpha|a>", str(cm.exception))
+
+        self.assertEqual(ca.normalize_value({"kind": "a"}), {"kind": "alpha"})
+        with self.assertRaises(ArgumentValueError) as cm:
+            ca.normalize_value({"kind": "alpah"})
+        self.assertIn("Did you mean: alpha?", str(cm.exception))
+
     def test_sub_variants(self) -> None:
         ca = Argument(
             "base",
