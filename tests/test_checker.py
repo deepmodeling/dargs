@@ -169,9 +169,7 @@ class TestChecker(unittest.TestCase):
         ca = Argument(
             "base",
             dict,
-            sub_variants=[
-                Variant("kind", [Argument("alpha", dict, alias=["a"])])
-            ],
+            sub_variants=[Variant("kind", [Argument("alpha", dict, alias=["a"])])],
         )
         for tag in ([], {}, 1, None):
             with self.subTest(tag=tag):
