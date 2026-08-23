@@ -665,7 +665,11 @@ class Argument:
             and self.optional
             and self.default is not _Flags.NONE
         ):
-            default = self.default if self.default != {} else _Flags.EMPTY_DICT
+            # Defaults belong to the schema and must not be shared with caller-owned
+            # normalized data. Deep-copying also protects nested mutable objects.
+            default = (
+                deepcopy(self.default) if self.default != {} else _Flags.EMPTY_DICT
+            )
             argdict[self.name] = default
 
     def _handle_empty_dict(self, argdict: dict, path: list[str] | None = None) -> None:

@@ -30,6 +30,26 @@ class TestNormalizer(unittest.TestCase):
         data = base.normalize_value({})
         self.assertDictEqual(data, {"bar": {}})
 
+    def test_mutable_defaults_are_copied(self) -> None:
+        """Mutating normalized defaults must not change later results or schemas."""
+        items = Argument("items", list, optional=True, default=[])
+        settings = Argument(
+            "settings",
+            dict,
+            optional=True,
+            default={"labels": []},
+        )
+        base = Argument("base", dict, [items, settings])
+
+        first = base.normalize_value({})
+        first["items"].append("changed")
+        first["settings"]["labels"].append("changed")
+        second = base.normalize_value({})
+
+        self.assertEqual(second, {"items": [], "settings": {"labels": []}})
+        self.assertEqual(items.default, [])
+        self.assertEqual(settings.default, {"labels": []})
+
     def test_alias(self) -> None:
         ca = Argument("Key1", int, alias=["Old1", "Old2"])
         beg = {"Old1": 1}
