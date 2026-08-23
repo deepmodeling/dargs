@@ -5,7 +5,24 @@ import json
 import sys
 from typing import IO, Any
 
-from dargs._version import __version__
+try:
+    from dargs._version import __version__
+except ModuleNotFoundError as exc:
+    if exc.name != "dargs._version":
+        raise
+    try:
+        from setuptools_scm import get_version
+    except ImportError:
+        # Source archives may have neither the generated module nor build tools.
+        # The CLI should remain usable even when an exact version is unavailable.
+        __version__ = "0+unknown"
+    else:
+        __version__ = get_version(
+            root="..",
+            relative_to=__file__,
+            fallback_version="0+unknown",
+        )
+
 from dargs.check import check
 
 
