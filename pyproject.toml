@@ -28,6 +28,9 @@ documentation = "https://docs.deepmodeling.com/projects/dargs"
 repository = "https://github.com/deepmodeling/dargs"
 
 [project.optional-dependencies]
+notebook = [
+    "ipython",
+]
 test = [
     "ipython",
     "jsonschema",
