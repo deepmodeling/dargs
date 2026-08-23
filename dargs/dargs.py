@@ -480,6 +480,9 @@ class Argument:
         """
         if allow_ref:
             value = deepcopy(value)
+        # ``traverse_value`` only checks descendants, so validate the root value
+        # explicitly before descending into any sub-fields or variants.
+        self._check_data(value, [])
         self.traverse_value(
             value,
             key_hook=Argument._check_exist,

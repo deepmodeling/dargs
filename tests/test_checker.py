@@ -100,6 +100,16 @@ class TestChecker(unittest.TestCase):
         with self.assertRaises(ValueError):
             Argument("base", dict, [Argument("sub1", int), Argument("sub1", int)])
 
+    def test_check_value_validates_root(self) -> None:
+        """Root types and extra checks are enforced by check_value()."""
+        with self.assertRaises(ArgumentTypeError):
+            Argument("value", int).check_value("not an integer")
+
+        positive = Argument("value", int, extra_check=lambda value: value > 0)
+        positive.check_value(1)
+        with self.assertRaises(ArgumentValueError):
+            positive.check_value(0)
+
     def test_sub_repeat_list(self) -> None:
         ca = Argument(
             "base", list, [Argument("sub1", int), Argument("sub2", str)], repeat=True
