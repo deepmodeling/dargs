@@ -1165,8 +1165,9 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
     The file is loaded and its contents are merged into ``d``.  Keys already
     present in ``d`` (other than ``$ref``) take precedence over keys from the
     loaded file, allowing local overrides.  Chained ``$ref`` values in the
-    loaded content are resolved in turn.  Cyclic references are detected and
-    raise a ``ValueError``.
+    loaded content are resolved in turn. Relative paths in a chain are resolved
+    from the directory of the file that contains them. Cyclic references are
+    detected and raise a ``ValueError``.
 
     The dict is modified **in place**.
 
@@ -1192,12 +1193,20 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
             "Pass allow_ref=True to enable loading from external files."
         )
     visited_refs: set[str] = set()
+    base_dir = os.curdir
     while "$ref" in d:
         ref_path = d.pop("$ref")
-        if ref_path in visited_refs:
-            raise ValueError(f"Cyclic $ref detected for path: {ref_path!r}")
-        visited_refs.add(ref_path)
-        loaded = _load_ref(ref_path)
+        resolved_ref_path = (
+            ref_path if os.path.isabs(ref_path) else os.path.join(base_dir, ref_path)
+        )
+        canonical_ref_path = os.path.realpath(resolved_ref_path)
+        if canonical_ref_path in visited_refs:
+            raise ValueError(f"Cyclic $ref detected for path: {canonical_ref_path!r}")
+        visited_refs.add(canonical_ref_path)
+        loaded = _load_ref(canonical_ref_path)
+        # A chained relative reference belongs to the file that declared it,
+        # rather than to the process's current working directory.
+        base_dir = os.path.dirname(canonical_ref_path)
         # Merge: loaded content as base, local keys take precedence
         merged = {**loaded, **d}
         d.clear()

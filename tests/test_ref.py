@@ -211,9 +211,12 @@ class TestRef(unittest.TestCase):
             ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
     def test_ref_chained(self) -> None:
-        """A $ref that loads a file containing another $ref is fully resolved."""
-        inner_path = self._write_json("ref_inner.json", {"sub1": 7, "sub2": "inner"})
-        outer_path = self._write_json("ref_outer.json", {"$ref": inner_path})
+        """A nested relative $ref resolves beside the file that declares it."""
+        self._write_json("ref_inner.json", {"sub1": 7, "sub2": "inner"})
+        outer_path = self._write_json(
+            "ref_outer.json",
+            {"$ref": "ref_inner.json"},
+        )
         ca = Argument(
             "base",
             dict,
