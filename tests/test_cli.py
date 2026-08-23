@@ -6,13 +6,14 @@ import unittest
 from pathlib import Path
 
 this_directory = Path(__file__).parent
+DARGS_COMMAND = [sys.executable, "-m", "dargs"]
 
 
 class TestCli(unittest.TestCase):
     def test_check(self) -> None:
         subprocess.check_call(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "check",
                 "-f",
                 "dargs._test.test_arguments",
@@ -22,9 +23,7 @@ class TestCli(unittest.TestCase):
         )
         subprocess.check_call(
             [
-                sys.executable,
-                "-m",
-                "dargs",
+                *DARGS_COMMAND,
                 "check",
                 "-f",
                 "dargs._test.test_arguments",
@@ -35,7 +34,7 @@ class TestCli(unittest.TestCase):
         with (this_directory / "test_arguments.json").open() as f:
             subprocess.check_call(
                 [
-                    "dargs",
+                    *DARGS_COMMAND,
                     "check",
                     "-f",
                     "dargs._test.test_arguments",
@@ -47,7 +46,7 @@ class TestCli(unittest.TestCase):
         """Test printing documentation for all arguments."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
             ],
@@ -68,7 +67,7 @@ class TestCli(unittest.TestCase):
         """Test printing documentation for a specific argument."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "test1",
@@ -89,7 +88,7 @@ class TestCli(unittest.TestCase):
         # Test top-level base argument
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base",
@@ -106,7 +105,7 @@ class TestCli(unittest.TestCase):
         # Test specific nested path
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/sub1",
@@ -125,7 +124,7 @@ class TestCli(unittest.TestCase):
         # Test deeply nested path
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/sub2/subsub1",
@@ -143,7 +142,7 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid argument path."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "invalid",
@@ -158,7 +157,7 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid nested argument path."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/invalid",
@@ -173,9 +172,7 @@ class TestCli(unittest.TestCase):
         """Test doc command using python -m."""
         result = subprocess.run(
             [
-                sys.executable,
-                "-m",
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "test1",
@@ -191,7 +188,7 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid function format."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "invalid_func",
             ],
