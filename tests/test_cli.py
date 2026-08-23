@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+import json
 import subprocess
 import sys
 import unittest
@@ -9,6 +11,18 @@ this_directory = Path(__file__).parent
 
 
 class TestCli(unittest.TestCase):
+    def test_check_trim_pattern(self) -> None:
+        """The CLI forwards its custom trim pattern to the checker."""
+        from dargs.cli import check_cli
+
+        data = {"test1": 1, "test2": 2, "dropme": "trimmed"}
+        check_cli(
+            func="dargs._test.test_arguments",
+            jdata=[io.StringIO(json.dumps(data))],
+            strict=True,
+            trim_pattern="drop*",
+        )
+
     def test_check(self) -> None:
         subprocess.check_call(
             [
