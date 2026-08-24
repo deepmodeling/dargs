@@ -58,7 +58,7 @@ class ArgumentError(Exception):
     """Base error class for invalid argument values in argchecking."""
 
     def __init__(
-        self, path: None | str | list[str] = None, message: str | None = None
+        self, path: str | list[str] | None = None, message: str | None = None
     ) -> None:
         super().__init__(message)
         if path is None:
@@ -142,7 +142,7 @@ class Argument:
     def __init__(
         self,
         name: str,
-        dtype: None | type | Iterable[type | Any | None],
+        dtype: type | Iterable[type | Any | None] | None,
         sub_fields: Iterable[Argument] | None = None,
         sub_variants: Iterable[Variant] | None = None,
         repeat: bool = False,
@@ -222,7 +222,7 @@ class Argument:
         return Argument("_", dict, [self])
 
     def _reorg_dtype(
-        self, dtype: None | type | Any | Iterable[type | Any | None]
+        self, dtype: type | Any | Iterable[type | Any | None] | None
     ) -> tuple[type | Any | None, ...]:
         if (
             isinstance(dtype, type)
@@ -258,7 +258,7 @@ class Argument:
         # and make it compatible with `isinstance`
         return tuple(dtype)
 
-    def set_dtype(self, dtype: None | type | Iterable[type]) -> None:
+    def set_dtype(self, dtype: type | Iterable[type] | None) -> None:
         """Change the dtype of the current Argument."""
         self.dtype = self._reorg_dtype(dtype)
 
@@ -866,7 +866,7 @@ class Variant:
     def add_choice(
         self,
         tag: str | Argument,
-        _dtype: None | type | Iterable[type] = dict,
+        _dtype: type | Iterable[type] | None = dict,
         *args: Any,
         **kwargs: Any,
     ) -> Argument:
