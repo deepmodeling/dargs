@@ -271,14 +271,13 @@ class ArgumentData:
             if isinstance(self.arg, (Argument, Variant)):
                 buff.append(r"""<span class="dargs-doc">""")
                 if isinstance(self.arg, Argument):
-                    doc_head = (
-                        self.arg.gen_doc_head()
-                        .replace("| type:", "type:")
-                        .replace("\n", linebreak)
-                    )
-                    # Escape generated text before selectively restoring the small
-                    # set of formatting markers supported by the tooltip.
-                    doc_head = html.escape(doc_head, quote=False)
+                    # Escape the generated text before adding our line-break
+                    # markup. This preserves generated ``<br/>`` elements while
+                    # keeping identically spelled user content escaped.
+                    doc_head = html.escape(
+                        self.arg.gen_doc_head().replace("| type:", "type:"),
+                        quote=False,
+                    ).replace("\n", linebreak)
                     # use re to replace ``xx`` to <code>xx</code>
                     doc_head = re.sub(
                         r"``(.*?)``",
