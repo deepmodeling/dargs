@@ -5,7 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/dargs/badge/)](https://dargs.readthedocs.io/)
 
 This is a minimum version for checking the input argument dict.
-It would examine argument's type,  as well as keys and types of its sub-arguments.
+It would examine argument's type, as well as keys and types of its sub-arguments.
 
 A special case called *variant* is also handled,
 where you can determine the items of a dict based the value of on one of its `flag_name` key.
@@ -31,3 +31,4 @@ Please refer to test files for detailed usage.
 - Native integration with [Sphinx](https://github.com/sphinx-doc/sphinx), [DP-GUI](https://github.com/deepmodeling/dpgui), and [Jupyter Notebook](https://jupyter.org/)
 - JSON encoder for `Argument` and `Variant` classes
 - Generate [JSON schema](https://json-schema.org/) from an `Argument`, which can be further integrated with JSON editors such as [Visual Studio Code](https://code.visualstudio.com/)
+- Load dict values from external JSON/YAML files via the `$ref` key

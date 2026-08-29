@@ -13,7 +13,7 @@ jobs:
           - "3"
           - "3.7"
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -21,7 +21,7 @@ jobs:
     - run: pip install .[test] coverage
     - name: Test
       run: coverage run --source=./dargs -m unittest -v && coverage report
-    - uses: codecov/codecov-action@v5
+    - uses: codecov/codecov-action@v7
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:

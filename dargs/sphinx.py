@@ -137,17 +137,17 @@ class DargsDomain(Domain):
 
     name: ClassVar[str] = "dargs"
     label: ClassVar[str] = "dargs"
-    object_types: ClassVar[dict[str, ObjType]] = {  # type: ignore
+    object_types: ClassVar[dict[str, ObjType]] = {
         "argument": ObjType("argument", "argument"),
     }
-    directives: ClassVar[dict[str, type[Directive]]] = {  # type: ignore
+    directives: ClassVar[dict[str, type[Directive]]] = {
         "argument": DargsObject,
     }
-    roles: ClassVar[dict[str, RoleFunction | XRefRole]] = {  # type: ignore
+    roles: ClassVar[dict[str, RoleFunction | XRefRole]] = {
         "argument": XRefRole(),
     }
 
-    initial_data: ClassVar[dict] = {  # type: ignore
+    initial_data: ClassVar[dict] = {
         "arguments": {},  # fullname -> docname, objtype
     }
 

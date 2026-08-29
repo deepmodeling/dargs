@@ -20,14 +20,14 @@ JSON schema can be used in several JSON editors. For example, in [Visual Studio 
 
 ```json
 {
-    "json.schemas": [
-        {
-            "fileMatch": [
-                "/**/*.json"
-            ],
-            "url": "./deepmd.json"
-        }
-    ]
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/**/*.json"
+      ],
+      "url": "./deepmd.json"
+    }
+  ]
 }
 ```
 
