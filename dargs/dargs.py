@@ -337,6 +337,7 @@ class Argument:
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
         allow_ref: bool = False,
+        _ref_base_dir: str | None = None,
     ) -> None:
         # first, do something with the key
         # then, take out the vaule and do something with it
@@ -349,7 +350,14 @@ class Argument:
             newpath = [*path, self.name]
             # this is the key step that we traverse into the tree
             self.traverse_value(
-                value, key_hook, value_hook, sub_hook, variant_hook, newpath, allow_ref
+                value,
+                key_hook,
+                value_hook,
+                sub_hook,
+                variant_hook,
+                newpath,
+                allow_ref,
+                _ref_base_dir,
             )
 
     def traverse_value(
@@ -361,6 +369,7 @@ class Argument:
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
         allow_ref: bool = False,
+        _ref_base_dir: str | None = None,
     ) -> None:
         # this is not private, and can be called directly
         # in the condition where there is no leading key
@@ -368,7 +377,14 @@ class Argument:
             path = []
         if not self.repeat and isinstance(value, dict):
             self._traverse_sub(
-                value, key_hook, value_hook, sub_hook, variant_hook, path, allow_ref
+                value,
+                key_hook,
+                value_hook,
+                sub_hook,
+                variant_hook,
+                path,
+                allow_ref,
+                _ref_base_dir,
             )
         elif self.repeat and isinstance(value, list):
             for idx, item in enumerate(value):
@@ -380,6 +396,7 @@ class Argument:
                     variant_hook,
                     [*path, str(idx)],
                     allow_ref,
+                    _ref_base_dir,
                 )
         elif self.repeat and isinstance(value, dict):
             for kk, item in value.items():
@@ -391,6 +408,7 @@ class Argument:
                     variant_hook,
                     [*path, kk],
                     allow_ref,
+                    _ref_base_dir,
                 )
 
     def _traverse_sub(
@@ -402,6 +420,7 @@ class Argument:
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
         allow_ref: bool = False,
+        _ref_base_dir: str | None = None,
     ) -> None:
         if path is None:
             path = [self.name]
@@ -411,13 +430,22 @@ class Argument:
                 f"key `{path[-1]}` gets wrong value type, "
                 f"requires dict but {type(value).__name__} is given",
             )
-        _resolve_ref(value, allow_ref)
+        # A referenced file becomes the containing source for any nested refs
+        # reached during this traversal.
+        ref_base_dir = _resolve_ref(value, allow_ref, _ref_base_dir)
         sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
         for subarg in self.flatten_sub(value, path).values():
             subarg.traverse(
-                value, key_hook, value_hook, sub_hook, variant_hook, path, allow_ref
+                value,
+                key_hook,
+                value_hook,
+                sub_hook,
+                variant_hook,
+                path,
+                allow_ref,
+                ref_base_dir,
             )
 
     # above are general traverse part
@@ -1158,7 +1186,7 @@ def _load_ref(ref_path: str) -> dict:
     return loaded
 
 
-def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
+def _resolve_ref(d: dict, allow_ref: bool = False, base_dir: str | None = None) -> str:
     """Resolve the ``$ref`` key in a dict by loading from an external file.
 
     If ``$ref`` is present in ``d``, its value is treated as a file path.
@@ -1178,6 +1206,14 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
     allow_ref : bool, optional
         If False (the default), raise a ``ValueError`` when ``$ref`` is found.
         Set to True to enable loading from external files.
+    base_dir : str, optional
+        Directory containing ``d``. Relative references are resolved from this
+        directory; the process working directory is used when it is omitted.
+
+    Returns
+    -------
+    str
+        The directory that nested mappings should use for relative references.
 
     Raises
     ------
@@ -1185,15 +1221,16 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
         If ``$ref`` is found but ``allow_ref`` is False, or if a cyclic
         reference is detected.
     """
+    if base_dir is None:
+        base_dir = os.curdir
     if "$ref" not in d:
-        return
+        return base_dir
     if not allow_ref:
         raise ValueError(
             "$ref is not allowed by default. "
             "Pass allow_ref=True to enable loading from external files."
         )
     visited_refs: set[str] = set()
-    base_dir = os.curdir
     while "$ref" in d:
         ref_path = d.pop("$ref")
         resolved_ref_path = (
@@ -1211,6 +1248,7 @@ def _resolve_ref(d: dict, allow_ref: bool = False) -> None:
         merged = {**loaded, **d}
         d.clear()
         d.update(merged)
+    return base_dir
 
 
 def isinstance_annotation(value: Any, dtype: type | Any) -> bool:

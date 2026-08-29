@@ -229,6 +229,23 @@ class TestRef(unittest.TestCase):
         self.assertEqual(result["base"]["sub1"], 7)
         self.assertEqual(result["base"]["sub2"], "inner")
 
+    def test_ref_nested_mapping(self) -> None:
+        """A relative $ref in a nested mapping uses its containing file."""
+        self._write_json("ref_nested_inner.json", {"value": 11})
+        outer_path = self._write_json(
+            "ref_nested_outer.json",
+            {"nested": {"$ref": "ref_nested_inner.json"}},
+        )
+        ca = Argument(
+            "base",
+            dict,
+            [Argument("nested", dict, [Argument("value", int)])],
+        )
+
+        result = ca.normalize({"base": {"$ref": outer_path}}, allow_ref=True)
+
+        self.assertEqual(result["base"]["nested"]["value"], 11)
+
 
 if __name__ == "__main__":
     unittest.main()
