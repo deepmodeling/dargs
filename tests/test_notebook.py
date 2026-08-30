@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import os
+import tempfile
 import unittest
 from xml.etree import ElementTree as ET
 
@@ -15,6 +18,33 @@ else:
 
 @unittest.skipUnless(ipython_installed, "IPython not installed")
 class TestNotebook(unittest.TestCase):
+    def test_nested_relative_ref_uses_containing_file(self) -> None:
+        """Notebook rendering resolves nested refs beside their source file."""
+        from dargs.notebook import print_html
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            nested = os.path.join(tmpdir, "nested")
+            os.mkdir(nested)
+            with open(os.path.join(nested, "inner.json"), "w", encoding="utf-8") as f:
+                json.dump({"value": 11}, f)
+            outer_path = os.path.join(tmpdir, "outer.json")
+            with open(outer_path, "w", encoding="utf-8") as f:
+                json.dump({"nested": {"$ref": "nested/inner.json"}}, f)
+
+            argument = Argument(
+                "base",
+                dict,
+                [Argument("nested", dict, [Argument("value", int)])],
+            )
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(os.path.dirname(tmpdir))
+                html = print_html({"$ref": outer_path}, argument, allow_ref=True)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn('"value"', html)
+
     def test_html_escapes_user_content(self) -> None:
         """JSON values, keys, and docs cannot inject executable HTML."""
         from dargs.notebook import print_html
