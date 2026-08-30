@@ -168,11 +168,15 @@ class ArgumentData:
         arg: Argument | Variant,
         repeat: bool = False,
         allow_ref: bool = False,
+        _ref_base_dir: str | None = None,
     ) -> None:
         self.data = data
         self.arg = arg
         self.repeat = repeat
         self.allow_ref = allow_ref
+        # Keep the directory of the file that supplied this mapping so that
+        # nested relative references are resolved beside their declaring file.
+        self._ref_base_dir = _ref_base_dir
         self.subdata = []
         self._init_subdata()
 
@@ -185,7 +189,9 @@ class ArgumentData:
         ):
             # Work on a copy to avoid mutating the caller's data
             data = self.data.copy()
-            _resolve_ref(data, self.allow_ref)
+            ref_base_dir = _resolve_ref(
+                data, self.allow_ref, self._ref_base_dir
+            )
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
@@ -196,7 +202,12 @@ class ArgumentData:
             for kk in data:
                 if kk in sub_fields:
                     self.subdata.append(
-                        ArgumentData(data[kk], sub_fields[kk], allow_ref=self.allow_ref)
+                        ArgumentData(
+                            data[kk],
+                            sub_fields[kk],
+                            allow_ref=self.allow_ref,
+                            _ref_base_dir=ref_base_dir,
+                        )
                     )
                 elif kk in self.arg.sub_variants:
                     self.subdata.append(
@@ -204,6 +215,7 @@ class ArgumentData:
                             data[kk],
                             self.arg.sub_variants[kk],
                             allow_ref=self.allow_ref,
+                            _ref_base_dir=ref_base_dir,
                         )
                     )
                 else:
@@ -216,7 +228,13 @@ class ArgumentData:
         ):
             for dd in self.data:
                 self.subdata.append(
-                    ArgumentData(dd, self.arg, repeat=True, allow_ref=self.allow_ref)
+                    ArgumentData(
+                        dd,
+                        self.arg,
+                        repeat=True,
+                        allow_ref=self.allow_ref,
+                        _ref_base_dir=self._ref_base_dir,
+                    )
                 )
         elif (
             isinstance(self.data, dict)
@@ -226,7 +244,13 @@ class ArgumentData:
         ):
             for dd in self.data.values():
                 self.subdata.append(
-                    ArgumentData(dd, self.arg, repeat=True, allow_ref=self.allow_ref)
+                    ArgumentData(
+                        dd,
+                        self.arg,
+                        repeat=True,
+                        allow_ref=self.allow_ref,
+                        _ref_base_dir=self._ref_base_dir,
+                    )
                 )
 
     def print_html(self, _level: int = 0, _last_one: bool = True) -> str:
