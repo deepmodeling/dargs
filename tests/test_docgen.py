@@ -248,7 +248,15 @@ class TestDocgen(unittest.TestCase):
         # print("\n\n"+docstr)
 
     def test_dpmd(self) -> None:
-        from .dpmdargs import gen_doc
+        from .dpmdargs import gen_doc, loss_ener
+
+        loss_arguments = {argument.name: argument for argument in loss_ener()}
+        self.assertIn(
+            "atom_ener loss at the start", loss_arguments["start_pref_ae"].doc
+        )
+        self.assertIn(
+            "atom_ener loss at the limit", loss_arguments["limit_pref_ae"].doc
+        )
 
         dargs.RAW_ANCHOR = False
         docstr = gen_doc(make_anchor=True, make_link=True)

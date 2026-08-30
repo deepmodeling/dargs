@@ -19,7 +19,7 @@ class TestJsonSchema(unittest.TestCase):
         validate(data, schema)
 
     def test_convert_types(self) -> None:
-        self.assertEqual(_convert_types(int), "number")
+        self.assertEqual(_convert_types(int), "integer")
         self.assertEqual(_convert_types(str), "string")
         self.assertEqual(_convert_types(float), "number")
         self.assertEqual(_convert_types(bool), "boolean")
@@ -45,3 +45,10 @@ class TestJsonSchema(unittest.TestCase):
             validate({"item1": {"sub1": 1, "sub2": None}}, schema)
         with self.assertRaises(ValidationError):
             validate({"item1": {"sub1": 1}}, schema)
+
+    def test_integer_argument_rejects_fractional_numbers(self) -> None:
+        """Generated integer schemas match dargs' runtime int validation."""
+        schema = generate_json_schema(Argument("count", int))
+        validate(1, schema)
+        with self.assertRaises(ValidationError):
+            validate(1.5, schema)
