@@ -350,6 +350,7 @@ class Argument:
         path: list[str] | None = None,
         allow_ref: bool = False,
         _ref_base_dir: str | None = None,
+        _trim_pattern: str | None = None,
     ) -> None:
         # first, do something with the key
         # then, take out the vaule and do something with it
@@ -370,6 +371,7 @@ class Argument:
                 newpath,
                 allow_ref,
                 _ref_base_dir,
+                _trim_pattern,
             )
 
     def traverse_value(
@@ -382,6 +384,7 @@ class Argument:
         path: list[str] | None = None,
         allow_ref: bool = False,
         _ref_base_dir: str | None = None,
+        _trim_pattern: str | None = None,
     ) -> None:
         # this is not private, and can be called directly
         # in the condition where there is no leading key
@@ -397,6 +400,7 @@ class Argument:
                 path,
                 allow_ref,
                 _ref_base_dir,
+                _trim_pattern,
             )
         elif self.repeat and isinstance(value, list):
             for idx, item in enumerate(value):
@@ -409,8 +413,14 @@ class Argument:
                     [*path, str(idx)],
                     allow_ref,
                     _ref_base_dir,
+                    _trim_pattern,
                 )
         elif self.repeat and isinstance(value, dict):
+            # Repeat dictionaries use their keys as item names. Trim comment or
+            # metadata entries before visiting items, since those entries may
+            # not contain dictionaries and must not be type-checked as items.
+            if _trim_pattern is not None:
+                trim_by_pattern(value, _trim_pattern)
             for kk, item in value.items():
                 self._traverse_sub(
                     item,
@@ -421,6 +431,7 @@ class Argument:
                     [*path, kk],
                     allow_ref,
                     _ref_base_dir,
+                    _trim_pattern,
                 )
 
     def _traverse_sub(
@@ -433,6 +444,7 @@ class Argument:
         path: list[str] | None = None,
         allow_ref: bool = False,
         _ref_base_dir: str | None = None,
+        _trim_pattern: str | None = None,
     ) -> None:
         if path is None:
             path = [self.name]
@@ -458,6 +470,7 @@ class Argument:
                 path,
                 allow_ref,
                 ref_base_dir,
+                _trim_pattern,
             )
 
     # above are general traverse part
@@ -633,13 +646,20 @@ class Argument:
                 key_hook=Argument._convert_alias,
                 variant_hook=Variant._convert_choice_alias,
                 allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         if do_default:
             self.traverse(
-                argdict, key_hook=Argument._assign_default, allow_ref=allow_ref
+                argdict,
+                key_hook=Argument._assign_default,
+                allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
             self.traverse(
-                argdict, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref
+                argdict,
+                key_hook=Argument._handle_empty_dict,
+                allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         if trim_pattern is not None:
             trim_by_pattern(argdict, trim_pattern, reserved=[self.name])
@@ -649,6 +669,7 @@ class Argument:
                     d, trim_pattern, a.flatten_sub(d, p).keys()
                 ),
                 allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         return argdict
 
@@ -693,13 +714,20 @@ class Argument:
                 key_hook=Argument._convert_alias,
                 variant_hook=Variant._convert_choice_alias,
                 allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         if do_default:
             self.traverse_value(
-                value, key_hook=Argument._assign_default, allow_ref=allow_ref
+                value,
+                key_hook=Argument._assign_default,
+                allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
             self.traverse_value(
-                value, key_hook=Argument._handle_empty_dict, allow_ref=allow_ref
+                value,
+                key_hook=Argument._handle_empty_dict,
+                allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         if trim_pattern is not None:
             self.traverse_value(
@@ -708,6 +736,7 @@ class Argument:
                     d, trim_pattern, a.flatten_sub(d, p).keys()
                 ),
                 allow_ref=allow_ref,
+                _trim_pattern=trim_pattern,
             )
         return value
 
@@ -1186,15 +1215,27 @@ def trim_by_pattern(
     rep = fnmatch.translate(pattern) if not use_regex else pattern
     rem = re.compile(rep)
     if reserved:
-        # Use lambda instead of rem.match for ty type checker compatibility
-        conflict = list(filter(lambda x: rem.match(x) is not None, reserved))
+        # Use lambda instead of rem.match for ty type checker compatibility.
+        # Keys from Python dictionaries are not required to be strings; only
+        # string keys can match a glob/regex pattern.
+        conflict = list(
+            filter(
+                lambda x: isinstance(x, str) and rem.match(x) is not None,
+                reserved,
+            )
+        )
         if conflict:
             raise ValueError(
                 f"pattern `{pattern}` conflicts with the "
                 f"following reserved names: {', '.join(conflict)}"
             )
-    # Use lambda instead of rem.match for ty type checker compatibility
-    unrequired = list(filter(lambda x: rem.match(x) is not None, argdict.keys()))
+    # Skip non-string keys instead of passing them to the regular expression.
+    unrequired = list(
+        filter(
+            lambda x: isinstance(x, str) and rem.match(x) is not None,
+            argdict.keys(),
+        )
+    )
     for key in unrequired:
         argdict.pop(key)
 
