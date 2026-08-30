@@ -147,7 +147,9 @@ def _convert_types(T: type | Any | None) -> str:
         return "null"
     elif T is str:
         return "string"
-    elif T in (int, float):
+    elif T is int:
+        return "integer"
+    elif T is float:
         return "number"
     elif T is bool:
         return "boolean"
