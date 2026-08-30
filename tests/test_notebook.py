@@ -47,6 +47,40 @@ class TestNotebook(unittest.TestCase):
 
         self.assertIn('"value"', html)
 
+    def test_html_escapes_user_content(self) -> None:
+        """JSON values, keys, and docs cannot inject executable HTML."""
+        from dargs.notebook import print_html
+
+        dangerous_key = '<img src="x" onerror="alert(1)">'
+        argument = Argument(
+            "root",
+            dict,
+            [Argument(dangerous_key, str, doc="<script>doc()</script>")],
+        )
+        rendered = print_html(
+            {dangerous_key: "<script>value()</script>"},
+            argument,
+        )
+
+        self.assertNotIn("<script>", rendered)
+        self.assertNotIn("<img ", rendered)
+        self.assertIn("&lt;script&gt;value()", rendered)
+        self.assertIn("&lt;img src=", rendered)
+
+    def test_html_preserves_only_generated_tooltip_breaks(self) -> None:
+        """Generated tooltip breaks remain markup while user tags stay escaped."""
+        from dargs.notebook import print_html
+
+        argument = Argument(
+            "root",
+            dict,
+            [Argument("literal<br/>", str)],
+        )
+        rendered = print_html({"literal<br/>": "value"}, argument)
+
+        self.assertIn("literal&lt;br/&gt;: <br/>", rendered)
+        self.assertNotIn("literal<br/>: <br/>", rendered)
+
     def test_html_validation(self) -> None:
         from dargs.notebook import print_html
 
