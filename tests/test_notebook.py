@@ -39,9 +39,7 @@ class TestNotebook(unittest.TestCase):
             original_cwd = os.getcwd()
             try:
                 os.chdir(os.path.dirname(tmpdir))
-                html = print_html(
-                    {"$ref": outer_path}, argument, allow_ref=True
-                )
+                html = print_html({"$ref": outer_path}, argument, allow_ref=True)
             finally:
                 os.chdir(original_cwd)
 

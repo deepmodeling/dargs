@@ -189,9 +189,7 @@ class ArgumentData:
         ):
             # Work on a copy to avoid mutating the caller's data
             data = self.data.copy()
-            ref_base_dir = _resolve_ref(
-                data, self.allow_ref, self._ref_base_dir
-            )
+            ref_base_dir = _resolve_ref(data, self.allow_ref, self._ref_base_dir)
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
