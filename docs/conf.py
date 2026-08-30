@@ -147,6 +147,11 @@ html_theme = "sphinx_book_theme"
 #
 # html_sidebars = {}
 
+# Use the project mark in generated HTML documentation.  The SVG lives in
+# ``docs/_static`` so it is also available as a relative asset from README.md.
+html_static_path = ["_static"]
+html_logo = "_static/dargs-logo.svg"
+
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

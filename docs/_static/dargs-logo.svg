@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">dargs logo</title>
+  <desc id="logo-description">A stylized letter D containing an indented argument schema, followed by the dargs wordmark.</desc>
+
+  <defs>
+    <!-- The clipped rows turn the D into a compact representation of a nested config. -->
+    <clipPath id="d-counter">
+      <path d="M64 48h17c30 0 50 18 50 52s-20 52-50 52H64V48Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- A flat, typographic mark: no network nodes or enclosing tile, so it remains
+       distinct from the sibling DeepModeling project marks. -->
+  <g fill="none" stroke="#173F5F" stroke-linejoin="round">
+    <path d="M51 34h30c40 0 66 25 66 66s-26 66-66 66H51V34Z" stroke-width="14"/>
+    <path d="M51 34v132" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <g clip-path="url(#d-counter)">
+    <!-- Indentation guide and rows evoke YAML/JSON argument nesting. -->
+    <path d="M64 62v86M64 86h17M64 111h30M64 136h17" fill="none" stroke="#173F5F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="80" y="57" width="47" height="11" rx="5.5" fill="#3CAEA3"/>
+    <rect x="93" y="82" width="36" height="11" rx="5.5" fill="#ED553B"/>
+    <rect x="105" y="107" width="25" height="11" rx="5.5" fill="#F6B73C"/>
+    <rect x="80" y="132" width="43" height="11" rx="5.5" fill="#20639B"/>
+  </g>
+
+  <!-- Lowercase wordmark keeps the tool name readable beside the compact mark. -->
+  <text x="221" y="130" fill="#173F5F" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif" font-size="102" font-weight="700" letter-spacing="-5">dargs</text>
+  <g transform="translate(228 157)">
+    <rect width="42" height="7" rx="3.5" fill="#3CAEA3"/>
+    <rect x="50" width="27" height="7" rx="3.5" fill="#ED553B"/>
+    <rect x="85" width="56" height="7" rx="3.5" fill="#F6B73C"/>
+    <rect x="149" width="34" height="7" rx="3.5" fill="#20639B"/>
+  </g>
+</svg>
