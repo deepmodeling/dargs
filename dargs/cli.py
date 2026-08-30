@@ -118,6 +118,7 @@ def check_cli(
     func: str,
     jdata: list[IO],
     strict: bool,
+    trim_pattern: str = "_*",
     allow_ref: bool = False,
     **kwargs: Any,
 ) -> None:
@@ -131,6 +132,8 @@ def check_cli(
         File object that contains the JSON data
     strict : bool
         If True, raise an error if the key is not pre-defined
+    trim_pattern : str, optional
+        Glob pattern for keys removed before strict validation.
     allow_ref : bool, optional
         If True, allow loading from external files via the ``$ref`` key
 
@@ -153,7 +156,13 @@ def check_cli(
     arginfo = func_obj()
     for jj in jdata:
         data = json.load(jj)
-        check(arginfo, data, strict=strict, allow_ref=allow_ref)
+        check(
+            arginfo,
+            data,
+            strict=strict,
+            trim_pattern=trim_pattern,
+            allow_ref=allow_ref,
+        )
 
 
 def doc_cli(
