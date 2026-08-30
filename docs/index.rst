@@ -6,6 +6,10 @@
 Welcome to dargs's documentation!
 ==================================
 
+.. image:: _static/dargs-logo.svg
+   :alt: dargs — argument schemas for Python
+   :width: 560px
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
