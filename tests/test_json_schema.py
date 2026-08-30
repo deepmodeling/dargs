@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import unittest
 
-from jsonschema import validate
+from jsonschema import ValidationError, validate
 
+from dargs import Argument
 from dargs.json_schema import _convert_types, generate_json_schema
 
 from .dpmdargs import example_json_str, gen_args
@@ -18,7 +19,7 @@ class TestJsonSchema(unittest.TestCase):
         validate(data, schema)
 
     def test_convert_types(self) -> None:
-        self.assertEqual(_convert_types(int), "number")
+        self.assertEqual(_convert_types(int), "integer")
         self.assertEqual(_convert_types(str), "string")
         self.assertEqual(_convert_types(float), "number")
         self.assertEqual(_convert_types(bool), "boolean")
@@ -28,3 +29,10 @@ class TestJsonSchema(unittest.TestCase):
         self.assertEqual(_convert_types(dict), "object")
         with self.assertRaises(ValueError):
             _convert_types(set)
+
+    def test_integer_argument_rejects_fractional_numbers(self) -> None:
+        """Generated integer schemas match dargs' runtime int validation."""
+        schema = generate_json_schema(Argument("count", int))
+        validate(1, schema)
+        with self.assertRaises(ValidationError):
+            validate(1.5, schema)

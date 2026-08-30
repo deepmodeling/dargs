@@ -23,6 +23,16 @@ class TestCli(unittest.TestCase):
             trim_pattern="drop*",
         )
 
+    def test_version_with_python_module(self) -> None:
+        """The source checkout exposes a version without generated build files."""
+        result = subprocess.run(
+            [sys.executable, "-m", "dargs", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        self.assertTrue(result.stdout.strip())
+
     def test_check(self) -> None:
         subprocess.check_call(
             [

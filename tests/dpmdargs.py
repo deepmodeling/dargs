@@ -525,7 +525,7 @@ def loss_ener() -> list[Argument]:
     doc_start_pref_v = start_pref("virial")
     doc_limit_pref_v = limit_pref("virial")
     doc_start_pref_ae = start_pref("atom_ener")
-    doc_start_pref_ae = limit_pref("atom_ener")
+    doc_limit_pref_ae = limit_pref("atom_ener")
     doc_relative_f = "If provided, relative force error will be used in the loss. The difference of force will be normalized by the magnitude of the force in the label with a shift given by `relative_f`, i.e. DF_i / ( || F || + relative_f ) with DF denoting the difference between prediction and label and || F || denoting the L2 norm of the label."
     return [
         Argument(
@@ -575,14 +575,14 @@ def loss_ener() -> list[Argument]:
             [float, int],
             optional=True,
             default=0.00,
-            doc=doc_start_pref_v,
+            doc=doc_start_pref_ae,
         ),
         Argument(
             "limit_pref_ae",
             [float, int],
             optional=True,
             default=0.00,
-            doc=doc_limit_pref_v,
+            doc=doc_limit_pref_ae,
         ),
         Argument("relative_f", [float, None], optional=True, doc=doc_relative_f),
     ]
