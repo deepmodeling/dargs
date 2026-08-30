@@ -126,6 +126,11 @@ def print_html(
     -------
     str
         The HTML string.
+
+    Raises
+    ------
+    ValueError
+        If the data or arg type is unknown
     """
     if isinstance(data, str):
         data = json.loads(data)
@@ -238,6 +243,16 @@ class ArgumentData:
             The level of indentation, by default 0
         _last_one : bool, optional
             Whether it is the last one, by default True
+
+        Returns
+        -------
+        str
+            The HTML string
+
+        Raises
+        ------
+        ValueError
+            If the data or arg type is incompatible
         """
         linebreak = "<br/>"
         indent = (

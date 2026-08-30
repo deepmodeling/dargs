@@ -65,8 +65,20 @@ select = [
     "I", # isort
     "TCH", # flake8-type-checking
     "ANN", # flake8-annotations
+    # DOC rules are preview-only in the pinned Ruff release. List them
+    # explicitly so enabling pydoclint does not opt into unrelated preview
+    # rules selected by broad prefixes such as RUF.
+    "DOC102", # docstring-extraneous-parameter
+    "DOC201", # docstring-missing-returns
+    "DOC202", # docstring-extraneous-returns
+    "DOC402", # docstring-missing-yields
+    "DOC403", # docstring-extraneous-yields
+    "DOC501", # docstring-missing-exception
+    "DOC502", # docstring-extraneous-exception
     "B904", # raise-without-from-inside-except
 ]
+preview = true
+explicit-preview-rules = true
 
 ignore = [
     "E501", # line too long
@@ -84,6 +96,7 @@ ignore = [
     "D404", # TODO: first word of the docstring should not be This
     "ANN401", # Allow typing.Any - necessary for a library handling arbitrary types
 ]
+
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 

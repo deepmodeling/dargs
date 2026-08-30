@@ -137,10 +137,10 @@ def check_cli(
     allow_ref : bool, optional
         If True, allow loading from external files via the ``$ref`` key
 
-    Returns
-    -------
-    dict
-        normalized data
+    Raises
+    ------
+    RuntimeError
+        If the function cannot be imported or does not exist
     """
     module_name, attr_name = func.strip().rsplit(".", 1)
     try:
@@ -179,6 +179,11 @@ def doc_cli(
         Function that returns an Argument or list of Arguments. E.g., `dargs._test.test_arguments`
     arg : str, optional
         Optional argument path (e.g., 'base/sub1'). If not provided, prints all top-level arguments.
+
+    Raises
+    ------
+    RuntimeError
+        If the function cannot be imported or does not exist
     """
     try:
         module_name, attr_name = func.strip().rsplit(".", 1)
