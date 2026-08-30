@@ -8,6 +8,11 @@ import unittest
 from pathlib import Path
 
 this_directory = Path(__file__).parent
+DARGS_COMMAND = [sys.executable, "-m", "dargs"]
+# Pin child-process imports to the checkout under test.  This keeps the
+# module invocation from silently selecting an unrelated installed dargs when
+# unittest discovery is launched from another working directory.
+DARGS_CWD = this_directory.parent
 
 
 class TestCli(unittest.TestCase):
@@ -36,48 +41,50 @@ class TestCli(unittest.TestCase):
     def test_check(self) -> None:
         subprocess.check_call(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "check",
                 "-f",
                 "dargs._test.test_arguments",
                 str(this_directory / "test_arguments.json"),
                 str(this_directory / "test_arguments.json"),
-            ]
+            ],
+            cwd=DARGS_CWD,
         )
         subprocess.check_call(
             [
-                sys.executable,
-                "-m",
-                "dargs",
+                *DARGS_COMMAND,
                 "check",
                 "-f",
                 "dargs._test.test_arguments",
                 str(this_directory / "test_arguments.json"),
                 str(this_directory / "test_arguments.json"),
-            ]
+            ],
+            cwd=DARGS_CWD,
         )
         with (this_directory / "test_arguments.json").open() as f:
             subprocess.check_call(
                 [
-                    "dargs",
+                    *DARGS_COMMAND,
                     "check",
                     "-f",
                     "dargs._test.test_arguments",
                 ],
                 stdin=f,
+                cwd=DARGS_CWD,
             )
 
     def test_doc_all_arguments(self) -> None:
         """Test printing documentation for all arguments."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
             ],
             capture_output=True,
             text=True,
             check=True,
+            cwd=DARGS_CWD,
         )
         # Check that all arguments are in the output (including nested base)
         self.assertIn("test1:", result.stdout)
@@ -92,7 +99,7 @@ class TestCli(unittest.TestCase):
         """Test printing documentation for a specific argument."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "test1",
@@ -100,6 +107,7 @@ class TestCli(unittest.TestCase):
             capture_output=True,
             text=True,
             check=True,
+            cwd=DARGS_CWD,
         )
         # Check that only test1 is in the output
         self.assertIn("test1:", result.stdout)
@@ -113,7 +121,7 @@ class TestCli(unittest.TestCase):
         # Test top-level base argument
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base",
@@ -121,6 +129,7 @@ class TestCli(unittest.TestCase):
             capture_output=True,
             text=True,
             check=True,
+            cwd=DARGS_CWD,
         )
         self.assertIn("base:", result.stdout)
         self.assertIn("sub1:", result.stdout)
@@ -130,7 +139,7 @@ class TestCli(unittest.TestCase):
         # Test specific nested path
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/sub1",
@@ -138,6 +147,7 @@ class TestCli(unittest.TestCase):
             capture_output=True,
             text=True,
             check=True,
+            cwd=DARGS_CWD,
         )
         self.assertIn("sub1:", result.stdout)
         self.assertIn("Sub argument 1", result.stdout)
@@ -149,7 +159,7 @@ class TestCli(unittest.TestCase):
         # Test deeply nested path
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/sub2/subsub1",
@@ -167,13 +177,14 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid argument path."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "invalid",
             ],
             capture_output=True,
             text=True,
+            cwd=DARGS_CWD,
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not found", result.stderr)
@@ -182,13 +193,14 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid nested argument path."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "base/invalid",
             ],
             capture_output=True,
             text=True,
+            cwd=DARGS_CWD,
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not found", result.stderr)
@@ -197,9 +209,7 @@ class TestCli(unittest.TestCase):
         """Test doc command using python -m."""
         result = subprocess.run(
             [
-                sys.executable,
-                "-m",
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "dargs._test.test_arguments",
                 "test1",
@@ -207,6 +217,7 @@ class TestCli(unittest.TestCase):
             capture_output=True,
             text=True,
             check=True,
+            cwd=DARGS_CWD,
         )
         self.assertIn("test1:", result.stdout)
         self.assertIn("Argument 1", result.stdout)
@@ -215,12 +226,13 @@ class TestCli(unittest.TestCase):
         """Test error handling for invalid function format."""
         result = subprocess.run(
             [
-                "dargs",
+                *DARGS_COMMAND,
                 "doc",
                 "invalid_func",
             ],
             capture_output=True,
             text=True,
+            cwd=DARGS_CWD,
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("module.function", result.stderr)
