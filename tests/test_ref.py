@@ -147,6 +147,17 @@ class TestRef(unittest.TestCase):
         )
         ca.check_value({"$ref": ref_path}, allow_ref=True)
 
+    def test_ref_check_value_root_extra_check(self) -> None:
+        """Root extra checks run against the contents loaded from ``$ref``."""
+        ref_path = self._write_json("ref_root_extra.json", {"sub1": 5})
+        ca = Argument(
+            "base",
+            dict,
+            [Argument("sub1", int)],
+            extra_check=lambda value: value["sub1"] == 5,
+        )
+        ca.check_value({"$ref": ref_path}, allow_ref=True)
+
     def test_ref_normalize_value(self) -> None:
         """$ref is resolved when using normalize_value."""
         ref_path = self._write_json("ref_normval.json", {"sub1": 99})

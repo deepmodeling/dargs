@@ -480,6 +480,10 @@ class Argument:
         """
         if allow_ref:
             value = deepcopy(value)
+            # Resolve a root reference before validating its type or running
+            # its extra check; traversal only resolves descendants.
+            if isinstance(value, dict):
+                _resolve_ref(value, allow_ref)
         # ``traverse_value`` only checks descendants, so validate the root value
         # explicitly before descending into any sub-fields or variants.
         self._check_data(value, [])
