@@ -4,7 +4,7 @@ import json
 import unittest
 from typing import List
 
-import dargs
+import dargs.dargs as dargs_module
 from dargs import Argument, ArgumentEncoder, Variant
 
 
@@ -258,17 +258,18 @@ class TestDocgen(unittest.TestCase):
             "atom_ener loss at the limit", loss_arguments["limit_pref_ae"].doc
         )
 
-        dargs.RAW_ANCHOR = False
-        docstr = gen_doc(make_anchor=True, make_link=True)
-        # print("\n\n"+docstr)
-        # with open("out.rst", "w") as of:
-        #     print(docstr, file=of)
-        # now testing raw anchor
-        dargs.RAW_ANCHOR = True
-        docstr = gen_doc(make_anchor=True, make_link=True)
-        # print("\n\n"+docstr)
-        # with open("outr.rst", "w") as of:
-        #     print(docstr, file=of)
+        original_raw_anchor = dargs_module.RAW_ANCHOR
+        try:
+            dargs_module.RAW_ANCHOR = False
+            rst_doc = gen_doc(make_anchor=True, make_link=True)
+            self.assertNotIn(".. raw:: html", rst_doc)
+
+            dargs_module.RAW_ANCHOR = True
+            raw_doc = gen_doc(make_anchor=True, make_link=True)
+            self.assertIn(".. raw:: html", raw_doc)
+        finally:
+            # Avoid leaking module-level configuration into later tests.
+            dargs_module.RAW_ANCHOR = original_raw_anchor
 
 
 if __name__ == "__main__":
