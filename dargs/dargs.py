@@ -58,7 +58,7 @@ class ArgumentError(Exception):
     """Base error class for invalid argument values in argchecking."""
 
     def __init__(
-        self, path: None | str | list[str] = None, message: str | None = None
+        self, path: str | list[str] | None = None, message: str | None = None
     ) -> None:
         super().__init__(message)
         if path is None:
@@ -142,7 +142,7 @@ class Argument:
     def __init__(
         self,
         name: str,
-        dtype: None | type | Iterable[type | Any | None],
+        dtype: type | Iterable[type | Any | None] | None,
         sub_fields: Iterable[Argument] | None = None,
         sub_variants: Iterable[Variant] | None = None,
         repeat: bool = False,
@@ -222,7 +222,7 @@ class Argument:
         return Argument("_", dict, [self])
 
     def _reorg_dtype(
-        self, dtype: None | type | Any | Iterable[type | Any | None]
+        self, dtype: type | Any | Iterable[type | Any | None] | None
     ) -> tuple[type | Any | None, ...]:
         if (
             isinstance(dtype, type)
@@ -258,7 +258,7 @@ class Argument:
         # and make it compatible with `isinstance`
         return tuple(dtype)
 
-    def set_dtype(self, dtype: None | type | Iterable[type]) -> None:
+    def set_dtype(self, dtype: type | Iterable[type] | None) -> None:
         """Change the dtype of the current Argument."""
         self.dtype = self._reorg_dtype(dtype)
 
@@ -682,7 +682,11 @@ class Argument:
             and self.optional
             and self.default is not _Flags.NONE
         ):
-            default = self.default if self.default != {} else _Flags.EMPTY_DICT
+            # Defaults belong to the schema and must not be shared with caller-owned
+            # normalized data. Deep-copying also protects nested mutable objects.
+            default = (
+                deepcopy(self.default) if self.default != {} else _Flags.EMPTY_DICT
+            )
             argdict[self.name] = default
 
     def _handle_empty_dict(self, argdict: dict, path: list[str] | None = None) -> None:
@@ -901,7 +905,7 @@ class Variant:
     def add_choice(
         self,
         tag: str | Argument,
-        _dtype: None | type | Iterable[type] = dict,
+        _dtype: type | Iterable[type] | None = dict,
         *args: Any,
         **kwargs: Any,
     ) -> Argument:
@@ -939,6 +943,14 @@ class Variant:
     def get_choice(self, argdict: dict, path: list[str] | None = None) -> Argument:
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
+            choices = [*self.choice_dict, *self.choice_alias]
+            if not isinstance(tag, str):
+                raise ArgumentTypeError(
+                    path,
+                    f"key `{self.flag_name}` gets wrong value type, requires <str> "
+                    f"but {type(tag).__name__} is given; "
+                    f"expected choices are <{'|'.join(choices)}>",
+                )
             if tag in self.choice_dict:
                 return self.choice_dict[tag]
             elif tag in self.choice_alias:
@@ -947,10 +959,7 @@ class Variant:
                 raise ArgumentValueError(
                     path,
                     f"get invalid choice `{tag}` for flag key `{self.flag_name}`."
-                    + did_you_mean(
-                        tag,
-                        list(self.choice_dict.keys()) + list(self.choice_alias.keys()),
-                    ),
+                    + did_you_mean(tag, choices),
                 )
         elif self.optional:
             return self.choice_dict[self.default_tag]
@@ -975,7 +984,11 @@ class Variant:
     ) -> None:
         if self.flag_name in argdict:
             tag = argdict[self.flag_name]
-            if tag not in self.choice_dict and tag in self.choice_alias:
+            if (
+                isinstance(tag, str)
+                and tag not in self.choice_dict
+                and tag in self.choice_alias
+            ):
                 argdict[self.flag_name] = self.choice_alias[tag]
 
     # above are traversing part

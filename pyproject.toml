@@ -19,7 +19,7 @@ dependencies = [
     "typeguard>=4",
     'typing_extensions; python_version < "3.8"',
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.7.4"
 readme = "README.md"
 
 [project.urls]
@@ -28,6 +28,9 @@ documentation = "https://docs.deepmodeling.com/projects/dargs"
 repository = "https://github.com/deepmodeling/dargs"
 
 [project.optional-dependencies]
+notebook = [
+    "ipython",
+]
 test = [
     "ipython",
     "jsonschema",

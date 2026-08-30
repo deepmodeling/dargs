@@ -3,9 +3,29 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from importlib import import_module
 from typing import IO, Any
 
-from dargs._version import __version__
+try:
+    from dargs._version import __version__
+except ModuleNotFoundError as exc:
+    if exc.name != "dargs._version":
+        raise
+    try:
+        get_version = getattr(import_module("setuptools_scm"), "get_version")
+    except ModuleNotFoundError as scm_exc:
+        if scm_exc.name != "setuptools_scm":
+            raise
+        # Source archives may have neither the generated module nor build tools.
+        # The CLI should remain usable even when an exact version is unavailable.
+        __version__ = "0+unknown"
+    else:
+        __version__ = get_version(
+            root="..",
+            relative_to=__file__,
+            fallback_version="0+unknown",
+        )
+
 from dargs.check import check
 
 

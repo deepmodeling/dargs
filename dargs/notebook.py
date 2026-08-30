@@ -274,11 +274,11 @@ class ArgumentData:
             buff.append(r"""<code class="dargs-code">""")
             buff.append('"')
             if isinstance(self.arg, Argument):
-                buff.append(self.arg.name)
+                buff.append(html.escape(self.arg.name, quote=False))
             elif isinstance(self.arg, Variant):
-                buff.append(self.arg.flag_name)
+                buff.append(html.escape(self.arg.flag_name, quote=False))
             elif isinstance(self.arg, str):
-                buff.append(self.arg)
+                buff.append(html.escape(self.arg, quote=False))
             else:
                 raise ValueError(f"Unknown type: {type(self.arg)}")
             buff.append('"')
@@ -286,11 +286,13 @@ class ArgumentData:
             if isinstance(self.arg, (Argument, Variant)):
                 buff.append(r"""<span class="dargs-doc">""")
                 if isinstance(self.arg, Argument):
-                    doc_head = (
-                        self.arg.gen_doc_head()
-                        .replace("| type:", "type:")
-                        .replace("\n", linebreak)
-                    )
+                    # Escape the generated text before adding our line-break
+                    # markup. This preserves generated ``<br/>`` elements while
+                    # keeping identically spelled user content escaped.
+                    doc_head = html.escape(
+                        self.arg.gen_doc_head().replace("| type:", "type:"),
+                        quote=False,
+                    ).replace("\n", linebreak)
                     # use re to replace ``xx`` to <code>xx</code>
                     doc_head = re.sub(
                         r"``(.*?)``",
@@ -300,19 +302,21 @@ class ArgumentData:
                     doc_head = re.sub(r"\*(.+)\*", r"<i>\1</i>", doc_head)
                     buff.append(doc_head)
                 elif isinstance(self.arg, Variant):
-                    buff.append(f"{self.arg.flag_name}:<br/>type: ")
+                    buff.append(
+                        f"{html.escape(self.arg.flag_name, quote=False)}:<br/>type: "
+                    )
                     buff.append(r"""<span class="dargs-doc-code">""")
                     buff.append("str")
                     buff.append(r"""</span>""")
                     if self.arg.default_tag:
                         buff.append(", default: ")
                         buff.append(r"""<span class="dargs-doc-code">""")
-                        buff.append(self.arg.default_tag)
+                        buff.append(html.escape(self.arg.default_tag, quote=False))
                         buff.append(r"""</span>""")
                 else:
                     raise ValueError(f"Unknown type: {type(self.arg)}")
 
-                doc_body = html.escape(self.arg.doc.strip())
+                doc_body = html.escape(self.arg.doc.strip(), quote=False)
                 if doc_body:
                     buff.append("<hr/>")
                 doc_body = re.sub(r"""\n+""", "\n", doc_body)
@@ -363,7 +367,7 @@ class ArgumentData:
         else:
             buff.append(r"""<code class="dargs-code">""")
             buff.append(
-                json.dumps(self.data, indent=2)
+                html.escape(json.dumps(self.data, indent=2), quote=False)
                 .replace(" ", "&nbsp;")
                 .replace(
                     "\n", f"""</code>{linebreak}{indent}<code class="dargs-code">"""
