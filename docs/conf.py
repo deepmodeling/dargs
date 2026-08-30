@@ -29,7 +29,14 @@ author = "DeepModeling"
 
 
 def _get_release() -> str:
-    """Return the SCM or installed-package version for documentation builds."""
+    """Return the SCM or installed-package version for documentation builds.
+
+    Returns
+    -------
+    str
+        The resolved package version, or ``0+unknown`` when no metadata is
+        available in the source tree.
+    """
     try:
         from setuptools_scm import get_version
     except ImportError:
