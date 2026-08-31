@@ -80,6 +80,32 @@ class TestNormalizer(unittest.TestCase):
         self.assertDictEqual(end1, ref)
         self.assertTrue(end1 is beg)
 
+    def test_trim_repeat_dict_container(self) -> None:
+        """Trim metadata entries before treating repeat-dict keys as items."""
+        ca = Argument("base", dict, [Argument("value", int)], repeat=True)
+        beg = {
+            "base": {
+                "_container_comment": "ignored",
+                "item": {"value": 1, "_item_comment": "ignored"},
+            }
+        }
+        ref = {"base": {"item": {"value": 1}}}
+
+        self.assertDictEqual(ca.normalize(beg, trim_pattern="_*"), ref)
+        self.assertDictEqual(
+            beg["base"]["item"], {"value": 1, "_item_comment": "ignored"}
+        )
+        self.assertDictEqual(
+            ca.normalize_value(beg["base"], trim_pattern="_*"), ref["base"]
+        )
+
+    def test_trim_repeat_dict_non_string_key(self) -> None:
+        """Do not pass non-string Python mapping keys to the trim regex."""
+        ca = Argument("base", dict, [Argument("value", int)], repeat=True)
+        value = {1: {"value": 1}}
+
+        self.assertDictEqual(ca.normalize_value(value, trim_pattern="_*"), value)
+
     def test_combined(self) -> None:
         ca = Argument(
             "base",
