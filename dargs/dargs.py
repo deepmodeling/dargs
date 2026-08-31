@@ -510,15 +510,32 @@ class Argument:
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
         for subarg in self.flatten_sub(value, path).values():
-            subarg._traverse(
-                value,
-                key_hook,
-                value_hook,
-                sub_hook,
-                variant_hook,
-                path,
-                ref_context,
-            )
+            # Keep the historical dynamic dispatch for subclasses that
+            # override ``traverse``. Built-in Arguments use the private helper
+            # so the complete context (including reference provenance) can be
+            # threaded without reconstructing it from legacy parameters.
+            if type(subarg).traverse is Argument.traverse:
+                subarg._traverse(
+                    value,
+                    key_hook,
+                    value_hook,
+                    sub_hook,
+                    variant_hook,
+                    path,
+                    ref_context,
+                )
+            else:
+                subarg.traverse(
+                    value,
+                    key_hook,
+                    value_hook,
+                    sub_hook,
+                    variant_hook,
+                    path,
+                    ref_context.allow_ref,
+                    ref_context.ref_base_dir,
+                    ref_context.trim_pattern,
+                )
 
     # above are general traverse part
     # below are type checking part

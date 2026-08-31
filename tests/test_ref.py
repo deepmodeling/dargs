@@ -95,6 +95,28 @@ class TestRef(unittest.TestCase):
         self.assertEqual(result["base"]["sub1"], 1)
         self.assertEqual(result["base"]["sub2"], "local")
 
+    def test_ref_repeated_reference_in_local_override(self) -> None:
+        """A local nested ref may independently reuse its parent's target."""
+        shared_path = self._write_json("ref_repeated.json", {"value": 1})
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("value", int),
+                Argument("nested", dict, [Argument("value", int)]),
+            ],
+        )
+
+        ca.check(
+            {
+                "base": {
+                    "$ref": shared_path,
+                    "nested": {"$ref": shared_path},
+                }
+            },
+            allow_ref=True,
+        )
+
     def test_ref_yaml(self) -> None:
         """$ref to a YAML file is resolved when pyyaml is installed."""
         if importlib.util.find_spec("yaml") is None:
