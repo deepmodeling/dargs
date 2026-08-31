@@ -95,6 +95,28 @@ class TestRef(unittest.TestCase):
         self.assertEqual(result["base"]["sub1"], 1)
         self.assertEqual(result["base"]["sub2"], "local")
 
+    def test_ref_repeated_reference_in_local_override(self) -> None:
+        """A local nested ref may independently reuse its parent's target."""
+        shared_path = self._write_json("ref_repeated.json", {"value": 1})
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument("value", int),
+                Argument("nested", dict, [Argument("value", int)]),
+            ],
+        )
+
+        ca.check(
+            {
+                "base": {
+                    "$ref": shared_path,
+                    "nested": {"$ref": shared_path},
+                }
+            },
+            allow_ref=True,
+        )
+
     def test_ref_yaml(self) -> None:
         """$ref to a YAML file is resolved when pyyaml is installed."""
         if importlib.util.find_spec("yaml") is None:
@@ -251,6 +273,37 @@ class TestRef(unittest.TestCase):
         ca = Argument("base", dict, [Argument("sub1", int, optional=True)])
         with self.assertRaises(ValueError, msg="Cyclic $ref"):
             ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
+
+    def test_ref_nested_cycle_detection(self) -> None:
+        """Cycles crossing nested mappings are detected by the traversal context."""
+        first_path = self._write_json(
+            "ref_nested_cycle_first.json",
+            {"nested": {"$ref": "ref_nested_cycle_second.json"}},
+        )
+        self._write_json(
+            "ref_nested_cycle_second.json",
+            {"nested": {"$ref": "ref_nested_cycle_first.json"}},
+        )
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument(
+                    "nested",
+                    dict,
+                    [
+                        Argument(
+                            "nested",
+                            dict,
+                            [Argument("nested", dict)],
+                        )
+                    ],
+                )
+            ],
+        )
+
+        with self.assertRaisesRegex(ValueError, "Cyclic \\$ref detected"):
+            ca.check({"base": {"$ref": first_path}}, allow_ref=True)
 
     def test_ref_chained(self) -> None:
         """A nested relative $ref resolves beside the file that declares it."""

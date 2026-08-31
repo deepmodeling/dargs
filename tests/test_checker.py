@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import List
+from typing import Any, List
 
 from dargs import Argument, Variant
 from dargs.dargs import ArgumentKeyError, ArgumentTypeError, ArgumentValueError
@@ -99,6 +99,23 @@ class TestChecker(unittest.TestCase):
         # make sure no dup keys is allowed
         with self.assertRaises(ValueError):
             Argument("base", dict, [Argument("sub1", int), Argument("sub1", int)])
+
+    def test_subclass_traverse_override_is_dispatched(self) -> None:
+        """Recursive traversal keeps honoring public ``traverse`` overrides."""
+
+        class TrackingArgument(Argument):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                super().__init__(*args, **kwargs)
+                self.traverse_calls = 0
+
+            def traverse(self, *args: Any, **kwargs: Any) -> None:
+                self.traverse_calls += 1
+                super().traverse(*args, **kwargs)
+
+        child = TrackingArgument("child", dict, [Argument("value", int)])
+        root = Argument("base", dict, [child])
+        root.check({"base": {"child": {"value": 1}}})
+        self.assertEqual(child.traverse_calls, 1)
 
     def test_check_value_validates_root(self) -> None:
         """Root types and extra checks are enforced by check_value()."""
