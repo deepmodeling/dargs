@@ -21,7 +21,6 @@ from __future__ import annotations
 import difflib
 import fnmatch
 import json
-import os
 import re
 from copy import deepcopy
 from enum import Enum
@@ -34,6 +33,10 @@ except ImportError:
     from typing_extensions import get_origin
 
 import typeguard
+
+from ._context import TraversalContext
+from ._refs import load_ref as _load_ref_file
+from ._refs import resolve_ref
 
 INDENT = "    "  # doc is indented by four spaces
 RAW_ANCHOR = False  # whether to use raw html anchors or RST ones
@@ -352,8 +355,38 @@ class Argument:
         _ref_base_dir: str | None = None,
         _trim_pattern: str | None = None,
     ) -> None:
-        # first, do something with the key
-        # then, take out the vaule and do something with it
+        """Traverse a mapping while applying the supplied hooks.
+
+        The historical arguments are retained for callers that use this
+        low-level method directly. Internal recursion uses one context object
+        so reference and trimming state cannot be dropped between nodes.
+        """
+        context = TraversalContext(
+            allow_ref=allow_ref,
+            trim_pattern=_trim_pattern,
+            ref_base_dir=_ref_base_dir,
+        )
+        self._traverse(
+            argdict,
+            key_hook,
+            value_hook,
+            sub_hook,
+            variant_hook,
+            path,
+            context,
+        )
+
+    def _traverse(
+        self,
+        argdict: dict,
+        key_hook: HookArgKType,
+        value_hook: HookArgVType,
+        sub_hook: HookArgKType,
+        variant_hook: HookVrntType,
+        path: list[str] | None,
+        context: TraversalContext,
+    ) -> None:
+        """Traverse a mapping using an already initialized context."""
         if path is None:
             path = []
         key_hook(self, argdict, path)
@@ -361,17 +394,14 @@ class Argument:
             value = argdict[self.name]
             value_hook(self, value, path)
             newpath = [*path, self.name]
-            # this is the key step that we traverse into the tree
-            self.traverse_value(
+            self._traverse_value(
                 value,
                 key_hook,
                 value_hook,
                 sub_hook,
                 variant_hook,
                 newpath,
-                allow_ref,
-                _ref_base_dir,
-                _trim_pattern,
+                context,
             )
 
     def traverse_value(
@@ -386,8 +416,33 @@ class Argument:
         _ref_base_dir: str | None = None,
         _trim_pattern: str | None = None,
     ) -> None:
-        # this is not private, and can be called directly
-        # in the condition where there is no leading key
+        """Traverse a value while applying the supplied hooks."""
+        context = TraversalContext(
+            allow_ref=allow_ref,
+            trim_pattern=_trim_pattern,
+            ref_base_dir=_ref_base_dir,
+        )
+        self._traverse_value(
+            value,
+            key_hook,
+            value_hook,
+            sub_hook,
+            variant_hook,
+            path,
+            context,
+        )
+
+    def _traverse_value(
+        self,
+        value: Any,
+        key_hook: HookArgKType,
+        value_hook: HookArgVType,
+        sub_hook: HookArgKType,
+        variant_hook: HookVrntType,
+        path: list[str] | None,
+        context: TraversalContext,
+    ) -> None:
+        """Traverse a value using an already initialized context."""
         if path is None:
             path = []
         if not self.repeat and isinstance(value, dict):
@@ -398,9 +453,7 @@ class Argument:
                 sub_hook,
                 variant_hook,
                 path,
-                allow_ref,
-                _ref_base_dir,
-                _trim_pattern,
+                context,
             )
         elif self.repeat and isinstance(value, list):
             for idx, item in enumerate(value):
@@ -411,16 +464,14 @@ class Argument:
                     sub_hook,
                     variant_hook,
                     [*path, str(idx)],
-                    allow_ref,
-                    _ref_base_dir,
-                    _trim_pattern,
+                    context,
                 )
         elif self.repeat and isinstance(value, dict):
             # Repeat dictionaries use their keys as item names. Trim comment or
             # metadata entries before visiting items, since those entries may
             # not contain dictionaries and must not be type-checked as items.
-            if _trim_pattern is not None:
-                trim_by_pattern(value, _trim_pattern)
+            if context.trim_pattern is not None:
+                trim_by_pattern(value, context.trim_pattern)
             for kk, item in value.items():
                 self._traverse_sub(
                     item,
@@ -429,9 +480,7 @@ class Argument:
                     sub_hook,
                     variant_hook,
                     [*path, kk],
-                    allow_ref,
-                    _ref_base_dir,
-                    _trim_pattern,
+                    context,
                 )
 
     def _traverse_sub(
@@ -442,12 +491,12 @@ class Argument:
         sub_hook: HookArgKType = _DUMMYHOOK,
         variant_hook: HookVrntType = _DUMMYHOOK,
         path: list[str] | None = None,
-        allow_ref: bool = False,
-        _ref_base_dir: str | None = None,
-        _trim_pattern: str | None = None,
+        context: TraversalContext | None = None,
     ) -> None:
         if path is None:
             path = [self.name]
+        if context is None:
+            context = TraversalContext()
         if not isinstance(value, dict):
             raise ArgumentTypeError(
                 path,
@@ -456,21 +505,19 @@ class Argument:
             )
         # A referenced file becomes the containing source for any nested refs
         # reached during this traversal.
-        ref_base_dir = _resolve_ref(value, allow_ref, _ref_base_dir)
+        ref_context = resolve_ref(value, context)
         sub_hook(self, value, path)
         for subvrnt in self.sub_variants.values():
             variant_hook(subvrnt, value, path)
         for subarg in self.flatten_sub(value, path).values():
-            subarg.traverse(
+            subarg._traverse(
                 value,
                 key_hook,
                 value_hook,
                 sub_hook,
                 variant_hook,
                 path,
-                allow_ref,
-                ref_base_dir,
-                _trim_pattern,
+                ref_context,
             )
 
     # above are general traverse part
@@ -536,23 +583,24 @@ class Argument:
             A deep copy of ``value`` is made internally so the caller's
             data is not mutated.
         """
-        ref_base_dir = None
+        context = TraversalContext(allow_ref=allow_ref)
         if allow_ref:
             value = deepcopy(value)
             # Resolve a root reference before validating its type or running
             # its extra check; traversal only resolves descendants.
             if isinstance(value, dict):
-                ref_base_dir = _resolve_ref(value, allow_ref)
+                context = resolve_ref(value, context)
         # ``traverse_value`` only checks descendants, so validate the root value
         # explicitly before descending into any sub-fields or variants.
         self._check_data(value, [])
-        self.traverse_value(
+        self._traverse_value(
             value,
             key_hook=Argument._check_exist,
             value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK,
-            allow_ref=allow_ref,
-            _ref_base_dir=ref_base_dir,
+            variant_hook=_DUMMYHOOK,
+            path=None,
+            context=context,
         )
 
     def _check_exist(self, argdict: dict, path: list[str] | None = None) -> None:
@@ -1243,116 +1291,32 @@ def trim_by_pattern(
 
 
 def _load_ref(ref_path: str) -> dict:
-    """Load a dict from an external file referenced by ``$ref``.
-
-    Parameters
-    ----------
-    ref_path : str
-        Path to the external file. Supported extensions: ``.json``, ``.yml``, ``.yaml``.
+    """Compatibility wrapper for the internal reference loader.
 
     Returns
     -------
     dict
-        The loaded dict from the external file.
-
-    Raises
-    ------
-    ValueError
-        If the file extension is not supported, or if the file does not contain a
-        top-level mapping/object.
-    ImportError
-        If pyyaml is not installed and a YAML file is requested.
+        The mapping loaded from ``ref_path``.
     """
-    ext = os.path.splitext(ref_path)[1].lower()
-    if ext == ".json":
-        with open(ref_path, encoding="utf-8") as f:
-            loaded = json.load(f)
-    elif ext in (".yml", ".yaml"):
-        try:
-            import yaml
-        except ImportError as e:
-            raise ImportError(
-                "pyyaml is required to load YAML files referenced by $ref. "
-                "Install it with: pip install pyyaml"
-            ) from e
-        with open(ref_path, encoding="utf-8") as f:
-            loaded = yaml.safe_load(f)
-    else:
-        raise ValueError(
-            f"Unsupported file extension `{ext}` for $ref. "
-            "Supported extensions are: .json, .yml, .yaml"
-        )
-    if not isinstance(loaded, dict):
-        raise ValueError(
-            f"Referenced file {ref_path!r} must contain a mapping/object at the top "
-            f"level, but got {type(loaded).__name__!r}."
-        )
-    return loaded
+    return _load_ref_file(ref_path)
 
 
 def _resolve_ref(d: dict, allow_ref: bool = False, base_dir: str | None = None) -> str:
-    """Resolve the ``$ref`` key in a dict by loading from an external file.
+    """Compatibility wrapper for the context-aware reference resolver.
 
-    If ``$ref`` is present in ``d``, its value is treated as a file path.
-    The file is loaded and its contents are merged into ``d``.  Keys already
-    present in ``d`` (other than ``$ref``) take precedence over keys from the
-    loaded file, allowing local overrides.  Chained ``$ref`` values in the
-    loaded content are resolved in turn. Relative paths in a chain are resolved
-    from the directory of the file that contains them. Cyclic references are
-    detected and raise a ``ValueError``.
-
-    The dict is modified **in place**.
-
-    Parameters
-    ----------
-    d : dict
-        The dict that may contain a ``$ref`` key.
-    allow_ref : bool, optional
-        If False (the default), raise a ``ValueError`` when ``$ref`` is found.
-        Set to True to enable loading from external files.
-    base_dir : str, optional
-        Directory containing ``d``. Relative references are resolved from this
-        directory; the process working directory is used when it is omitted.
+    The historical signature is retained for callers that import this private
+    helper. Traversal code uses :func:`resolve_ref` directly so the complete
+    reference chain remains available to child nodes.
 
     Returns
     -------
     str
         The directory that nested mappings should use for relative references.
 
-    Raises
-    ------
-    ValueError
-        If ``$ref`` is found but ``allow_ref`` is False, or if a cyclic
-        reference is detected.
     """
-    if base_dir is None:
-        base_dir = os.curdir
-    if "$ref" not in d:
-        return base_dir
-    if not allow_ref:
-        raise ValueError(
-            "$ref is not allowed by default. "
-            "Pass allow_ref=True to enable loading from external files."
-        )
-    visited_refs: set[str] = set()
-    while "$ref" in d:
-        ref_path = d.pop("$ref")
-        resolved_ref_path = (
-            ref_path if os.path.isabs(ref_path) else os.path.join(base_dir, ref_path)
-        )
-        canonical_ref_path = os.path.realpath(resolved_ref_path)
-        if canonical_ref_path in visited_refs:
-            raise ValueError(f"Cyclic $ref detected for path: {canonical_ref_path!r}")
-        visited_refs.add(canonical_ref_path)
-        loaded = _load_ref(canonical_ref_path)
-        # A chained relative reference belongs to the file that declared it,
-        # rather than to the process's current working directory.
-        base_dir = os.path.dirname(canonical_ref_path)
-        # Merge: loaded content as base, local keys take precedence
-        merged = {**loaded, **d}
-        d.clear()
-        d.update(merged)
-    return base_dir
+    context = TraversalContext(allow_ref=allow_ref, ref_base_dir=base_dir)
+    resolved = resolve_ref(d, context)
+    return resolved.ref_base_dir or "."
 
 
 def isinstance_annotation(value: Any, dtype: type | Any) -> bool:

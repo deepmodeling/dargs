@@ -27,7 +27,8 @@ from typing import Any, cast
 from IPython.display import HTML, display
 
 from dargs import Argument, Variant
-from dargs.dargs import _resolve_ref
+from dargs._context import TraversalContext
+from dargs._refs import resolve_ref
 
 __all__ = ["JSON"]
 
@@ -174,6 +175,7 @@ class ArgumentData:
         repeat: bool = False,
         allow_ref: bool = False,
         _ref_base_dir: str | None = None,
+        _ref_context: TraversalContext | None = None,
     ) -> None:
         self.data = data
         self.arg = arg
@@ -181,7 +183,11 @@ class ArgumentData:
         self.allow_ref = allow_ref
         # Keep the directory of the file that supplied this mapping so that
         # nested relative references are resolved beside their declaring file.
-        self._ref_base_dir = _ref_base_dir
+        self._ref_context = _ref_context or TraversalContext(
+            allow_ref=allow_ref,
+            ref_base_dir=_ref_base_dir,
+        )
+        self._ref_base_dir = self._ref_context.ref_base_dir
         self.subdata = []
         self._init_subdata()
 
@@ -194,7 +200,7 @@ class ArgumentData:
         ):
             # Work on a copy to avoid mutating the caller's data
             data = self.data.copy()
-            ref_base_dir = _resolve_ref(data, self.allow_ref, self._ref_base_dir)
+            ref_context = resolve_ref(data, self._ref_context)
             sub_fields = self.arg.sub_fields.copy()
             # extend subfiles with sub_variants
             for vv in self.arg.sub_variants.values():
@@ -209,7 +215,7 @@ class ArgumentData:
                             data[kk],
                             sub_fields[kk],
                             allow_ref=self.allow_ref,
-                            _ref_base_dir=ref_base_dir,
+                            _ref_context=ref_context,
                         )
                     )
                 elif kk in self.arg.sub_variants:
@@ -218,7 +224,7 @@ class ArgumentData:
                             data[kk],
                             self.arg.sub_variants[kk],
                             allow_ref=self.allow_ref,
-                            _ref_base_dir=ref_base_dir,
+                            _ref_context=ref_context,
                         )
                     )
                 else:
@@ -236,7 +242,7 @@ class ArgumentData:
                         self.arg,
                         repeat=True,
                         allow_ref=self.allow_ref,
-                        _ref_base_dir=self._ref_base_dir,
+                        _ref_context=self._ref_context,
                     )
                 )
         elif (
@@ -252,7 +258,7 @@ class ArgumentData:
                         self.arg,
                         repeat=True,
                         allow_ref=self.allow_ref,
-                        _ref_base_dir=self._ref_base_dir,
+                        _ref_context=self._ref_context,
                     )
                 )
 

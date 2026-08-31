@@ -252,6 +252,37 @@ class TestRef(unittest.TestCase):
         with self.assertRaises(ValueError, msg="Cyclic $ref"):
             ca.check({"base": {"$ref": ref_path}}, allow_ref=True)
 
+    def test_ref_nested_cycle_detection(self) -> None:
+        """Cycles crossing nested mappings are detected by the traversal context."""
+        first_path = self._write_json(
+            "ref_nested_cycle_first.json",
+            {"nested": {"$ref": "ref_nested_cycle_second.json"}},
+        )
+        self._write_json(
+            "ref_nested_cycle_second.json",
+            {"nested": {"$ref": "ref_nested_cycle_first.json"}},
+        )
+        ca = Argument(
+            "base",
+            dict,
+            [
+                Argument(
+                    "nested",
+                    dict,
+                    [
+                        Argument(
+                            "nested",
+                            dict,
+                            [Argument("nested", dict)],
+                        )
+                    ],
+                )
+            ],
+        )
+
+        with self.assertRaisesRegex(ValueError, "Cyclic \\$ref detected"):
+            ca.check({"base": {"$ref": first_path}}, allow_ref=True)
+
     def test_ref_chained(self) -> None:
         """A nested relative $ref resolves beside the file that declares it."""
         self._write_json("ref_inner.json", {"sub1": 7, "sub2": "inner"})
