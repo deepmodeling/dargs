@@ -536,12 +536,13 @@ class Argument:
             A deep copy of ``value`` is made internally so the caller's
             data is not mutated.
         """
+        ref_base_dir = None
         if allow_ref:
             value = deepcopy(value)
             # Resolve a root reference before validating its type or running
             # its extra check; traversal only resolves descendants.
             if isinstance(value, dict):
-                _resolve_ref(value, allow_ref)
+                ref_base_dir = _resolve_ref(value, allow_ref)
         # ``traverse_value`` only checks descendants, so validate the root value
         # explicitly before descending into any sub-fields or variants.
         self._check_data(value, [])
@@ -551,6 +552,7 @@ class Argument:
             value_hook=Argument._check_data,
             sub_hook=Argument._check_strict if strict else _DUMMYHOOK,
             allow_ref=allow_ref,
+            _ref_base_dir=ref_base_dir,
         )
 
     def _check_exist(self, argdict: dict, path: list[str] | None = None) -> None:

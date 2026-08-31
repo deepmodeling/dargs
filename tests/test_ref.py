@@ -147,6 +147,37 @@ class TestRef(unittest.TestCase):
         )
         ca.check_value({"$ref": ref_path}, allow_ref=True)
 
+    def test_ref_check_value_nested_relative_ref_uses_containing_file(self) -> None:
+        """Nested refs from a root ref resolve beside the declaring file."""
+        source_dir = os.path.join(self._tmpdir, "source")
+        cwd_dir = os.path.join(self._tmpdir, "cwd")
+        os.mkdir(source_dir)
+        os.mkdir(cwd_dir)
+
+        inner_path = os.path.join(source_dir, "inner.json")
+        outer_path = os.path.join(source_dir, "outer.json")
+        with open(inner_path, "w") as f:
+            json.dump({"value": 11}, f)
+        with open(outer_path, "w") as f:
+            json.dump({"nested": {"$ref": "inner.json"}}, f)
+
+        # A different file in the working directory makes accidental CWD-based
+        # resolution fail type validation instead of hiding the regression.
+        with open(os.path.join(cwd_dir, "inner.json"), "w") as f:
+            json.dump({"value": "wrong"}, f)
+
+        ca = Argument(
+            "base",
+            dict,
+            [Argument("nested", dict, [Argument("value", int)])],
+        )
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(cwd_dir)
+            ca.check_value({"$ref": outer_path}, allow_ref=True)
+        finally:
+            os.chdir(original_cwd)
+
     def test_ref_check_value_root_extra_check(self) -> None:
         """Root extra checks run against the contents loaded from ``$ref``."""
         ref_path = self._write_json("ref_root_extra.json", {"sub1": 5})
