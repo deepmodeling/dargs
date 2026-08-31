@@ -104,9 +104,7 @@ class TestNormalizer(unittest.TestCase):
         ca = Argument("base", dict, [Argument("value", int)], repeat=True)
         value = {1: {"value": 1}}
 
-        self.assertDictEqual(
-            ca.normalize_value(value, trim_pattern="_*"), value
-        )
+        self.assertDictEqual(ca.normalize_value(value, trim_pattern="_*"), value)
 
     def test_combined(self) -> None:
         ca = Argument(
